@@ -1,0 +1,732 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		B001000000000000000001 /* HikBikApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = F001000000000000000001 /* HikBikApp.swift */; };
+		B001000000000000000002 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F001000000000000000002 /* ContentView.swift */; };
+		B001000000000000000003 /* StateModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = F001000000000000000003 /* StateModels.swift */; };
+		B001000000000000000004 /* NationalParkModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = F001000000000000000004 /* NationalParkModels.swift */; };
+		B001000000000000000005 /* DataLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = F001000000000000000005 /* DataLoader.swift */; };
+		B001000000000000000006 /* StateParksTab.swift in Sources */ = {isa = PBXBuildFile; fileRef = F001000000000000000006 /* StateParksTab.swift */; };
+		B001000000000000000007 /* StateParksListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F001000000000000000007 /* StateParksListView.swift */; };
+		B001000000000000000008 /* ParkDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F001000000000000000008 /* ParkDetailView.swift */; };
+		B001000000000000000009 /* NationalParksTab.swift in Sources */ = {isa = PBXBuildFile; fileRef = F001000000000000000009 /* NationalParksTab.swift */; };
+		B00100000000000000000A /* NationalParkDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00100000000000000000A /* NationalParkDetailView.swift */; };
+		B00100000000000000000B /* states-list.json in Resources */ = {isa = PBXBuildFile; fileRef = F00100000000000000000B /* states-list.json */; };
+		B00100000000000000000C /* national-parks.json in Resources */ = {isa = PBXBuildFile; fileRef = F00100000000000000000C /* national-parks.json */; };
+		B00100000000000000000D /* states-parks.json in Resources */ = {isa = PBXBuildFile; fileRef = F00100000000000000000D /* states-parks.json */; };
+		B00100000000000000000E /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = F00100000000000000000E /* Assets.xcassets */; };
+		B00100000000000000000F /* HikBikTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00100000000000000000F /* HikBikTheme.swift */; };
+		B001000000000000000010 /* ForestGrasslandModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = F001000000000000000010 /* ForestGrasslandModels.swift */; };
+		B001000000000000000011 /* ForestsTab.swift in Sources */ = {isa = PBXBuildFile; fileRef = F001000000000000000011 /* ForestsTab.swift */; };
+		B001000000000000000012 /* ForestDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F001000000000000000012 /* ForestDetailView.swift */; };
+		B001000000000000000013 /* GrasslandsTab.swift in Sources */ = {isa = PBXBuildFile; fileRef = F001000000000000000013 /* GrasslandsTab.swift */; };
+		B001000000000000000014 /* GrasslandDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F001000000000000000014 /* GrasslandDetailView.swift */; };
+		B001000000000000000015 /* RecreationTab.swift in Sources */ = {isa = PBXBuildFile; fileRef = F001000000000000000015 /* RecreationTab.swift */; };
+		B001000000000000000016 /* national-forests.json in Resources */ = {isa = PBXBuildFile; fileRef = F001000000000000000016 /* national-forests.json */; };
+		B001000000000000000017 /* national-grasslands.json in Resources */ = {isa = PBXBuildFile; fileRef = F001000000000000000017 /* national-grasslands.json */; };
+		B001000000000000000018 /* national-recreation.json in Resources */ = {isa = PBXBuildFile; fileRef = F001000000000000000018 /* national-recreation.json */; };
+		B001000000000000000019 /* alabama-regions.json in Resources */ = {isa = PBXBuildFile; fileRef = F001000000000000000019 /* alabama-regions.json */; };
+		B00100000000000000001A /* TripModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00100000000000000001A /* TripModels.swift */; };
+		B00100000000000000001B /* TripStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00100000000000000001B /* TripStore.swift */; };
+		B00100000000000000001C /* FavoritesStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00100000000000000001C /* FavoritesStore.swift */; };
+		B00100000000000000001D /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00100000000000000001D /* HomeView.swift */; };
+		B00100000000000000001E /* ExploreView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00100000000000000001E /* ExploreView.swift */; };
+		B00100000000000000001F /* TripsListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00100000000000000001F /* TripsListView.swift */; };
+		B001000000000000000020 /* ProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F001000000000000000020 /* ProfileView.swift */; };
+		B001000000000000000021 /* FavoritesListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F001000000000000000021 /* FavoritesListView.swift */; };
+		B001000000000000000022 /* NationalParkExtendedModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = F001000000000000000022 /* NationalParkExtendedModels.swift */; };
+		B001000000000000000023 /* national-parks-facilities.json in Resources */ = {isa = PBXBuildFile; fileRef = F001000000000000000023 /* national-parks-facilities.json */; };
+		B001000000000000000024 /* national-parks-gallery.json in Resources */ = {isa = PBXBuildFile; fileRef = F001000000000000000024 /* national-parks-gallery.json */; };
+		B001000000000000000025 /* national-parks-weather.json in Resources */ = {isa = PBXBuildFile; fileRef = F001000000000000000025 /* national-parks-weather.json */; };
+		B001000000000000000026 /* FlowLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = F001000000000000000026 /* FlowLayout.swift */; };
+		B001000000000000000027 /* national-parks-wildlife.json in Resources */ = {isa = PBXBuildFile; fileRef = F001000000000000000027 /* national-parks-wildlife.json */; };
+		B001000000000000000028 /* national-parks-stats.json in Resources */ = {isa = PBXBuildFile; fileRef = F001000000000000000028 /* national-parks-stats.json */; };
+		B001000000000000000029 /* national-parks-lodging.json in Resources */ = {isa = PBXBuildFile; fileRef = F001000000000000000029 /* national-parks-lodging.json */; };
+		B001000000000000000036 /* ParkBackupData.json in Resources */ = {isa = PBXBuildFile; fileRef = F001000000000000000036 /* ParkBackupData.json */; };
+		B00100000000000000002A /* ParkCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00100000000000000002A /* ParkCardView.swift */; };
+		B00100000000000000002B /* RoutesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00100000000000000002B /* RoutesView.swift */; };
+		B00100000000000000002C /* ShopView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00100000000000000002C /* ShopView.swift */; };
+		B00100000000000000002D /* OrdersView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00100000000000000002D /* OrdersView.swift */; };
+		B00100000000000000002E /* CommunityDiscoveryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00100000000000000002E /* CommunityDiscoveryView.swift */; };
+		B00100000000000000002F /* ParkDetailFlightyComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00100000000000000002F /* ParkDetailFlightyComponents.swift */; };
+		B001000000000000000030 /* NPSAPIModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = F001000000000000000030 /* NPSAPIModels.swift */; };
+		B001000000000000000031 /* NPSMockData.swift in Sources */ = {isa = PBXBuildFile; fileRef = F001000000000000000031 /* NPSMockData.swift */; };
+		B001000000000000000032 /* NPSAPIConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = F001000000000000000032 /* NPSAPIConfig.swift */; };
+		B001000000000000000033 /* NPSAPIService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F001000000000000000033 /* NPSAPIService.swift */; };
+		B001000000000000000034 /* ParkDetailModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = F001000000000000000034 /* ParkDetailModels.swift */; };
+		B001000000000000000035 /* AccessLogisticsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F001000000000000000035 /* AccessLogisticsView.swift */; };
+		B001000000000000000037 /* ForestDetailSheetContent.swift in Sources */ = {isa = PBXBuildFile; fileRef = F001000000000000000037 /* ForestDetailSheetContent.swift */; };
+		B001000000000000000038 /* ForestAccessView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F001000000000000000038 /* ForestAccessView.swift */; };
+		B001000000000000000039 /* GrasslandDetailSheetContent.swift in Sources */ = {isa = PBXBuildFile; fileRef = F001000000000000000039 /* GrasslandDetailSheetContent.swift */; };
+		B00100000000000000003A /* GrasslandAccessView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00100000000000000003A /* GrasslandAccessView.swift */; };
+		B00100000000000000003B /* RecreationAccessView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00100000000000000003B /* RecreationAccessView.swift */; };
+		B00100000000000000003C /* CustomRouteBuilderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00100000000000000003C /* CustomRouteBuilderView.swift */; };
+		B00100000000000000003E /* UnifiedDraftBox.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00100000000000000003E /* UnifiedDraftBox.swift */; };
+		B001000000000000000044 /* ProfileCollectionsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = F001000000000000000044 /* ProfileCollectionsStore.swift */; };
+		B001000000000000000045 /* ProfileAchievementsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = F001000000000000000045 /* ProfileAchievementsStore.swift */; };
+		B001000000000000000046 /* Achievement.swift in Sources */ = {isa = PBXBuildFile; fileRef = F001000000000000000046 /* Achievement.swift */; };
+		B001000000000000000047 /* AchievementStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = F001000000000000000047 /* AchievementStore.swift */; };
+		B001000000000000000048 /* HonorCenterView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F001000000000000000048 /* HonorCenterView.swift */; };
+		B001000000000000000049 /* AdventureStatsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F001000000000000000049 /* AdventureStatsService.swift */; };
+		B00100000000000000004A /* RadarChartView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00100000000000000004A /* RadarChartView.swift */; };
+		B00100000000000000004B /* AdventureStatsProView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00100000000000000004B /* AdventureStatsProView.swift */; };
+		B00100000000000000004C /* ParkLandmarkIcons.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00100000000000000004C /* ParkLandmarkIcons.swift */; };
+		B00100000000000000004D /* ProfileLikedStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00100000000000000004D /* ProfileLikedStore.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		F001000000000000000001 /* HikBikApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HikBikApp.swift; sourceTree = "<group>"; };
+		F001000000000000000002 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		F001000000000000000003 /* StateModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StateModels.swift; sourceTree = "<group>"; };
+		F001000000000000000004 /* NationalParkModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NationalParkModels.swift; sourceTree = "<group>"; };
+		F001000000000000000005 /* DataLoader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataLoader.swift; sourceTree = "<group>"; };
+		F001000000000000000006 /* StateParksTab.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StateParksTab.swift; sourceTree = "<group>"; };
+		F001000000000000000007 /* StateParksListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StateParksListView.swift; sourceTree = "<group>"; };
+		F001000000000000000008 /* ParkDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ParkDetailView.swift; sourceTree = "<group>"; };
+		F001000000000000000009 /* NationalParksTab.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NationalParksTab.swift; sourceTree = "<group>"; };
+		F00100000000000000000A /* NationalParkDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NationalParkDetailView.swift; sourceTree = "<group>"; };
+		F00100000000000000000B /* states-list.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "states-list.json"; sourceTree = "<group>"; };
+		F00100000000000000000C /* national-parks.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "national-parks.json"; sourceTree = "<group>"; };
+		F00100000000000000000D /* states-parks.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "states-parks.json"; sourceTree = "<group>"; };
+		F00100000000000000000E /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		F00100000000000000000F /* HikBikTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HikBikTheme.swift; sourceTree = "<group>"; };
+		F001000000000000000010 /* ForestGrasslandModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ForestGrasslandModels.swift; sourceTree = "<group>"; };
+		F001000000000000000011 /* ForestsTab.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ForestsTab.swift; sourceTree = "<group>"; };
+		F001000000000000000012 /* ForestDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ForestDetailView.swift; sourceTree = "<group>"; };
+		F001000000000000000013 /* GrasslandsTab.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GrasslandsTab.swift; sourceTree = "<group>"; };
+		F001000000000000000014 /* GrasslandDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GrasslandDetailView.swift; sourceTree = "<group>"; };
+		F001000000000000000015 /* RecreationTab.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecreationTab.swift; sourceTree = "<group>"; };
+		F001000000000000000016 /* national-forests.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "national-forests.json"; sourceTree = "<group>"; };
+		F001000000000000000017 /* national-grasslands.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "national-grasslands.json"; sourceTree = "<group>"; };
+		F001000000000000000018 /* national-recreation.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "national-recreation.json"; sourceTree = "<group>"; };
+		F001000000000000000019 /* alabama-regions.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "alabama-regions.json"; sourceTree = "<group>"; };
+		F00100000000000000001A /* TripModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TripModels.swift; sourceTree = "<group>"; };
+		F00100000000000000001B /* TripStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TripStore.swift; sourceTree = "<group>"; };
+		F00100000000000000001C /* FavoritesStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FavoritesStore.swift; sourceTree = "<group>"; };
+		F00100000000000000001D /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
+		F00100000000000000001E /* ExploreView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExploreView.swift; sourceTree = "<group>"; };
+		F00100000000000000001F /* TripsListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TripsListView.swift; sourceTree = "<group>"; };
+		F001000000000000000020 /* ProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileView.swift; sourceTree = "<group>"; };
+		F001000000000000000021 /* FavoritesListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FavoritesListView.swift; sourceTree = "<group>"; };
+		F001000000000000000022 /* NationalParkExtendedModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NationalParkExtendedModels.swift; sourceTree = "<group>"; };
+		F001000000000000000023 /* national-parks-facilities.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "national-parks-facilities.json"; sourceTree = "<group>"; };
+		F001000000000000000024 /* national-parks-gallery.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "national-parks-gallery.json"; sourceTree = "<group>"; };
+		F001000000000000000025 /* national-parks-weather.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "national-parks-weather.json"; sourceTree = "<group>"; };
+		F001000000000000000026 /* FlowLayout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlowLayout.swift; sourceTree = "<group>"; };
+		F001000000000000000027 /* national-parks-wildlife.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "national-parks-wildlife.json"; sourceTree = "<group>"; };
+		F001000000000000000028 /* national-parks-stats.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "national-parks-stats.json"; sourceTree = "<group>"; };
+		F001000000000000000029 /* national-parks-lodging.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "national-parks-lodging.json"; sourceTree = "<group>"; };
+		F001000000000000000036 /* ParkBackupData.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = ParkBackupData.json; sourceTree = "<group>"; };
+		F001000000000000000037 /* ForestDetailSheetContent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ForestDetailSheetContent.swift; sourceTree = "<group>"; };
+		F001000000000000000038 /* ForestAccessView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ForestAccessView.swift; sourceTree = "<group>"; };
+		F001000000000000000039 /* GrasslandDetailSheetContent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GrasslandDetailSheetContent.swift; sourceTree = "<group>"; };
+		F00100000000000000003A /* GrasslandAccessView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GrasslandAccessView.swift; sourceTree = "<group>"; };
+		F00100000000000000003B /* RecreationAccessView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecreationAccessView.swift; sourceTree = "<group>"; };
+		F00100000000000000003C /* CustomRouteBuilderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomRouteBuilderView.swift; sourceTree = "<group>"; };
+		F00100000000000000003E /* UnifiedDraftBox.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnifiedDraftBox.swift; sourceTree = "<group>"; };
+		F001000000000000000044 /* ProfileCollectionsStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileCollectionsStore.swift; sourceTree = "<group>"; };
+		F001000000000000000045 /* ProfileAchievementsStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileAchievementsStore.swift; sourceTree = "<group>"; };
+		F001000000000000000046 /* Achievement.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Achievement.swift; sourceTree = "<group>"; };
+		F001000000000000000047 /* AchievementStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AchievementStore.swift; sourceTree = "<group>"; };
+		F001000000000000000048 /* HonorCenterView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HonorCenterView.swift; sourceTree = "<group>"; };
+		F001000000000000000049 /* AdventureStatsService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdventureStatsService.swift; sourceTree = "<group>"; };
+		F00100000000000000004A /* RadarChartView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RadarChartView.swift; sourceTree = "<group>"; };
+		F00100000000000000004B /* AdventureStatsProView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdventureStatsProView.swift; sourceTree = "<group>"; };
+		F00100000000000000004C /* ParkLandmarkIcons.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ParkLandmarkIcons.swift; sourceTree = "<group>"; };
+		F00100000000000000004D /* ProfileLikedStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileLikedStore.swift; sourceTree = "<group>"; };
+		F00100000000000000002A /* ParkCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ParkCardView.swift; sourceTree = "<group>"; };
+		F00100000000000000002B /* RoutesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoutesView.swift; sourceTree = "<group>"; };
+		F00100000000000000002C /* ShopView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShopView.swift; sourceTree = "<group>"; };
+		F00100000000000000002D /* OrdersView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OrdersView.swift; sourceTree = "<group>"; };
+		F00100000000000000002E /* CommunityDiscoveryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommunityDiscoveryView.swift; sourceTree = "<group>"; };
+		F00100000000000000002F /* ParkDetailFlightyComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ParkDetailFlightyComponents.swift; sourceTree = "<group>"; };
+		F001000000000000000030 /* NPSAPIModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NPSAPIModels.swift; sourceTree = "<group>"; };
+		F001000000000000000031 /* NPSMockData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NPSMockData.swift; sourceTree = "<group>"; };
+		F001000000000000000032 /* NPSAPIConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NPSAPIConfig.swift; sourceTree = "<group>"; };
+		F001000000000000000033 /* NPSAPIService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NPSAPIService.swift; sourceTree = "<group>"; };
+		F001000000000000000034 /* ParkDetailModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ParkDetailModels.swift; sourceTree = "<group>"; };
+		F001000000000000000035 /* AccessLogisticsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccessLogisticsView.swift; sourceTree = "<group>"; };
+		T001000000000000000001 /* HikBik.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = HikBik.app; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		P001000000000000000001 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		G001000000000000000001 = {
+			isa = PBXGroup;
+			children = (
+				G001000000000000000002 /* HikBik */,
+				G001000000000000000003 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		G001000000000000000002 /* HikBik */ = {
+			isa = PBXGroup;
+			children = (
+				G001000000000000000009 /* App */,
+				G00100000000000000000A /* Core */,
+				G00100000000000000000B /* Features */,
+				G001000000000000000004 /* Models */,
+				G001000000000000000006 /* Services */,
+				G001000000000000000007 /* Resources */,
+			);
+			path = HikBik;
+			sourceTree = "<group>";
+		};
+		G001000000000000000003 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				T001000000000000000001 /* HikBik.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		G001000000000000000004 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				F001000000000000000003 /* StateModels.swift */,
+				F001000000000000000004 /* NationalParkModels.swift */,
+				F001000000000000000022 /* NationalParkExtendedModels.swift */,
+				F001000000000000000030 /* NPSAPIModels.swift */,
+				F001000000000000000031 /* NPSMockData.swift */,
+				F001000000000000000034 /* ParkDetailModels.swift */,
+				F001000000000000000010 /* ForestGrasslandModels.swift */,
+				F00100000000000000001A /* TripModels.swift */,
+				F001000000000000000046 /* Achievement.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		G001000000000000000006 /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				F001000000000000000005 /* DataLoader.swift */,
+				F001000000000000000044 /* ProfileCollectionsStore.swift */,
+				F001000000000000000045 /* ProfileAchievementsStore.swift */,
+				F001000000000000000047 /* AchievementStore.swift */,
+				F001000000000000000049 /* AdventureStatsService.swift */,
+				F00100000000000000004D /* ProfileLikedStore.swift */,
+				F001000000000000000032 /* NPSAPIConfig.swift */,
+				F001000000000000000033 /* NPSAPIService.swift */,
+				F00100000000000000001B /* TripStore.swift */,
+				F00100000000000000001C /* FavoritesStore.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		G001000000000000000007 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				F00100000000000000000B /* states-list.json */,
+				F00100000000000000000C /* national-parks.json */,
+				F00100000000000000000D /* states-parks.json */,
+				F001000000000000000023 /* national-parks-facilities.json */,
+				F001000000000000000024 /* national-parks-gallery.json */,
+				F001000000000000000025 /* national-parks-weather.json */,
+				F001000000000000000027 /* national-parks-wildlife.json */,
+				F001000000000000000028 /* national-parks-stats.json */,
+				F001000000000000000029 /* national-parks-lodging.json */,
+				F001000000000000000036 /* ParkBackupData.json */,
+				F001000000000000000016 /* national-forests.json */,
+				F001000000000000000017 /* national-grasslands.json */,
+				F001000000000000000018 /* national-recreation.json */,
+				F001000000000000000019 /* alabama-regions.json */,
+				F00100000000000000000E /* Assets.xcassets */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+		G001000000000000000008 /* Theme */ = {
+			isa = PBXGroup;
+			children = (
+				F00100000000000000000F /* HikBikTheme.swift */,
+			);
+			path = Theme;
+			sourceTree = "<group>";
+		};
+		G001000000000000000009 /* App */ = {
+			isa = PBXGroup;
+			children = (
+				F001000000000000000001 /* HikBikApp.swift */,
+				F001000000000000000002 /* ContentView.swift */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		G00100000000000000000A /* Core */ = {
+			isa = PBXGroup;
+			children = (
+				G001000000000000000008 /* Theme */,
+				G00100000000000000000C /* Components */,
+			);
+			path = Core;
+			sourceTree = "<group>";
+		};
+		G00100000000000000000B /* Features */ = {
+			isa = PBXGroup;
+			children = (
+				G00100000000000000000D /* Home */,
+				G00100000000000000000E /* Explore */,
+				G00100000000000000000F /* Trips */,
+				G001000000000000000010 /* Profile */,
+				G001000000000000000016 /* Routes */,
+				G001000000000000000017 /* Shop */,
+				G001000000000000000018 /* Orders */,
+				G001000000000000000019 /* Community */,
+			);
+			path = Features;
+			sourceTree = "<group>";
+		};
+		G00100000000000000000C /* Components */ = {
+			isa = PBXGroup;
+			children = (
+				F001000000000000000026 /* FlowLayout.swift */,
+				F00100000000000000002A /* ParkCardView.swift */,
+			);
+			path = Components;
+			sourceTree = "<group>";
+		};
+		G00100000000000000000D /* Home */ = {
+			isa = PBXGroup;
+			children = (
+				F00100000000000000001D /* HomeView.swift */,
+			);
+			path = Home;
+			sourceTree = "<group>";
+		};
+		G00100000000000000000E /* Explore */ = {
+			isa = PBXGroup;
+			children = (
+				F00100000000000000001E /* ExploreView.swift */,
+				G001000000000000000011 /* StateParks */,
+				G001000000000000000012 /* NationalParks */,
+				G001000000000000000013 /* Forests */,
+				G001000000000000000014 /* Grasslands */,
+				G001000000000000000015 /* Recreation */,
+			);
+			path = Explore;
+			sourceTree = "<group>";
+		};
+		G00100000000000000000F /* Trips */ = {
+			isa = PBXGroup;
+			children = (
+				F00100000000000000001F /* TripsListView.swift */,
+			);
+			path = Trips;
+			sourceTree = "<group>";
+		};
+		G001000000000000000010 /* Profile */ = {
+			isa = PBXGroup;
+			children = (
+				F001000000000000000020 /* ProfileView.swift */,
+				F00100000000000000004B /* AdventureStatsProView.swift */,
+				F00100000000000000004A /* RadarChartView.swift */,
+				F00100000000000000004C /* ParkLandmarkIcons.swift */,
+				F001000000000000000048 /* HonorCenterView.swift */,
+				F001000000000000000021 /* FavoritesListView.swift */,
+			);
+			path = Profile;
+			sourceTree = "<group>";
+		};
+		G001000000000000000011 /* StateParks */ = {
+			isa = PBXGroup;
+			children = (
+				F001000000000000000006 /* StateParksTab.swift */,
+				F001000000000000000007 /* StateParksListView.swift */,
+				F001000000000000000008 /* ParkDetailView.swift */,
+			);
+			path = StateParks;
+			sourceTree = "<group>";
+		};
+		G001000000000000000012 /* NationalParks */ = {
+			isa = PBXGroup;
+			children = (
+				F001000000000000000035 /* AccessLogisticsView.swift */,
+				F001000000000000000009 /* NationalParksTab.swift */,
+				F00100000000000000000A /* NationalParkDetailView.swift */,
+				F00100000000000000002F /* ParkDetailFlightyComponents.swift */,
+			);
+			path = NationalParks;
+			sourceTree = "<group>";
+		};
+		G001000000000000000013 /* Forests */ = {
+			isa = PBXGroup;
+			children = (
+				F001000000000000000038 /* ForestAccessView.swift */,
+				F001000000000000000037 /* ForestDetailSheetContent.swift */,
+				F001000000000000000011 /* ForestsTab.swift */,
+				F001000000000000000012 /* ForestDetailView.swift */,
+			);
+			path = Forests;
+			sourceTree = "<group>";
+		};
+		G001000000000000000014 /* Grasslands */ = {
+			isa = PBXGroup;
+			children = (
+				F001000000000000000013 /* GrasslandsTab.swift */,
+				F001000000000000000014 /* GrasslandDetailView.swift */,
+				F001000000000000000039 /* GrasslandDetailSheetContent.swift */,
+				F00100000000000000003A /* GrasslandAccessView.swift */,
+			);
+			path = Grasslands;
+			sourceTree = "<group>";
+		};
+		G001000000000000000015 /* Recreation */ = {
+			isa = PBXGroup;
+			children = (
+				F001000000000000000015 /* RecreationTab.swift */,
+				F00100000000000000003B /* RecreationAccessView.swift */,
+			);
+			path = Recreation;
+			sourceTree = "<group>";
+		};
+		G001000000000000000016 /* Routes */ = {
+			isa = PBXGroup;
+			children = (
+				F00100000000000000002B /* RoutesView.swift */,
+				F00100000000000000003C /* CustomRouteBuilderView.swift */,
+				F00100000000000000003E /* UnifiedDraftBox.swift */,
+			);
+			path = Routes;
+			sourceTree = "<group>";
+		};
+		G001000000000000000017 /* Shop */ = {
+			isa = PBXGroup;
+			children = (
+				F00100000000000000002C /* ShopView.swift */,
+			);
+			path = Shop;
+			sourceTree = "<group>";
+		};
+		G001000000000000000018 /* Orders */ = {
+			isa = PBXGroup;
+			children = (
+				F00100000000000000002D /* OrdersView.swift */,
+			);
+			path = Orders;
+			sourceTree = "<group>";
+		};
+		G001000000000000000019 /* Community */ = {
+			isa = PBXGroup;
+			children = (
+				F00100000000000000002E /* CommunityDiscoveryView.swift */,
+			);
+			path = Community;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		N001000000000000000001 /* HikBik */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = C001000000000000000002 /* Build configuration list for PBXNativeTarget "HikBik" */;
+			buildPhases = (
+				P001000000000000000002 /* Sources */,
+				P001000000000000000001 /* Frameworks */,
+				P001000000000000000003 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = HikBik;
+			productName = HikBik;
+			productReference = T001000000000000000001 /* HikBik.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		R001000000000000000001 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1500;
+				LastUpgradeCheck = 1500;
+				TargetAttributes = {
+					N001000000000000000001 = {
+						CreatedOnToolsVersion = 15.0;
+					};
+				};
+			};
+			buildConfigurationList = C001000000000000000001 /* Build configuration list for PBXProject "HikBik" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+				"zh-Hans",
+			);
+			mainGroup = G001000000000000000001;
+			productRefGroup = G001000000000000000003 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				N001000000000000000001 /* HikBik */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		P001000000000000000003 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B00100000000000000000B /* states-list.json in Resources */,
+				B00100000000000000000C /* national-parks.json in Resources */,
+				B00100000000000000000D /* states-parks.json in Resources */,
+				B00100000000000000000E /* Assets.xcassets in Resources */,
+				B001000000000000000016 /* national-forests.json in Resources */,
+				B001000000000000000017 /* national-grasslands.json in Resources */,
+				B001000000000000000018 /* national-recreation.json in Resources */,
+				B001000000000000000019 /* alabama-regions.json in Resources */,
+				B001000000000000000023 /* national-parks-facilities.json in Resources */,
+				B001000000000000000024 /* national-parks-gallery.json in Resources */,
+				B001000000000000000025 /* national-parks-weather.json in Resources */,
+				B001000000000000000027 /* national-parks-wildlife.json in Resources */,
+				B001000000000000000028 /* national-parks-stats.json in Resources */,
+				B001000000000000000029 /* national-parks-lodging.json in Resources */,
+				B001000000000000000036 /* ParkBackupData.json in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		P001000000000000000002 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B001000000000000000001 /* HikBikApp.swift in Sources */,
+				B001000000000000000002 /* ContentView.swift in Sources */,
+				B001000000000000000003 /* StateModels.swift in Sources */,
+				B001000000000000000004 /* NationalParkModels.swift in Sources */,
+				B001000000000000000005 /* DataLoader.swift in Sources */,
+				B001000000000000000006 /* StateParksTab.swift in Sources */,
+				B001000000000000000007 /* StateParksListView.swift in Sources */,
+				B001000000000000000008 /* ParkDetailView.swift in Sources */,
+				B001000000000000000009 /* NationalParksTab.swift in Sources */,
+				B00100000000000000000A /* NationalParkDetailView.swift in Sources */,
+				B00100000000000000002F /* ParkDetailFlightyComponents.swift in Sources */,
+				B00100000000000000000F /* HikBikTheme.swift in Sources */,
+				B001000000000000000010 /* ForestGrasslandModels.swift in Sources */,
+				B001000000000000000011 /* ForestsTab.swift in Sources */,
+				B001000000000000000012 /* ForestDetailView.swift in Sources */,
+				B001000000000000000013 /* GrasslandsTab.swift in Sources */,
+				B001000000000000000014 /* GrasslandDetailView.swift in Sources */,
+				B001000000000000000015 /* RecreationTab.swift in Sources */,
+				B00100000000000000001A /* TripModels.swift in Sources */,
+				B00100000000000000001B /* TripStore.swift in Sources */,
+				B00100000000000000001C /* FavoritesStore.swift in Sources */,
+				B00100000000000000001D /* HomeView.swift in Sources */,
+				B00100000000000000001E /* ExploreView.swift in Sources */,
+				B00100000000000000001F /* TripsListView.swift in Sources */,
+				B001000000000000000020 /* ProfileView.swift in Sources */,
+				B001000000000000000048 /* HonorCenterView.swift in Sources */,
+				B001000000000000000049 /* AdventureStatsService.swift in Sources */,
+				B00100000000000000004A /* RadarChartView.swift in Sources */,
+				B00100000000000000004B /* AdventureStatsProView.swift in Sources */,
+				B00100000000000000004C /* ParkLandmarkIcons.swift in Sources */,
+				B00100000000000000004D /* ProfileLikedStore.swift in Sources */,
+				B001000000000000000021 /* FavoritesListView.swift in Sources */,
+				B001000000000000000022 /* NationalParkExtendedModels.swift in Sources */,
+				B001000000000000000026 /* FlowLayout.swift in Sources */,
+				B00100000000000000002A /* ParkCardView.swift in Sources */,
+				B00100000000000000002B /* RoutesView.swift in Sources */,
+				B00100000000000000002C /* ShopView.swift in Sources */,
+				B00100000000000000002D /* OrdersView.swift in Sources */,
+				B00100000000000000002E /* CommunityDiscoveryView.swift in Sources */,
+				B001000000000000000030 /* NPSAPIModels.swift in Sources */,
+				B001000000000000000031 /* NPSMockData.swift in Sources */,
+				B001000000000000000032 /* NPSAPIConfig.swift in Sources */,
+				B001000000000000000033 /* NPSAPIService.swift in Sources */,
+				B001000000000000000034 /* ParkDetailModels.swift in Sources */,
+				B001000000000000000035 /* AccessLogisticsView.swift in Sources */,
+				B001000000000000000037 /* ForestDetailSheetContent.swift in Sources */,
+				B001000000000000000038 /* ForestAccessView.swift in Sources */,
+				B001000000000000000039 /* GrasslandDetailSheetContent.swift in Sources */,
+				B00100000000000000003A /* GrasslandAccessView.swift in Sources */,
+				B00100000000000000003B /* RecreationAccessView.swift in Sources */,
+				B00100000000000000003C /* CustomRouteBuilderView.swift in Sources */,
+				B00100000000000000003E /* UnifiedDraftBox.swift in Sources */,
+				B001000000000000000044 /* ProfileCollectionsStore.swift in Sources */,
+				B001000000000000000045 /* ProfileAchievementsStore.swift in Sources */,
+				B001000000000000000046 /* Achievement.swift in Sources */,
+				B001000000000000000047 /* AchievementStore.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		C001000000000000000003 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		C001000000000000000004 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		C001000000000000000005 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "";
+				DEVELOPMENT_TEAM = Z76UD4DWSJ;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "HikBik needs location access to record your live track and create route waypoints.";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.hikbik.app;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		C001000000000000000006 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "";
+				DEVELOPMENT_TEAM = Z76UD4DWSJ;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "HikBik needs location access to record your live track and create route waypoints.";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.hikbik.app;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		C001000000000000000001 /* Build configuration list for PBXProject "HikBik" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C001000000000000000003 /* Debug */,
+				C001000000000000000004 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		C001000000000000000002 /* Build configuration list for PBXNativeTarget "HikBik" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C001000000000000000005 /* Debug */,
+				C001000000000000000006 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = R001000000000000000001 /* Project object */;
+}

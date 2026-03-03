@@ -1,0 +1,25 @@
+{
+  "yosemite": {
+    "parkId": "yosemite",
+    "generalInfo": "Yosemite offers extensive visitor facilities with seasonal variations. Most services operate year-round in Yosemite Valley.",
+    "facilities": [
+      {"id": "yose-vc", "name": "Yosemite Valley Visitor Center", "category": "visitor-services", "icon": "ℹ️", "available": true, "locations": ["Yosemite Village"], "details": "Exhibits, bookstore, ranger programs", "seasonalInfo": "Year-round, 9 AM - 5 PM"},
+      {"id": "yose-med", "name": "Medical Clinic", "category": "safety", "icon": "🏥", "available": true, "locations": ["Yosemite Village"], "details": "24/7 emergency services available"},
+      {"id": "yose-gas", "name": "Gas Station", "category": "services", "icon": "⛽", "available": true, "locations": ["Crane Flat"], "details": "Seasonal hours"}
+    ]
+  },
+  "sequoia": {
+    "parkId": "sequoia",
+    "generalInfo": "Visitor centers and services at Lodgepole and Foothills.",
+    "facilities": [
+      {"id": "seq-vc", "name": "Lodgepole Visitor Center", "category": "visitor-services", "icon": "ℹ️", "available": true, "details": "Exhibits, wilderness permits"}
+    ]
+  },
+  "yellowstone": {
+    "parkId": "yellowstone",
+    "generalInfo": "Multiple visitor centers and services throughout the park.",
+    "facilities": [
+      {"id": "yell-vc", "name": "Old Faithful Visitor Center", "category": "visitor-services", "icon": "ℹ️", "available": true}
+    ]
+  }
+}
