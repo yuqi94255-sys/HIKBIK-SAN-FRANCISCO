@@ -90,9 +90,9 @@ struct RouteItem: Identifiable {
 
 // MARK: - Mock data
 private let trendingRoutes: [RouteItem] = [
-    RouteItem(id: "t1", title: "Yellowstone Grand Loop", location: "Yellowstone National Park",
-              imageUrl: "https://images.unsplash.com/photo-1476610182048-b716b8518aae?w=800",
-              tier: .free, rating: 4.8, reviewCount: 234, distance: "142 m", waterCount: 12,
+    RouteItem(id: "t1", title: "Arizona Desert Explorer", location: "Sonoran Desert, Arizona",
+              imageUrl: "https://images.unsplash.com/photo-1509316785289-025f5b846b35?w=800",
+              tier: .free, rating: 4.8, reviewCount: 234, distance: "118 mi", waterCount: 8,
               gpsAccuracy: "±5m", difficulty: .moderate, showPreview: true),
     RouteItem(id: "t2", title: "South Rim to North Rim...", location: "Grand Canyon National Park",
               imageUrl: "https://images.unsplash.com/photo-1473580044384-7ba9967e16a0?w=800",
@@ -139,9 +139,9 @@ private let familyRoutes: [RouteItem] = [
               imageUrl: "https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?w=800",
               tier: .free, rating: 4.6, reviewCount: 145, distance: "8 miles", waterCount: 5,
               gpsAccuracy: "±8m", difficulty: .easy, showPreview: false),
-    RouteItem(id: "f2", title: "Yellowstone Grand Loop", location: "Yellowstone National Park",
-              imageUrl: "https://images.unsplash.com/photo-1476610182048-b716b8518aae?w=800",
-              tier: .free, rating: 4.8, reviewCount: 234, distance: "142 miles", waterCount: 12,
+    RouteItem(id: "f2", title: "Arizona Desert Explorer", location: "Sonoran Desert, Arizona",
+              imageUrl: "https://images.unsplash.com/photo-1509316785289-025f5b846b35?w=800",
+              tier: .free, rating: 4.8, reviewCount: 234, distance: "118 miles", waterCount: 8,
               gpsAccuracy: "±5m", difficulty: .moderate, showPreview: false),
     RouteItem(id: "f3", title: "Delicate Arch Trail", location: "Arches National Park",
               imageUrl: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=800",
@@ -224,6 +224,7 @@ struct RoutesView: View {
 
     private var allRoutesContent: some View {
         VStack(alignment: .leading, spacing: 0) {
+            officialDetailedTrackSection
             routeSection(title: "Trending Now", icon: "chart.line.uptrend.xyaxis", routes: trendingRoutes)
             routeSection(title: "Pro Guide Routes", icon: "person.badge.shield.checkmark.fill", routes: proGuideRoutes)
             routeSection(title: "National Park National Forest", icon: "leaf.fill", routes: nationalParkForestRoutes)
@@ -273,6 +274,7 @@ struct RoutesView: View {
 
     private var officialRoutesContent: some View {
         VStack(alignment: .leading, spacing: 0) {
+            officialDetailedTrackSection
             routeSection(title: "Official Macro Journeys", icon: "mountain.2.fill", routes: trendingRoutes)
             routeSection(title: "Expert Micro Tracks", icon: "scope", routes: proGuideRoutes)
             routeSection(title: "Family & Beginner", icon: "person.3.fill", routes: familyRoutes)
@@ -369,6 +371,42 @@ struct RoutesView: View {
         .padding(.bottom, 20)
     }
 
+    /// Official Detailed Track 入口：Half Dome Cables Section，點擊進入 JSON 驅動的綠色戰術詳情頁
+    private var officialDetailedTrackSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(spacing: 8) {
+                Image(systemName: "location.north.line.fill")
+                    .font(.system(size: 18))
+                    .foregroundStyle(RouteColors.accentGreen)
+                Text("Official Detailed")
+                    .font(.system(size: 18, weight: .bold))
+                    .foregroundStyle(RouteColors.textPrimary)
+            }
+            .padding(.horizontal, 20)
+
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 16) {
+                    if let payload = OfficialTrackPayload.yosemiteHalfDome {
+                        NavigationLink(destination: OfficialDetailedTrackView(track: .yosemiteCables)) {
+                            YosemiteHalfDomeCard(
+                                title: payload.header.title,
+                                location: payload.header.location,
+                                rating: payload.header.rating,
+                                reviewsCount: payload.header.reviewsCount,
+                                imageURL: payload.heroImageURL
+                            )
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                .padding(.horizontal, 20)
+                .padding(.trailing, 44)
+                .padding(.vertical, 4)
+            }
+        }
+        .padding(.bottom, 12)
+    }
+
     private func routeSection(title: String, subtitle: String? = nil, icon: String, routes: [RouteItem]) -> some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
@@ -396,7 +434,18 @@ struct RoutesView: View {
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 16) {
                     ForEach(routes) { route in
-                        RouteCard(route: route)
+                        Group {
+                            if title == "Official Macro Journeys" {
+                                NavigationLink(destination: OfficialMacroJourneyView(selectedRoute: .arizonaDesertExplorer)) {
+                                    RouteCard(route: route)
+                                }
+                            } else {
+                                NavigationLink(destination: OfficialRouteDetailView(route: route)) {
+                                    RouteCard(route: route)
+                                }
+                            }
+                        }
+                        .buttonStyle(.plain)
                     }
                 }
                 .padding(.horizontal, 20)
@@ -585,6 +634,101 @@ struct RouteCard: View {
                         }
                         .foregroundStyle(RouteColors.textPrimary)
                     }
+                }
+            }
+            .padding(16)
+            .frame(width: cardWidth, alignment: .leading)
+            .background(RouteColors.cardBg)
+        }
+        .frame(width: cardWidth)
+        .clipShape(RoundedRectangle(cornerRadius: 16))
+    }
+}
+
+// MARK: - Yosemite Half Dome 入口卡（Official Detailed，戰術紫 OFFICIAL 標籤，跳轉 JSON 詳情頁）
+private struct YosemiteHalfDomeCard: View {
+    let title: String
+    let location: String
+    let rating: String
+    let reviewsCount: Int
+    let imageURL: URL?
+
+    private let cardWidth: CGFloat = 280
+    private let imageHeight: CGFloat = 140
+    private let tacticalPurple = Color(hex: "A855F7")
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            ZStack(alignment: .topLeading) {
+                AsyncImage(url: imageURL) { phase in
+                    switch phase {
+                    case .success(let img): img.resizable().aspectRatio(contentMode: .fill)
+                    case .failure: Color.gray.opacity(0.3)
+                    default: Color.gray.opacity(0.2)
+                    }
+                }
+                .frame(width: cardWidth, height: imageHeight)
+                .clipped()
+
+                Text("OFFICIAL")
+                    .font(.system(size: 11, weight: .bold))
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 5)
+                    .background(tacticalPurple)
+                    .clipShape(Capsule())
+                    .padding(12)
+            }
+            .frame(width: cardWidth, height: imageHeight)
+            .clipShape(RoundedRectangle(cornerRadius: 12))
+
+            VStack(alignment: .leading, spacing: 8) {
+                Text(title)
+                    .font(.system(size: 16, weight: .bold))
+                    .foregroundStyle(tacticalPurple)
+                    .lineLimit(1)
+
+                HStack(spacing: 4) {
+                    Image(systemName: "mappin")
+                        .font(.system(size: 12))
+                        .foregroundStyle(RouteColors.textMuted)
+                    Text(location)
+                        .font(.system(size: 13))
+                        .foregroundStyle(RouteColors.textMuted)
+                        .lineLimit(1)
+                }
+
+                HStack {
+                    HStack(spacing: 4) {
+                        Image(systemName: "star.fill")
+                            .font(.system(size: 12))
+                            .foregroundStyle(RouteColors.accentYellow)
+                        Text("\(rating) (\(reviewsCount))")
+                            .font(monoFontBold)
+                            .foregroundStyle(RouteColors.textPrimary)
+                    }
+                    Spacer()
+                    Text("Detailed Track")
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundStyle(tacticalPurple)
+                }
+
+                HStack {
+                    Text("Official Detailed")
+                        .font(.system(size: 12, weight: .bold))
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 6)
+                        .background(tacticalPurple)
+                        .clipShape(Capsule())
+                    Spacer()
+                    HStack(spacing: 4) {
+                        Text("View")
+                            .font(.system(size: 14, weight: .semibold))
+                        Image(systemName: "arrow.right")
+                            .font(.system(size: 12, weight: .semibold))
+                    }
+                    .foregroundStyle(RouteColors.textPrimary)
                 }
             }
             .padding(16)
