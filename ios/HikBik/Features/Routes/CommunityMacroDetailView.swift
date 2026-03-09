@@ -44,7 +44,6 @@ struct CommunityMacroDetailView: View {
     @State private var isLiked: Bool
     @State private var isFavorited: Bool
     @State private var likeCount: Int
-    @State private var isFollowing: Bool = false
     /// 緩存：真實道路路徑（N-1 段，每段 MKRoute.polyline），避免每次打開都重新請求。
     @State private var roadRouteSegments: [[CLLocationCoordinate2D]] = []
     @State private var isLoadingRoadRoutes = false

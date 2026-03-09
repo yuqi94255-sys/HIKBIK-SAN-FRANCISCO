@@ -44,6 +44,7 @@ struct GrandJourneyItem: Identifiable {
 // MARK: - Detailed Track Model
 struct DetailedTrackItem: Identifiable {
     let id: String
+    let authorId: String
     let authorName: String
     let authorSubtitle: String
     let authorAvatarUrl: String?
@@ -135,6 +136,7 @@ private let mockGrandJourneys: [GrandJourneyItem] = [
 private let mockDetailedTracks: [DetailedTrackItem] = [
     DetailedTrackItem(
         id: "dt1",
+        authorId: "tom-wilson",
         authorName: "Tom Wilson",
         authorSubtitle: "234 followers",
         authorAvatarUrl: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200",
@@ -152,6 +154,7 @@ private let mockDetailedTracks: [DetailedTrackItem] = [
     ),
     DetailedTrackItem(
         id: "dt2",
+        authorId: "jessica-martinez",
         authorName: "Jessica Martinez",
         authorSubtitle: "427 followers",
         authorAvatarUrl: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200",
@@ -169,6 +172,7 @@ private let mockDetailedTracks: [DetailedTrackItem] = [
     ),
     DetailedTrackItem(
         id: "dt3",
+        authorId: "david-kim",
         authorName: "David Kim",
         authorSubtitle: "Overlanding Pro",
         authorAvatarUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200",
@@ -186,6 +190,7 @@ private let mockDetailedTracks: [DetailedTrackItem] = [
     ),
     DetailedTrackItem(
         id: "dt4",
+        authorId: "lauren-hughes",
         authorName: "Lauren Hughes",
         authorSubtitle: "Backcountry Expert",
         authorAvatarUrl: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200",
@@ -203,6 +208,7 @@ private let mockDetailedTracks: [DetailedTrackItem] = [
     ),
     DetailedTrackItem(
         id: "dt5",
+        authorId: "chris-anderson",
         authorName: "Chris Anderson",
         authorSubtitle: "MTB Guide",
         authorAvatarUrl: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200",
@@ -232,7 +238,6 @@ struct CommunityDiscoveryView: View {
     @State private var viewMode: CommunityViewMode = .grandJourneys
     @State private var searchText = ""
     @State private var showFilterSheet = false
-    @State private var followStates: [String: Bool] = [:]
     @State private var likeStates: [String: Bool] = [:]
 
     /// Mock 數據 + 用戶剛發布的帖子（prepend 在最前）。
@@ -257,9 +262,12 @@ struct CommunityDiscoveryView: View {
                                     NavigationLink(destination: communityDetailDestination(for: item)) {
                                         GrandJourneyCard(
                                             item: item,
-                                            isFollowing: followStates[item.id] ?? item.isFollowing,
+                                            isFollowing: currentUser.isFollowing(userId: item.authorId),
                                             isLiked: currentUser.isLiked(postId: item.id),
-                                            onFollowTap: { toggleFollow(item.id) },
+                                            onFollowTap: {
+                                                UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                                                currentUser.toggleFollow(targetUserId: item.authorId)
+                                            },
                                             onLikeTap: { toggleLike(item.id) }
                                         )
                                     }
@@ -295,9 +303,12 @@ struct CommunityDiscoveryView: View {
                             ForEach(mockDetailedTracks) { item in
                                 DetailedTrackCard(
                                     item: item,
-                                    isFollowing: followStates[item.id] ?? item.isFollowing,
+                                    isFollowing: currentUser.isFollowing(userId: item.authorId),
                                     isLiked: likeStates[item.id] ?? false,
-                                    onFollowTap: { toggleFollow(item.id) },
+                                    onFollowTap: {
+                                                UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                                                currentUser.toggleFollow(targetUserId: item.authorId)
+                                            },
                                     onLikeTap: { toggleLike(item.id) }
                                 )
                             }
@@ -420,19 +431,6 @@ struct CommunityDiscoveryView: View {
                 .shadow(color: .black.opacity(0.3), radius: 8, x: 0, y: 4)
         }
         .padding(20)
-    }
-
-    private func toggleFollow(_ id: String) {
-        let generator = UIImpactFeedbackGenerator(style: .light)
-        generator.impactOccurred()
-        let current = followStates[id]
-        if current != nil {
-            followStates[id] = !current!
-        } else {
-            let fromGrand = mockGrandJourneys.first(where: { $0.id == id })?.isFollowing
-            let fromTrack = mockDetailedTracks.first(where: { $0.id == id })?.isFollowing
-            followStates[id] = !(fromGrand ?? fromTrack ?? false)
-        }
     }
 
     private func toggleLike(_ id: String) {
