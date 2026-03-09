@@ -521,9 +521,9 @@ struct ProfileView: View {
             if groups.isEmpty {
                 MyTripEmptyState()
             } else {
-                List {
+            List {
                     ForEach(groups) { group in
-                        Section {
+                Section {
                             ForEach(group.trips) { draft in
                                 NavigationLink(value: draft) {
                                     MyTripCard(draft: draft)
@@ -1139,7 +1139,7 @@ struct PostReelFullScreenView: View {
 
     private func mockComment(_ text: String) -> some View {
         HStack(alignment: .top, spacing: 10) {
-            Image(systemName: "person.circle.fill")
+                        Image(systemName: "person.circle.fill")
                 .font(.system(size: 32))
                 .foregroundStyle(ProfileTheme.textMuted)
             Text(text)
@@ -1300,15 +1300,15 @@ struct ViewAchievementsCard: View {
                         .font(.system(size: 16, weight: .bold))
                         .foregroundStyle(ProfileTheme.textPrimary)
                 }
-                VStack(alignment: .leading, spacing: 2) {
+                        VStack(alignment: .leading, spacing: 2) {
                     Text("View Achievements")
                         .font(.system(size: 16, weight: .semibold))
                         .foregroundStyle(ProfileTheme.textPrimary)
                     Text("\(unlocked) of \(total) unlocked")
                         .font(.system(size: 13))
                         .foregroundStyle(ProfileTheme.textMuted)
-                }
-                Spacer()
+                        }
+                        Spacer()
                 Image(systemName: "chevron.right")
                     .font(.system(size: 14, weight: .semibold))
                     .foregroundStyle(ProfileTheme.textMuted)
@@ -1423,7 +1423,7 @@ struct BadgeDetailModal: View {
                         : "Check out the \"\(achievement.title)\" badge on HikBik."
                     UIPasteboard.general.string = text
                     dismiss()
-                } label: {
+                        } label: {
                     HStack(spacing: 8) {
                         Image(systemName: "square.and.arrow.up")
                         Text("Share badge")
@@ -1553,7 +1553,7 @@ struct CollectionCoverThumbnail: View {
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .background(ProfileTheme.cardBg)
                     .onAppear { loadAsset(id) }
-            } else {
+                } else {
                 Image(systemName: "folder.fill")
                     .font(.system(size: 28))
                     .foregroundStyle(ProfileTheme.accentSecondary)
@@ -1643,7 +1643,7 @@ struct CollectionDetailView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
-                Button {
+                        Button {
                     showAddRoute = true
                 } label: {
                     HStack(spacing: 8) {
@@ -1717,7 +1717,7 @@ struct AddRouteToCollectionSheet: View {
                         if isInCollection { return }
                         ProfileCollectionsStore.addDraft(draft.id, toCollectionId: collectionId)
                         onAdd()
-                    } label: {
+                        } label: {
                         HStack {
                             VStack(alignment: .leading, spacing: 4) {
                                 Text(draft.title)
