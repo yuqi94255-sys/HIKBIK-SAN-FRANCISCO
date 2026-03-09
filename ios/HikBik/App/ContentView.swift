@@ -3,7 +3,9 @@ import SwiftUI
 /// 5 Tab：Home, Routes, Shop, Community, Profile（Orders 入口移至 Shop 內）
 struct ContentView: View {
     @StateObject private var cartStore = CartStore()
-    
+    @StateObject private var communityViewModel = CommunityViewModel()
+    @StateObject private var currentUser = CurrentUser()
+
     var body: some View {
         TabView {
             HomeView()
@@ -18,6 +20,8 @@ struct ContentView: View {
                 .tabItem { Label("Profile", systemImage: "person.crop.circle.fill") }
         }
         .environmentObject(cartStore)
+        .environmentObject(communityViewModel)
+        .environmentObject(currentUser)
         .tint(Color.hikbikTabActive)
         .onAppear {
             let appearance = UITabBarAppearance()
@@ -38,4 +42,7 @@ struct ContentView: View {
 
 #Preview {
     ContentView()
+        .environmentObject(UserState())
+        .environmentObject(CommunityViewModel())
+        .environmentObject(CurrentUser())
 }

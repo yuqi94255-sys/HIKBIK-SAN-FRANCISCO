@@ -20,9 +20,15 @@ extension Color {
     static let hikbikCard = Color.white
     static let hikbikCardForeground = Color(hex: "252525")
     
-    // Tab / 强调（与 Web 版绿色一致）
-    static let hikbikTabActive = Color(hex: "10B981")
-    static let hikbikTabActiveTint = Color(hex: "10B981").opacity(0.2)
+    // Tab / 强调（Deep Space Blue：与 Home/Profile 一致，霓虹绿）
+    static let hikbikTabActive = Color(hex: "3FFD98")
+    static let hikbikTabActiveTint = Color(hex: "3FFD98").opacity(0.2)
+
+    // Deep Space Blue 主题（Shop / Home / Profile 共用）
+    static let deepSpaceBackground = Color(hex: "050A18")
+    static let deepSpaceCard = Color(hex: "161C2C")
+    static let shopNeonGreen = Color(hex: "3FFD98")
+    static let shopRentOrange = Color(hex: "FF6B00")
 }
 
 extension Color {

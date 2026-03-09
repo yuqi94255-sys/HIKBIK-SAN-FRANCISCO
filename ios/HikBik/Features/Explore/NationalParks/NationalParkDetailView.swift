@@ -110,7 +110,7 @@ struct NationalParkDetailView: View {
                             .font(HikBikFont.caption())
                             .fontWeight(.medium)
                     }
-                    .foregroundStyle(Color.hikbikPrimary)
+                            .foregroundStyle(Color.hikbikPrimary)
                     .padding(.horizontal, HikBikSpacing.md)
                     .padding(.vertical, 10)
                     .background(.ultraThinMaterial, in: Capsule())
@@ -138,14 +138,14 @@ struct NationalParkDetailView: View {
         ZStack(alignment: .bottomLeading) {
             Group {
                 if let urlString = heroImageUrl, let url = URL(string: urlString) {
-                    AsyncImage(url: url) { phase in
-                        switch phase {
-                        case .success(let img): img.resizable().scaledToFill()
+                                        AsyncImage(url: url) { phase in
+                                            switch phase {
+                                            case .success(let img): img.resizable().scaledToFill()
                         default: Color.hikbikMuted
-                        }
-                    }
+                                            }
+                                        }
                     .frame(height: height)
-                    .clipped()
+                                        .clipped()
                 } else {
                     Color.hikbikMuted
                         .frame(height: height)
@@ -388,8 +388,8 @@ struct NationalParkDetailView: View {
                 .font(HikBikFont.caption2())
                 .foregroundStyle(Color.hikbikMutedForeground)
             Text(value)
-                .font(HikBikFont.headline())
-                .foregroundStyle(Color.hikbikPrimary)
+                            .font(HikBikFont.headline())
+                            .foregroundStyle(Color.hikbikPrimary)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(HikBikSpacing.md)
@@ -402,16 +402,16 @@ struct NationalParkDetailView: View {
         VStack(alignment: .leading, spacing: HikBikSpacing.sm) {
             Label("About This Park", systemImage: "camera.fill")
                 .font(HikBikFont.headline())
-                .foregroundStyle(Color.hikbikPrimary)
+                                    .foregroundStyle(Color.hikbikPrimary)
             Text(park.description ?? "")
-                .font(HikBikFont.body())
-                .foregroundStyle(Color.hikbikForeground)
-        }
-        .padding(HikBikSpacing.md)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.hikbikCard)
-        .clipShape(RoundedRectangle(cornerRadius: HikBikRadius.lg))
-        .overlay(RoundedRectangle(cornerRadius: HikBikRadius.lg).stroke(Color.hikbikBorder, lineWidth: 1))
+                                    .font(HikBikFont.body())
+                                    .foregroundStyle(Color.hikbikForeground)
+                        }
+                        .padding(HikBikSpacing.md)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(Color.hikbikCard)
+                        .clipShape(RoundedRectangle(cornerRadius: HikBikRadius.lg))
+                        .overlay(RoundedRectangle(cornerRadius: HikBikRadius.lg).stroke(Color.hikbikBorder, lineWidth: 1))
     }
 
     private func highlightsSection(_ highlights: [String]) -> some View {
@@ -467,18 +467,18 @@ struct NationalParkDetailView: View {
                     }
                 }
             }
-            if let forecast = weather.forecast, !forecast.isEmpty {
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: HikBikSpacing.sm) {
-                        ForEach(forecast.prefix(7), id: \.day) { d in
-                            VStack(spacing: 4) {
-                                Text(d.day).font(HikBikFont.caption2()).foregroundStyle(Color.hikbikMutedForeground)
-                                Text(d.icon ?? "").font(.title3)
-                                Text("\(d.high)°").font(HikBikFont.caption()).foregroundStyle(Color.hikbikPrimary)
-                                Text("\(d.low)°").font(HikBikFont.caption2()).foregroundStyle(Color.hikbikMutedForeground)
-                            }
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 6)
+                        if let forecast = weather.forecast, !forecast.isEmpty {
+                            ScrollView(.horizontal, showsIndicators: false) {
+                                HStack(spacing: HikBikSpacing.sm) {
+                                    ForEach(forecast.prefix(7), id: \.day) { d in
+                                        VStack(spacing: 4) {
+                                            Text(d.day).font(HikBikFont.caption2()).foregroundStyle(Color.hikbikMutedForeground)
+                                            Text(d.icon ?? "").font(.title3)
+                                            Text("\(d.high)°").font(HikBikFont.caption()).foregroundStyle(Color.hikbikPrimary)
+                                            Text("\(d.low)°").font(HikBikFont.caption2()).foregroundStyle(Color.hikbikMutedForeground)
+                                        }
+                                        .padding(.horizontal, 8)
+                                        .padding(.vertical, 6)
                             .background(Color.hikbikMuted.opacity(0.4))
                             .clipShape(RoundedRectangle(cornerRadius: HikBikRadius.sm))
                         }
@@ -527,9 +527,9 @@ struct NationalParkDetailView: View {
                         .padding(HikBikSpacing.sm)
                         .frame(maxWidth: .infinity)
                         .background(Color.hikbikCard)
-                        .clipShape(RoundedRectangle(cornerRadius: HikBikRadius.sm))
-                    }
-                }
+                                        .clipShape(RoundedRectangle(cornerRadius: HikBikRadius.sm))
+                                    }
+                                }
                 if let times = wildlife.bestViewingTimes, !times.isEmpty {
                     VStack(alignment: .leading, spacing: 4) {
                         Text("Best Viewing Times").font(HikBikFont.caption()).fontWeight(.semibold).foregroundStyle(Color.hikbikPrimary)
@@ -615,7 +615,7 @@ struct NationalParkDetailView: View {
     // MARK: - Activities
     private var activitiesContent: some View {
         VStack(alignment: .leading, spacing: HikBikSpacing.lg) {
-            if let activities = park.activities, !activities.isEmpty {
+                if let activities = park.activities, !activities.isEmpty {
                 VStack(alignment: .leading, spacing: HikBikSpacing.sm) {
                     Text("Activities")
                         .font(HikBikFont.headline())

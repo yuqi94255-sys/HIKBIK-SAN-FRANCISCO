@@ -1,5 +1,17 @@
-// 与 Figma Shop 设计一致
+// 与 Figma Shop 设计一致 + Deep Space Blue 主题
 import SwiftUI
+
+// MARK: - Shop Deep Space 主题
+private enum ShopTheme {
+    static let background = Color.deepSpaceBackground
+    static let cardNavy = Color.deepSpaceCard
+    static let neonGreen = Color.shopNeonGreen
+    static let rentOrange = Color.shopRentOrange
+    static let textPrimary = Color.white
+    static let textMuted = Color.white.opacity(0.75)
+    /// 标题冷色蓝白光晕
+    static let titleGlow = Color.white.opacity(0.3)
+}
 
 struct ShopView: View {
     @EnvironmentObject var cartStore: CartStore
@@ -21,7 +33,9 @@ struct ShopView: View {
                     // Header
                     headerSection
                     
-                    Divider()
+                    Rectangle()
+                        .fill(ShopTheme.textPrimary.opacity(0.15))
+                        .frame(height: 1)
                         .padding(.vertical, 24)
                     
                     // Choose your path
@@ -49,7 +63,14 @@ struct ShopView: View {
                 .padding(.top, 20)
                 .padding(.bottom, 40)
             }
-            .background(Color.hikbikBackground)
+            .background(
+                ZStack {
+                    ShopTheme.background
+                    TopoBackgroundView(lineColor: .white)
+                        .opacity(0.05)
+                }
+                .ignoresSafeArea()
+            )
             .navigationTitle("")
             .navigationBarHidden(true)
             .navigationDestination(isPresented: $showStoresView) {
@@ -63,11 +84,13 @@ struct ShopView: View {
             VStack(alignment: .leading, spacing: 8) {
                 Text("HIKBIK Shop")
                     .font(.system(size: 32, weight: .bold, design: .rounded))
-                    .foregroundStyle(Color.hikbikPrimary)
+                    .foregroundStyle(ShopTheme.textPrimary)
+                    .shadow(color: ShopTheme.titleGlow, radius: 12, x: 0, y: 0)
+                    .shadow(color: ShopTheme.titleGlow, radius: 24, x: 0, y: 0)
                 
                 Text("Outdoor gear rental & shop")
                     .font(.system(size: 16, weight: .regular, design: .rounded))
-                    .foregroundStyle(Color.hikbikMutedForeground)
+                    .foregroundStyle(ShopTheme.textMuted)
             }
             
             Spacer()
@@ -76,24 +99,24 @@ struct ShopView: View {
                 NavigationLink(destination: OrdersView()) {
                     Image(systemName: "shippingbox")
                         .font(.system(size: 24))
-                        .foregroundStyle(Color.hikbikPrimary)
+                        .foregroundStyle(ShopTheme.textPrimary)
                 }
                 .buttonStyle(.plain)
                 Button(action: { showCart = true }) {
                     ZStack(alignment: .topTrailing) {
                         Image(systemName: "cart.fill")
                             .font(.system(size: 24))
-                            .foregroundStyle(Color.hikbikPrimary)
+                            .foregroundStyle(ShopTheme.textPrimary)
                         if cartStore.itemCount > 0 {
                             Text("\(cartStore.itemCount)")
                                 .font(.system(size: 12, weight: .bold, design: .rounded))
-                                .foregroundStyle(.white)
+                                .foregroundStyle(ShopTheme.background)
                                 .frame(minWidth: 18, minHeight: 18)
-                                .background(Color.hikbikPrimary)
+                                .background(ShopTheme.neonGreen)
                                 .clipShape(Circle())
                                 .overlay(
                                     Circle()
-                                        .stroke(Color.hikbikBackground, lineWidth: 2)
+                                        .stroke(ShopTheme.background, lineWidth: 2)
                                 )
                                 .offset(x: 8, y: -8)
                         }
@@ -111,11 +134,11 @@ struct ShopView: View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Choose your path")
                 .font(.system(size: 24, weight: .bold, design: .rounded))
-                .foregroundStyle(Color.hikbikPrimary)
+                .foregroundStyle(ShopTheme.textPrimary)
             
             Text("How would you like to get your gear?")
                 .font(.system(size: 16, weight: .regular, design: .rounded))
-                .foregroundStyle(Color.hikbikMutedForeground)
+                .foregroundStyle(ShopTheme.textMuted)
             
             // Path Options
             HStack(spacing: 16) {
@@ -145,11 +168,11 @@ struct ShopView: View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Rental method")
                 .font(.system(size: 24, weight: .bold, design: .rounded))
-                .foregroundStyle(Color.hikbikPrimary)
+                .foregroundStyle(ShopTheme.textPrimary)
             
             Text("Choose how you'd like to rent")
                 .font(.system(size: 16, weight: .regular, design: .rounded))
-                .foregroundStyle(Color.hikbikMutedForeground)
+                .foregroundStyle(ShopTheme.textMuted)
             
             VStack(spacing: 12) {
                 RentalMethodCard(
@@ -175,11 +198,11 @@ struct ShopView: View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Browse categories")
                 .font(.system(size: 24, weight: .bold, design: .rounded))
-                .foregroundStyle(Color.hikbikPrimary)
+                .foregroundStyle(ShopTheme.textPrimary)
             
             Text("Explore our collection")
                 .font(.system(size: 16, weight: .regular, design: .rounded))
-                .foregroundStyle(Color.hikbikMutedForeground)
+                .foregroundStyle(ShopTheme.textMuted)
             
             LazyVGrid(columns: categoryColumns, spacing: 16) {
                 ForEach(GearCategory.allCases, id: \.self) { category in
@@ -290,31 +313,55 @@ private struct ShopPathCard: View {
     let path: ShopPath
     let isSelected: Bool
     let onTap: () -> Void
-    
+
+    private var borderGradient: LinearGradient {
+        switch path {
+        case .rent:
+            return LinearGradient(
+                colors: [ShopTheme.rentOrange, Color.clear],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+        case .buy:
+            return LinearGradient(
+                colors: [ShopTheme.neonGreen, Color.clear],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+        }
+    }
+
     var body: some View {
         Button(action: onTap) {
             VStack(alignment: .leading, spacing: 12) {
                 Image(systemName: path.icon)
                     .font(.system(size: 28))
-                    .foregroundStyle(isSelected ? .white : Color.hikbikMutedForeground)
-                
+                    .foregroundStyle(ShopTheme.textPrimary)
+
                 Text(path.title)
                     .font(.system(size: 18, weight: .bold, design: .rounded))
-                    .foregroundStyle(isSelected ? .white : Color.hikbikPrimary)
-                
+                    .foregroundStyle(ShopTheme.textPrimary)
+
                 Text(path.subtitle)
                     .font(.system(size: 14, weight: .regular, design: .rounded))
-                    .foregroundStyle(isSelected ? .white.opacity(0.8) : Color.hikbikMutedForeground)
+                    .foregroundStyle(ShopTheme.textMuted)
                     .lineLimit(2)
                     .fixedSize(horizontal: false, vertical: true)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(20)
-            .background(isSelected ? Color.hikbikPrimary : Color.hikbikCard)
+            .background {
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(ShopTheme.cardNavy.opacity(0.82))
+            }
+            .background {
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(.ultraThinMaterial)
+            }
             .clipShape(RoundedRectangle(cornerRadius: 12))
             .overlay(
                 RoundedRectangle(cornerRadius: 12)
-                    .stroke(isSelected ? Color.clear : Color.hikbikBorder, lineWidth: 1)
+                    .strokeBorder(borderGradient, lineWidth: 1)
             )
         }
         .buttonStyle(.plain)
@@ -325,34 +372,41 @@ private struct RentalMethodCard: View {
     let method: RentalMethod
     let isSelected: Bool
     let onTap: () -> Void
-    
+
     var body: some View {
         Button(action: onTap) {
             HStack(alignment: .top, spacing: 16) {
                 Image(systemName: method.icon)
                     .font(.system(size: 24))
-                    .foregroundStyle(isSelected ? .white : Color.hikbikMutedForeground)
+                    .foregroundStyle(ShopTheme.textPrimary)
                     .frame(width: 40)
-                
+
                 VStack(alignment: .leading, spacing: 4) {
                     Text(method.title)
                         .font(.system(size: 18, weight: .bold, design: .rounded))
-                        .foregroundStyle(isSelected ? .white : Color.hikbikPrimary)
-                    
+                        .foregroundStyle(ShopTheme.textPrimary)
+
                     Text(method.subtitle)
                         .font(.system(size: 14, weight: .regular, design: .rounded))
-                        .foregroundStyle(isSelected ? .white.opacity(0.8) : Color.hikbikMutedForeground)
+                        .foregroundStyle(ShopTheme.textMuted)
                         .fixedSize(horizontal: false, vertical: true)
                 }
-                
+
                 Spacer()
             }
             .padding(20)
-            .background(isSelected ? Color.hikbikPrimary : Color.hikbikCard)
+            .background {
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(ShopTheme.cardNavy.opacity(0.82))
+            }
+            .background {
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(.ultraThinMaterial)
+            }
             .clipShape(RoundedRectangle(cornerRadius: 12))
             .overlay(
                 RoundedRectangle(cornerRadius: 12)
-                    .stroke(isSelected ? Color.clear : Color.hikbikBorder, lineWidth: 1)
+                    .stroke(ShopTheme.neonGreen.opacity(isSelected ? 0.8 : 0.2), lineWidth: isSelected ? 1.5 : 1)
             )
         }
         .buttonStyle(.plain)
@@ -362,23 +416,30 @@ private struct RentalMethodCard: View {
 private struct ShopCategoryCardContent: View {
     let category: GearCategory
     let isSelected: Bool
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text(category.emoji)
                 .font(.system(size: 40))
-            
+
             Text(category.title)
                 .font(.system(size: 18, weight: .bold, design: .rounded))
-                .foregroundStyle(Color.hikbikPrimary)
+                .foregroundStyle(ShopTheme.textPrimary)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(20)
-        .background(Color.hikbikCard)
+        .background {
+            RoundedRectangle(cornerRadius: 12)
+                .fill(ShopTheme.cardNavy.opacity(0.82))
+        }
+        .background {
+            RoundedRectangle(cornerRadius: 12)
+                .fill(.ultraThinMaterial)
+        }
         .clipShape(RoundedRectangle(cornerRadius: 12))
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(isSelected ? Color.hikbikTabActive : Color.hikbikBorder, lineWidth: isSelected ? 2 : 1)
+                .stroke(isSelected ? ShopTheme.neonGreen : Color.white.opacity(0.2), lineWidth: isSelected ? 2 : 1)
         )
     }
 }

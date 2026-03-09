@@ -45,7 +45,7 @@ enum TripCardStatus {
 
 // MARK: - Mock data
 private let upcomingItems: [MyTripCardItem] = [
-    MyTripCardItem(id: "u1", title: "Yellowstone Grand Loop", imageUrl: "https://images.unsplash.com/photo-1476610182048-b716b8518aae?w=800", tag: "Official", isPro: true, rating: 5, reviewCount: 2891, author: "TrailGuide Official", distance: "92 mi", duration: "4 Days", date: "Feb 25, 2026", offlineProgress: 1.0, status: .upcoming, finishedDuration: nil),
+    MyTripCardItem(id: "u1", title: "Arizona Desert Explorer", imageUrl: "https://images.unsplash.com/photo-1509316785289-025f5b846b35?w=800", tag: "Official", isPro: true, rating: 5, reviewCount: 2891, author: "TrailGuide Official", distance: "118 mi", duration: "4 Days", date: "Feb 25, 2026", offlineProgress: 1.0, status: .upcoming, finishedDuration: nil),
     MyTripCardItem(id: "u2", title: "Arizona Desert Explorer", imageUrl: "https://images.unsplash.com/photo-1473580044384-7ba9967e16a0?w=800", tag: "Journey", isPro: false, rating: 4.7, reviewCount: 342, author: "@desert_wanderer", distance: "580 mi", duration: "5 Days", date: "Mar 5, 2026", offlineProgress: 0.65, status: .upcoming, finishedDuration: nil),
     MyTripCardItem(id: "u3", title: "Moab Slickrock Trail", imageUrl: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=800", tag: "Track", isPro: false, rating: 4.8, reviewCount: 521, author: "@trail_rider", distance: "12.3 mi", duration: "6-8 hrs", date: "Feb 28, 2026", offlineProgress: 0.30, status: .upcoming, finishedDuration: nil),
 ]

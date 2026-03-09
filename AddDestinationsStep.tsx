@@ -1,4 +1,34 @@
-import { useState, useEffect } from 'react';
+🛠️ 針對「微觀詳情頁」的最終轉換逻辑
+
+為了實現你截圖中的效果，我們必須讓 JSON 模板與 UI 元件 1:1 對齊。請直接命令 Cursor：
+
+「Cursor，看清楚這張截圖 (12.03.06 AM)。這才是 Detailed Track 詳情頁的最終標準。請立即重構 View Point 的渲染邏輯：
+
+數據模型同步：在 ViewPointNode 中，將 Survival & Amenities 的數據結構改為：
+
+var hasWater: Bool
+
+var hasFuel: Bool
+
+var signalStrength: Int (0-5 級)
+
+UI 膠囊元件 (Capsule Component)：
+
+禁止 出現文字斷行。
+
+實作一個 AmenityCapsule：包含一個圖標（如 drop.fill）和文字 Water。背景色使用深藍色，圓角半徑設為膠囊狀。
+
+實作一個 SignalStrengthBar：根據 signalStrength 的數值，點亮對應數量的橘色方塊（剩下的方塊顯示灰色）。
+
+詳情頁 JSON 映射：
+
+詳情頁讀取 JSON 時，如果 hasWater 為 true，則顯示對應膠囊。
+
+根據 JSON 中的 signalStrength 數值，自動渲染那排五格階梯圖標。
+
+地理線條繪製：
+
+在頂部的 Map View 中，將 JSON 裡所有 View Points 的 latitude 和 longitude 取出來，用 MKPolyline 畫出一條紫色的路線（如截圖 11.05.04 AM 所示）。」import { useState, useEffect } from 'react';
 import { Heart, Clock, Search, Check, Mountain, Trees, Tent, MapPin, X } from 'lucide-react';
 import { TripDestination } from '../utils/trips';
 import { getFavorites as getStateParkFavorites, FavoriteItem } from '../lib/favorites';

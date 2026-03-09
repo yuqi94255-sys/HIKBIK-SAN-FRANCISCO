@@ -4,6 +4,7 @@ import PhotosUI
 import MapKit
 import CoreLocation
 import ImageIO
+import UIKit
 
 // MARK: - Live Track Draft (from Record Live Track → Save as Draft)
 struct LiveTrackDraft {
@@ -91,6 +92,23 @@ private enum PaceOption: String, CaseIterable {
     case hardcore = "Hardcore"
 }
 
+// MARK: - US States (name + abbreviation for Macro Journey State Selector)
+private let usStatesWithAbbr: [(name: String, abbr: String)] = [
+    ("Alabama", "AL"), ("Alaska", "AK"), ("Arizona", "AZ"), ("Arkansas", "AR"), ("California", "CA"),
+    ("Colorado", "CO"), ("Connecticut", "CT"), ("Delaware", "DE"), ("Florida", "FL"), ("Georgia", "GA"),
+    ("Hawaii", "HI"), ("Idaho", "ID"), ("Illinois", "IL"), ("Indiana", "IN"), ("Iowa", "IA"),
+    ("Kansas", "KS"), ("Kentucky", "KY"), ("Louisiana", "LA"), ("Maine", "ME"), ("Maryland", "MD"),
+    ("Massachusetts", "MA"), ("Michigan", "MI"), ("Minnesota", "MN"), ("Mississippi", "MS"), ("Missouri", "MO"),
+    ("Montana", "MT"), ("Nebraska", "NE"), ("Nevada", "NV"), ("New Hampshire", "NH"), ("New Jersey", "NJ"),
+    ("New Mexico", "NM"), ("New York", "NY"), ("North Carolina", "NC"), ("North Dakota", "ND"), ("Ohio", "OH"),
+    ("Oklahoma", "OK"), ("Oregon", "OR"), ("Pennsylvania", "PA"), ("Rhode Island", "RI"), ("South Carolina", "SC"),
+    ("South Dakota", "SD"), ("Tennessee", "TN"), ("Texas", "TX"), ("Utah", "UT"), ("Vermont", "VT"),
+    ("Virginia", "VA"), ("Washington", "WA"), ("West Virginia", "WV"), ("Wisconsin", "WI"), ("Wyoming", "WY")
+]
+private func stateAbbr(for name: String) -> String {
+    usStatesWithAbbr.first { $0.name == name }?.abbr ?? name
+}
+
 // MARK: - Land Management Category (Location Selector)
 private enum LandManagementCategory: String, CaseIterable, Hashable {
     case nationalPark = "National Park"
@@ -160,6 +178,13 @@ private struct Waypoint: Identifiable {
     }
 }
 
+// MARK: - Route Location (name + coordinates for Day location picker)
+struct RouteLocation: Equatable {
+    var name: String
+    var latitude: Double
+    var longitude: Double
+}
+
 // MARK: - Journey Stop Model (Day); Micro Track: each stop has nested microTracks
 private struct JourneyStop: Identifiable {
     let id = UUID()
@@ -171,7 +196,8 @@ private struct JourneyStop: Identifiable {
     var recommendedStay: String
     var photo: UIImage?
     var microTracks: [Waypoint]
-    init(cityOrPark: String = "", date: Date = Date(), dateWasPicked: Bool = false, vehicleType: String = "SUV", briefNote: String = "", recommendedStay: String = "", photo: UIImage? = nil, microTracks: [Waypoint] = [Waypoint()]) {
+    var selectedLocation: RouteLocation?
+    init(cityOrPark: String = "", date: Date = Date(), dateWasPicked: Bool = false, vehicleType: String = "SUV", briefNote: String = "", recommendedStay: String = "", photo: UIImage? = nil, microTracks: [Waypoint] = [Waypoint()], selectedLocation: RouteLocation? = nil) {
         self.cityOrPark = cityOrPark
         self.date = date
         self.dateWasPicked = dateWasPicked
@@ -180,6 +206,7 @@ private struct JourneyStop: Identifiable {
         self.recommendedStay = recommendedStay
         self.photo = photo
         self.microTracks = microTracks
+        self.selectedLocation = selectedLocation
     }
 }
 
@@ -261,32 +288,182 @@ struct CustomRouteBuilderView: View {
     @State private var reverseGeocodeApplyTrigger = 0
     @State private var waypointPhotoPickerItems: [String: PhotosPickerItem?] = [:]
     @State private var loadingEXIFForWaypoint: (dayIndex: Int, waypointIndex: Int)?
+    @State private var locationPickerDayIndex: Int?
+    // Detailed Track Builder: single source of truth (physical isolation from Macro)
+    @State private var detailedTrack: DetailedTrackPost = DetailedTrackPost(
+        routeName: "",
+        totalDurationMinutes: 30,
+        viewPointNodes: [ViewPointNode(), ViewPointNode()]
+    )
+    @State private var viewPointPhotos: [UUID: [UIImage]] = [:]
+    @State private var mapSelectionViewPointIndex: Int?
+    @State private var viewPointPhotoPickerItems: [Int: PhotosPickerItem?] = [:]
+    @State private var hasPrintedDetailedTrackSample = false
+    /// Macro Journey only: selected state names (multi-select). Synced to MacroJourneyPost.selectedStates when saving.
+    @State private var selectedMacroStates: Set<String> = []
+    /// 發布成功後顯示 overlay；2 秒後自動 dismiss。
+    @State private var showingSuccessOverlay = false
+    /// 點擊 Publish 後顯示旋轉圖標，持續 1.5 秒模擬上傳。
+    @State private var isPublishing = false
+    /// 成功 overlay 綠勾動畫：從 0.5 放大到 1。
+    @State private var successCheckmarkScale: CGFloat = 0.5
+    @EnvironmentObject private var communityViewModel: CommunityViewModel
 
     init(liveTrackDraft: LiveTrackDraft? = nil) {
         _pendingLiveTrackDraft = State(initialValue: liveTrackDraft)
     }
 
     private var summaryText: String {
-        if planningStyle == .microTrack {
+        if planningStyle == .macroJourney {
             let total = stops.reduce(0) { $0 + $1.microTracks.count }
-            return "\(total) waypoints • Micro Track"
+            return "\(stops.count) days • \(total) waypoints • Macro Journey"
         }
         let durationStr = duration.rawValue
         let vehicleStr = vehicle.rawValue
         let paceStr = pace.rawValue
-        let styleStr = planningStyle.rawValue
-        return "\(stops.count) stops • \(durationStr) • \(vehicleStr) • \(paceStr) pace • \(styleStr)"
+        return "\(detailedTrack.viewPointNodes.count) view points • \(durationStr) • \(vehicleStr) • \(paceStr) • Micro Track"
     }
 
     private var canPublish: Bool {
-        if planningStyle == .microTrack {
-            let hasValidWaypoint = stops.contains { stop in
-                stop.microTracks.contains { !$0.name.trimmingCharacters(in: .whitespaces).isEmpty }
-            }
-            return !journeyName.trimmingCharacters(in: .whitespaces).isEmpty && hasValidWaypoint
+        if planningStyle == .macroJourney {
+            return macroJourneyIsReadyToPublish
         }
-        return !journeyName.trimmingCharacters(in: .whitespaces).isEmpty
-            && stops.contains { !$0.cityOrPark.trimmingCharacters(in: .whitespaces).isEmpty }
+        return detailedTrack.isReadyToPublish
+    }
+
+    /// Macro: days.count >= 1, journeyName non-empty, every day has mainLocation (selectedLocation).
+    private var macroJourneyIsReadyToPublish: Bool {
+        guard !journeyName.trimmingCharacters(in: .whitespaces).isEmpty else { return false }
+        guard !stops.isEmpty else { return false }
+        return stops.allSatisfy { $0.selectedLocation != nil }
+    }
+
+    /// Call when Publish is disabled: prints which fields are missing so you can fix (e.g. Acadia trip).
+    private func printMacroPublishValidation() {
+        print("========== Macro Publish Validation ==========")
+        let nameOk = !journeyName.trimmingCharacters(in: .whitespaces).isEmpty
+        print("journeyName: \(nameOk ? "✓" : "✗ MISSING (fill Journey Name)")")
+        print("stops.count: \(stops.count) \(stops.isEmpty ? "✗ need at least 1 day" : "✓")")
+        for (index, stop) in stops.enumerated() {
+            let locOk = stop.selectedLocation != nil
+            let locStr = locOk ? "✓ \(stop.selectedLocation!.name)" : "✗ MISSING (tap Add Location for Day \(index + 1))"
+            print("  Day \(index + 1) selectedLocation: \(locStr)")
+        }
+        print("canPublish: \(macroJourneyIsReadyToPublish ? "YES" : "NO")")
+        print("===============================================")
+    }
+
+    /// 從當前 UI 狀態建構 MacroJourneyPost（確保 latitude/longitude 正確）。僅在 macroJourneyIsReadyToPublish 時有效。
+    private func buildMacroJourneyPost() -> MacroJourneyPost? {
+        guard macroJourneyIsReadyToPublish else { return nil }
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        let days: [JourneyDay] = stops.enumerated().map { index, stop in
+            let loc = stop.selectedLocation.map { GeoLocation(latitude: $0.latitude, longitude: $0.longitude) }
+            let dateStr = stop.dateWasPicked ? formatter.string(from: stop.date) : nil
+            return JourneyDay(
+                id: stop.id,
+                dayNumber: index + 1,
+                location: loc,
+                locationName: stop.selectedLocation?.name ?? (stop.cityOrPark.isEmpty ? nil : stop.cityOrPark),
+                dateString: dateStr,
+                notes: stop.briefNote.isEmpty ? nil : stop.briefNote
+            )
+        }
+        return MacroJourneyPost(
+            journeyName: journeyName,
+            days: days,
+            selectedStates: Array(selectedMacroStates),
+            duration: duration.rawValue,
+            vehicle: vehicle.rawValue,
+            pace: pace.rawValue
+        )
+    }
+
+    /// 將 MacroJourneyPost 轉成 JSON 並 print（確保 lat/lon 正確）。
+    private func exportMacroJourneyToJSON() -> String? {
+        guard let post = buildMacroJourneyPost() else { return nil }
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+        guard let data = try? encoder.encode(post) else { return nil }
+        return String(data: data, encoding: .utf8)
+    }
+
+    /// 模擬上傳 Macro Journey：1.5 秒 loading → 封裝為 CommunityJourney → prepend 到 CommunityViewModel → 滿屏綠勾 2 秒後 dismiss。接後端時僅需替換此函數內上傳邏輯為 API 調用。
+    private func publishMacroJourney(json: String) {
+        guard let post = buildMacroJourneyPost() else { return }
+        isPublishing = true
+        print("[Publish] Macro Journey JSON（latitude/longitude 已包含）:")
+        print(json)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [self] in
+            isPublishing = false
+            let author = CommunityAuthor(id: "guest_user_001", displayName: "Guest", avatarURL: nil)
+            let coverURL: String? = coverImage.flatMap { img in
+                Self.processCoverImageForGrandJourney(image: img)?.absoluteString
+            }
+            let communityPost = CommunityJourney.from(post, author: author, likeCount: 0, commentCount: 0, coverImageURL: coverURL)
+            // 模擬注入：prepend 到本地列表。接後端時改為: await api.uploadJourney(post); communityViewModel.reloadFromServer()
+            communityViewModel.prepend(communityPost)
+            showingSuccessOverlay = true
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+                dismiss()
+            }
+        }
+    }
+
+    /// 封面預處理：16:10 裁剪、最大寬 1920、JPEG 85%，寫入臨時檔（與 ImageUploadService 邏輯一致，避免跨模組依賴）
+    private static func processCoverImageForGrandJourney(image: UIImage) -> URL? {
+        let ratio: CGFloat = 16.0 / 10.0
+        let maxW: CGFloat = 1920
+        let quality: CGFloat = 0.85
+        guard let cropped = image.croppedToAspectRatio(ratio, smartCrop: true),
+              let resized = cropped.resized(maxWidth: maxW),
+              let data = resized.jpegData(compressionQuality: quality) else { return nil }
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent("grand_cover_\(UUID().uuidString).jpg")
+        try? data.write(to: url)
+        return url
+    }
+
+    /// 模擬上傳 Detailed Track：印出 JSON 後延遲觸發成功 overlay。
+    private func publishDetailedTrack(json: String) {
+        print("[Publish] Detailed Track JSON 將上傳（模擬）:")
+        print(json)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            showingSuccessOverlay = true
+        }
+    }
+
+    /// Export Detailed Track to JSON string (View Points only, no Days). Only valid when isReadyToPublish. Syncs photoCount from viewPointPhotos.
+    private func exportDetailedTrackToJSON() -> String? {
+        guard detailedTrack.isReadyToPublish else { return nil }
+        var copy = detailedTrack
+        for i in copy.viewPointNodes.indices {
+            let id = copy.viewPointNodes[i].id
+            copy.viewPointNodes[i].photoCount = viewPointPhotos[id]?.count ?? 0
+        }
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+        guard let data = try? encoder.encode(copy) else { return nil }
+        return String(data: data, encoding: .utf8)
+    }
+
+    /// Print a sample DetailedTrack JSON so you can confirm it contains only View Points (viewPointNodes), no Days.
+    private func printDetailedTrackJSONSample() {
+        let sample = DetailedTrackPost(
+            category: .nationalForest,
+            routeName: "Sample Route",
+            totalDurationMinutes: 90,
+            viewPointNodes: [
+                ViewPointNode(title: "Trailhead", activityType: .hiking, latitude: 37.73, longitude: -119.55, photoCount: 1),
+                ViewPointNode(title: "Summit", activityType: .hiking, latitude: 37.75, longitude: -119.52, photoCount: 1)
+            ]
+        )
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+        guard let data = try? encoder.encode(sample), let str = String(data: data, encoding: .utf8) else { return }
+        print("========== Detailed Track JSON 範例 (僅 View Points，無 Days) ==========")
+        print(str)
+        print("========== end ==========")
     }
 
     /// Base date: Day 1 only. Day 2+ = startDate + index (days).
@@ -310,79 +487,149 @@ struct CustomRouteBuilderView: View {
     var body: some View {
         crbMainContent
             .navigationBarBackButtonHidden(true)
-        .onAppear { applyLiveTrackDraftIfNeeded() }
-        .sheet(isPresented: Binding(
-            get: { datePickerStopIndex != nil },
-            set: { if !$0 { datePickerStopIndex = nil } }
-        )) {
-            if datePickerStopIndex == 0, !stops.isEmpty {
-                DatePickerSheet(
-                    date: binding(for: 0).date,
-                    onDismiss: { cleared in
-                        if cleared { stops[0].dateWasPicked = false }
-                        else { stops[0].dateWasPicked = true }
-                        datePickerStopIndex = nil
-                    }
-                )
+            .onAppear {
+                applyLiveTrackDraftIfNeeded()
+                if planningStyle == .microTrack && !hasPrintedDetailedTrackSample {
+                    hasPrintedDetailedTrackSample = true
+                    printDetailedTrackJSONSample()
+                }
             }
-        }
-        .onChange(of: reverseGeocodeApplyTrigger) { _, _ in
-            guard let p = pendingReverseGeocodeName else { return }
-            defer { pendingReverseGeocodeName = nil }
-            guard p.dayIndex >= 0, p.dayIndex < stops.count,
-                  p.waypointIndex >= 0, p.waypointIndex < stops[p.dayIndex].microTracks.count else { return }
-            if stops[p.dayIndex].microTracks[p.waypointIndex].name.trimmingCharacters(in: .whitespaces).isEmpty {
-                stops[p.dayIndex].microTracks[p.waypointIndex].name = p.name
+            .onChange(of: planningStyle) { _, new in
+                if new == .microTrack && !hasPrintedDetailedTrackSample {
+                    hasPrintedDetailedTrackSample = true
+                    printDetailedTrackJSONSample()
+                }
             }
-        }
-        .onChange(of: routeUpdateApplyTrigger) { _, _ in
-            guard let p = pendingRouteUpdate else { return }
-            defer { pendingRouteUpdate = nil }
-            guard p.dayIndex >= 0, p.dayIndex < stops.count,
-                  p.waypointIndex >= 0, p.waypointIndex < stops[p.dayIndex].microTracks.count else { return }
-            stops[p.dayIndex].microTracks[p.waypointIndex].distanceFromPrevious = p.distance
-            stops[p.dayIndex].microTracks[p.waypointIndex].durationFromPrevious = p.duration
-            stops[p.dayIndex].microTracks[p.waypointIndex].routePolylineFromPrevious = p.polyline
-        }
-        .fullScreenCover(isPresented: Binding(
-            get: { dropPinContext != nil },
-            set: { if !$0 { dropPinContext = nil } }
-        )) {
-            if let ctx = dropPinContext, ctx.dayIndex < stops.count, ctx.waypointIndex < stops[ctx.dayIndex].microTracks.count {
-                let wp = stops[ctx.dayIndex].microTracks[ctx.waypointIndex]
-                DropPinMapSheetView(
-                    initialLat: Double(wp.latitude) ?? 0,
-                    initialLon: Double(wp.longitude) ?? 0,
-                    fallbackCenter: previousWaypointCoordinate(dayIndex: ctx.dayIndex, waypointIndex: ctx.waypointIndex),
-                    onConfirm: { coord in
-                        stops[ctx.dayIndex].microTracks[ctx.waypointIndex].latitude = String(coord.latitude)
-                        stops[ctx.dayIndex].microTracks[ctx.waypointIndex].longitude = String(coord.longitude)
-                        stops[ctx.dayIndex].microTracks[ctx.waypointIndex].coordinatesFromPhoto = false
-                        dropPinContext = nil
-                        if ctx.dayIndex != 0 || ctx.waypointIndex != 0 {
-                            fetchRouteInfo(dayIndex: ctx.dayIndex, waypointIndex: ctx.waypointIndex)
+            .sheet(isPresented: Binding(
+                get: { datePickerStopIndex != nil },
+                set: { if !$0 { datePickerStopIndex = nil } }
+            )) {
+                if datePickerStopIndex == 0, !stops.isEmpty {
+                    DatePickerSheet(
+                        date: binding(for: 0).date,
+                        onDismiss: { cleared in
+                            if cleared { stops[0].dateWasPicked = false }
+                            else { stops[0].dateWasPicked = true }
+                            datePickerStopIndex = nil
                         }
-                        reverseGeocodeAndFillPointName(dayIndex: ctx.dayIndex, waypointIndex: ctx.waypointIndex, lat: coord.latitude, lon: coord.longitude)
-                    },
-                    onCancel: { dropPinContext = nil }
-                )
-            }
-        }
-        .confirmationDialog("Remove Day?", isPresented: Binding(
-            get: { deleteConfirmDayIndex != nil },
-            set: { if !$0 { deleteConfirmDayIndex = nil } }
-        ), titleVisibility: .visible) {
-            if let idx = deleteConfirmDayIndex, idx >= 0, idx < stops.count {
-                Button("Delete Day \(idx + 1)", role: .destructive) {
-                    removeDay(at: idx)
-                }
-                Button("Cancel", role: .cancel) {
-                    deleteConfirmDayIndex = nil
+                    )
                 }
             }
-        } message: {
-            if let idx = deleteConfirmDayIndex {
-                Text("Are you sure you want to delete Day \(idx + 1)?")
+            .sheet(isPresented: Binding(
+                get: { locationPickerDayIndex != nil },
+                set: { if !$0 { locationPickerDayIndex = nil } }
+            )) {
+                if let dayIndex = locationPickerDayIndex, dayIndex >= 0, dayIndex < stops.count {
+                    MapLocationPickerView(
+                        selectedLocation: bindingLocation(for: dayIndex),
+                        onDismiss: { locationPickerDayIndex = nil }
+                    )
+                }
+            }
+            .onChange(of: reverseGeocodeApplyTrigger) { _, _ in
+                guard let p = pendingReverseGeocodeName else { return }
+                defer { pendingReverseGeocodeName = nil }
+                guard p.dayIndex >= 0, p.dayIndex < stops.count,
+                      p.waypointIndex >= 0, p.waypointIndex < stops[p.dayIndex].microTracks.count else { return }
+                if stops[p.dayIndex].microTracks[p.waypointIndex].name.trimmingCharacters(in: .whitespaces).isEmpty {
+                    stops[p.dayIndex].microTracks[p.waypointIndex].name = p.name
+                }
+            }
+            .onChange(of: routeUpdateApplyTrigger) { _, _ in
+                guard let p = pendingRouteUpdate else { return }
+                defer { pendingRouteUpdate = nil }
+                guard p.dayIndex >= 0, p.dayIndex < stops.count,
+                      p.waypointIndex >= 0, p.waypointIndex < stops[p.dayIndex].microTracks.count else { return }
+                stops[p.dayIndex].microTracks[p.waypointIndex].distanceFromPrevious = p.distance
+                stops[p.dayIndex].microTracks[p.waypointIndex].durationFromPrevious = p.duration
+                stops[p.dayIndex].microTracks[p.waypointIndex].routePolylineFromPrevious = p.polyline
+            }
+            .fullScreenCover(isPresented: Binding(
+                get: { dropPinContext != nil },
+                set: { if !$0 { dropPinContext = nil } }
+            )) {
+                if let ctx = dropPinContext, ctx.dayIndex < stops.count, ctx.waypointIndex < stops[ctx.dayIndex].microTracks.count {
+                    let wp = stops[ctx.dayIndex].microTracks[ctx.waypointIndex]
+                    DropPinMapSheetView(
+                        initialLat: Double(wp.latitude) ?? 0,
+                        initialLon: Double(wp.longitude) ?? 0,
+                        fallbackCenter: previousWaypointCoordinate(dayIndex: ctx.dayIndex, waypointIndex: ctx.waypointIndex),
+                        onConfirm: { coord in
+                            stops[ctx.dayIndex].microTracks[ctx.waypointIndex].latitude = String(coord.latitude)
+                            stops[ctx.dayIndex].microTracks[ctx.waypointIndex].longitude = String(coord.longitude)
+                            stops[ctx.dayIndex].microTracks[ctx.waypointIndex].coordinatesFromPhoto = false
+                            dropPinContext = nil
+                            if ctx.dayIndex != 0 || ctx.waypointIndex != 0 {
+                                fetchRouteInfo(dayIndex: ctx.dayIndex, waypointIndex: ctx.waypointIndex)
+                            }
+                            reverseGeocodeAndFillPointName(dayIndex: ctx.dayIndex, waypointIndex: ctx.waypointIndex, lat: coord.latitude, lon: coord.longitude)
+                        },
+                        onCancel: { dropPinContext = nil }
+                    )
+                }
+            }
+            .fullScreenCover(isPresented: Binding(
+                get: { mapSelectionViewPointIndex != nil },
+                set: { if !$0 { mapSelectionViewPointIndex = nil } }
+            )) {
+                if let idx = mapSelectionViewPointIndex, idx >= 0, idx < detailedTrack.viewPointNodes.count {
+                    let vp = detailedTrack.viewPointNodes[idx]
+                    MapSelectionView(
+                        initialLat: vp.latitude ?? 37.73,
+                        initialLon: vp.longitude ?? -119.55,
+                        onConfirm: { coord in
+                            detailedTrack.viewPointNodes[idx].latitude = coord.latitude
+                            detailedTrack.viewPointNodes[idx].longitude = coord.longitude
+                            mapSelectionViewPointIndex = nil
+                        },
+                        onCancel: { mapSelectionViewPointIndex = nil }
+                    )
+                }
+            }
+            .confirmationDialog("Remove Day?", isPresented: Binding(
+                get: { deleteConfirmDayIndex != nil },
+                set: { if !$0 { deleteConfirmDayIndex = nil } }
+            ), titleVisibility: .visible) {
+                if let idx = deleteConfirmDayIndex, idx >= 0, idx < stops.count {
+                    Button("Delete Day \(idx + 1)", role: .destructive) {
+                        removeDay(at: idx)
+                    }
+                    Button("Cancel", role: .cancel) {
+                        deleteConfirmDayIndex = nil
+                    }
+                }
+            } message: {
+                if let idx = deleteConfirmDayIndex {
+                    Text("Are you sure you want to delete Day \(idx + 1)?")
+                }
+            }
+            .overlay {
+                if showingSuccessOverlay {
+                    publishSuccessOverlay
+                }
+            }
+    }
+
+    /// 發布成功：滿屏綠色勾勾動畫 + "Your Journey is Live!"，2 秒後自動 dismiss（在 publishMacroJourney 內已排程）。
+    private var publishSuccessOverlay: some View {
+        ZStack {
+            Color(hex: "0B121F")
+                .ignoresSafeArea()
+            VStack(spacing: 24) {
+                Image(systemName: "checkmark.circle.fill")
+                    .font(.system(size: 80))
+                    .foregroundStyle(Color(hex: "22C55E"))
+                    .scaleEffect(successCheckmarkScale)
+                Text("Your Journey is Live!")
+                    .font(.system(size: 24, weight: .bold))
+                    .foregroundStyle(.white)
+                Text("Taking you back to Community…")
+                    .font(.system(size: 15))
+                    .foregroundStyle(Color(hex: "9CA3AF"))
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .onAppear {
+                withAnimation(.spring(response: 0.45, dampingFraction: 0.7)) { successCheckmarkScale = 1.0 }
             }
         }
     }
@@ -394,14 +641,19 @@ struct CustomRouteBuilderView: View {
                     headerSection
                     planningStyleSection
                     if planningStyle == .microTrack {
-                        locationSelectorSection
+                        detailedTrackRequiredSection
                     }
                     basicInfoSection
-                    if planningStyle == .macroJourney {
+                    if planningStyle == .microTrack {
+                        viewPointsSection
+                    } else {
                         preferencesSection
                     }
-                    journeyTimelineSection
-                    addStopButton
+                    if planningStyle == .macroJourney {
+                        stateMultiSelectorSection
+                        journeyTimelineSection
+                        addStopButton
+                    }
                     Spacer(minLength: 120)
                 }
                 .padding(.bottom, 24)
@@ -437,7 +689,7 @@ struct CustomRouteBuilderView: View {
             )
         }
         stops = [JourneyStop(microTracks: waypoints)]
-        planningStyle = .microTrack
+        planningStyle = .macroJourney
         pendingLiveTrackDraft = nil
     }
 
@@ -706,6 +958,23 @@ struct CustomRouteBuilderView: View {
         .buttonStyle(.plain)
     }
 
+    // MARK: - Macro Journey only: State Multi-Selector (collapsible, top of macro content)
+    private var stateMultiSelectorSection: some View {
+        StateMultiSelectorView(
+            selectedStates: Binding(
+                get: { selectedMacroStates },
+                set: { selectedMacroStates = $0 }
+            ),
+            stateList: usStatesWithAbbr,
+            accentColor: CRBColors.activeOrange,
+            backgroundColor: CRBColors.cardNested,
+            textPrimary: CRBColors.textPrimary,
+            textMuted: CRBColors.textMuted,
+            borderMuted: CRBColors.borderMuted
+        )
+        .padding(.horizontal, 20)
+    }
+
     // MARK: - Location Selector (Micro Track: Land Management Category)
     private var locationSelectorSection: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -743,6 +1012,56 @@ struct CustomRouteBuilderView: View {
         .background(CRBColors.cardNested)
         .clipShape(RoundedRectangle(cornerRadius: 16))
         .overlay(RoundedRectangle(cornerRadius: 16).strokeBorder(CRBColors.borderMuted, lineWidth: 1))
+        .padding(.horizontal, 20)
+    }
+
+    // MARK: - Detailed Track required: Category (mandatory), Route Name, Total Duration
+    private var detailedTrackRequiredSection: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            VStack(alignment: .leading, spacing: 8) {
+                labelWithIcon("Category (Required)", icon: "tag")
+                Picker("Category", selection: Binding(
+                    get: { detailedTrack.category },
+                    set: { new in var c = detailedTrack; c.category = new; detailedTrack = c }
+                )) {
+                    Text("Select category").tag(nil as DetailedTrackCategory?)
+                    ForEach(DetailedTrackCategory.allCases) { cat in
+                        Text(cat.rawValue).tag(cat as DetailedTrackCategory?)
+                    }
+                }
+                .pickerStyle(.menu)
+                .tint(CRBColors.textPrimary)
+                .padding(12)
+                .background(CRBColors.searchBg)
+                .clipShape(RoundedRectangle(cornerRadius: 10))
+                .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(detailedTrack.category == nil ? CRBColors.textMuted.opacity(0.5) : CRBColors.activeOrange, lineWidth: 1))
+            }
+            VStack(alignment: .leading, spacing: 8) {
+                labelWithIcon("Total Duration (Required)", icon: "clock")
+                HStack(spacing: 12) {
+                    Picker("Hours", selection: Binding(
+                        get: { detailedTrack.totalDurationMinutes / 60 },
+                        set: { newH in var c = detailedTrack; c.totalDurationMinutes = newH * 60 + (c.totalDurationMinutes % 60); detailedTrack = c }
+                    )) {
+                        ForEach(0..<25, id: \.self) { Text("\($0) h").tag($0) }
+                    }
+                    .pickerStyle(.menu)
+                    .frame(maxWidth: .infinity)
+                    Picker("Minutes", selection: Binding(
+                        get: { detailedTrack.totalDurationMinutes % 60 },
+                        set: { newM in var c = detailedTrack; c.totalDurationMinutes = (c.totalDurationMinutes / 60) * 60 + newM; detailedTrack = c }
+                    )) {
+                        ForEach([0, 15, 30, 45], id: \.self) { Text("\($0) min").tag($0) }
+                    }
+                    .pickerStyle(.menu)
+                    .frame(maxWidth: .infinity)
+                }
+                .padding(12)
+                .background(CRBColors.searchBg)
+                .clipShape(RoundedRectangle(cornerRadius: 10))
+                .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(CRBColors.borderMuted, lineWidth: 1))
+            }
+        }
         .padding(.horizontal, 20)
     }
 
@@ -799,12 +1118,12 @@ struct CustomRouteBuilderView: View {
     }
 
     private var journeyNameField: some View {
-        let (label, placeholder) = planningStyle == .microTrack
-            ? ("Trail/Track Name", "e.g., Angel's Landing Trail - Zion")
-            : ("Journey Name", "e.g., Pacific Coast Highway Adventure")
+        let (label, placeholder, binding) = planningStyle == .macroJourney
+            ? ("Journey Name", "e.g., Pacific Coast Road Trip", $journeyName)
+            : ("Route Name (Required)", "e.g., Angel's Landing Trail - Zion", Binding(get: { detailedTrack.routeName }, set: { var c = detailedTrack; c.routeName = $0; detailedTrack = c }))
         return VStack(alignment: .leading, spacing: 8) {
             labelWithIcon(label, icon: "link")
-            TextField(placeholder, text: $journeyName)
+            TextField(placeholder, text: binding)
                 .textFieldStyle(.plain)
                 .font(.system(size: 16))
                 .foregroundStyle(CRBColors.textPrimary)
@@ -857,6 +1176,342 @@ struct CustomRouteBuilderView: View {
                 .padding(.vertical, 8)
                 .background(selected ? CRBColors.activeOrange : CRBColors.inactivePill)
                 .clipShape(Capsule())
+        }
+        .buttonStyle(.plain)
+    }
+
+    // MARK: - View Points (min 2; each: Title, Activity, Location from map, at least one Photo)
+    private var viewPointsSection: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            HStack(spacing: 8) {
+                Image(systemName: "mappin.circle.fill")
+                    .foregroundStyle(CRBColors.activeOrange)
+                Text("View Points")
+                    .font(.system(size: 18, weight: .bold))
+                    .foregroundStyle(CRBColors.textPrimary)
+            }
+            .padding(.horizontal, 20)
+            HStack(alignment: .top, spacing: 0) {
+                timelineDashedLine(count: detailedTrack.viewPointNodes.count)
+                VStack(spacing: 12) {
+                    ForEach(Array(detailedTrack.viewPointNodes.enumerated()), id: \.element.id) { index, _ in
+                        viewPointCard(displayIndex: index + 1, arrayIndex: index)
+                    }
+                    Button {
+                        var c = detailedTrack
+                        c.viewPointNodes.append(ViewPointNode())
+                        detailedTrack = c
+                    } label: {
+                        HStack(spacing: 8) {
+                            Image(systemName: "plus.circle.fill")
+                                .foregroundStyle(CRBColors.activeOrange)
+                            Text("Add View Point")
+                                .font(.system(size: 14, weight: .semibold))
+                                .foregroundStyle(CRBColors.activeOrange)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 12)
+                    }
+                    .buttonStyle(.plain)
+                }
+                .padding(.leading, 12)
+                .padding(.trailing, 20)
+            }
+        }
+    }
+
+    private func viewPointCard(displayIndex: Int, arrayIndex: Int) -> some View {
+        let vp = detailedTrack.viewPointNodes[arrayIndex]
+        return VStack(alignment: .leading, spacing: 14) {
+            HStack {
+                Text("View Point \(displayIndex)")
+                    .font(.system(size: 14, weight: .bold))
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
+                    .background(CRBColors.activeOrange)
+                    .clipShape(Capsule())
+                Spacer()
+                if detailedTrack.viewPointNodes.count > 2 {
+                    Button {
+                        var c = detailedTrack
+                        c.viewPointNodes.remove(at: arrayIndex)
+                        detailedTrack = c
+                        let id = vp.id
+                        viewPointPhotos.removeValue(forKey: id)
+                    } label: {
+                        Image(systemName: "trash")
+                            .font(.system(size: 14))
+                            .foregroundStyle(CRBColors.textMuted)
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+            TextField("Title (Required)", text: Binding(
+                get: { detailedTrack.viewPointNodes[arrayIndex].title },
+                set: { new in var c = detailedTrack; c.viewPointNodes[arrayIndex].title = new; detailedTrack = c }
+            ))
+            .textFieldStyle(.plain)
+            .font(.system(size: 15))
+            .foregroundStyle(CRBColors.textPrimary)
+            .padding(12)
+            .background(CRBColors.searchBg)
+            .clipShape(RoundedRectangle(cornerRadius: 10))
+            .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(CRBColors.borderMuted, lineWidth: 1))
+
+            VStack(alignment: .leading, spacing: 8) {
+                labelWithIcon("Activity Type", icon: "figure.walk")
+                Picker("Activity", selection: Binding(
+                    get: { detailedTrack.viewPointNodes[arrayIndex].activityType },
+                    set: { new in var c = detailedTrack; c.viewPointNodes[arrayIndex].activityType = new; detailedTrack = c }
+                )) {
+                    ForEach(ViewPointActivityType.allCases) { type in
+                        Text(type.rawValue).tag(type)
+                    }
+                }
+                .pickerStyle(.menu)
+                .tint(CRBColors.textPrimary)
+                .padding(12)
+                .background(CRBColors.searchBg)
+                .clipShape(RoundedRectangle(cornerRadius: 10))
+                .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(CRBColors.borderMuted, lineWidth: 1))
+            }
+
+            // MARK: - PROFESSIONAL DATA
+            VStack(alignment: .leading, spacing: 12) {
+                Text("PROFESSIONAL DATA")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(CRBColors.textPrimary)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
+                    .background(CRBColors.activeOrange)
+                    .clipShape(Capsule())
+
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack(spacing: 6) {
+                        Image(systemName: "location.circle.fill")
+                            .font(.system(size: 14))
+                            .foregroundStyle(CRBColors.textMuted)
+                        Text("Precise GPS Coordinates")
+                            .font(.system(size: 15, weight: .medium))
+                            .foregroundStyle(CRBColors.textPrimary)
+                    }
+                    HStack(spacing: 10) {
+                        TextField("Latitude", text: Binding(
+                            get: { vp.latitude.map { String($0) } ?? "" },
+                            set: { var c = detailedTrack; c.viewPointNodes[arrayIndex].latitude = $0.isEmpty ? nil : Double($0); detailedTrack = c }
+                        ))
+                        .keyboardType(.decimalPad)
+                        .textFieldStyle(.plain)
+                        .font(.system(size: 14, design: .monospaced))
+                        .foregroundStyle(CRBColors.textPrimary)
+                        .padding(10)
+                        .background(CRBColors.searchBg)
+                        .clipShape(RoundedRectangle(cornerRadius: 8))
+                        TextField("Longitude", text: Binding(
+                            get: { vp.longitude.map { String($0) } ?? "" },
+                            set: { var c = detailedTrack; c.viewPointNodes[arrayIndex].longitude = $0.isEmpty ? nil : Double($0); detailedTrack = c }
+                        ))
+                        .keyboardType(.decimalPad)
+                        .textFieldStyle(.plain)
+                        .font(.system(size: 14, design: .monospaced))
+                        .foregroundStyle(CRBColors.textPrimary)
+                        .padding(10)
+                        .background(CRBColors.searchBg)
+                        .clipShape(RoundedRectangle(cornerRadius: 8))
+                    }
+                    Text("If the photo has no coordinates or no photo is uploaded, tap Drop Pin below to set the location.")
+                        .font(.system(size: 12))
+                        .foregroundStyle(CRBColors.textMuted)
+                    Button {
+                        mapSelectionViewPointIndex = arrayIndex
+                    } label: {
+                        HStack(spacing: 8) {
+                            Image(systemName: "scope")
+                                .font(.system(size: 16))
+                            Text("Drop Pin on Map")
+                                .font(.system(size: 15, weight: .medium))
+                        }
+                        .foregroundStyle(CRBColors.activeOrange)
+                        .frame(maxWidth: .infinity)
+                        .padding(12)
+                        .background(CRBColors.searchBg)
+                        .clipShape(RoundedRectangle(cornerRadius: 10))
+                        .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(CRBColors.borderMuted, lineWidth: 1))
+                    }
+                    .buttonStyle(.plain)
+                }
+
+                VStack(alignment: .leading, spacing: 8) {
+                    labelWithIcon("Arrival Time", icon: "clock")
+                    TextField("e.g. 12:30 PM", text: Binding(
+                        get: { detailedTrack.viewPointNodes[arrayIndex].arrivalTime ?? "" },
+                        set: { var c = detailedTrack; c.viewPointNodes[arrayIndex].arrivalTime = $0.isEmpty ? nil : $0; detailedTrack = c }
+                    ))
+                    .textFieldStyle(.plain)
+                    .font(.system(size: 15))
+                    .foregroundStyle(CRBColors.textPrimary)
+                    .padding(12)
+                    .background(CRBColors.searchBg)
+                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                    .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(CRBColors.borderMuted, lineWidth: 1))
+                }
+
+                VStack(alignment: .leading, spacing: 8) {
+                    labelWithIcon("Elevation", icon: "mountain.2.fill")
+                    TextField("e.g. 4,035 ft", text: Binding(
+                        get: { detailedTrack.viewPointNodes[arrayIndex].elevation ?? "" },
+                        set: { var c = detailedTrack; c.viewPointNodes[arrayIndex].elevation = $0.isEmpty ? nil : $0; detailedTrack = c }
+                    ))
+                    .textFieldStyle(.plain)
+                    .font(.system(size: 15))
+                    .foregroundStyle(CRBColors.textPrimary)
+                    .padding(12)
+                    .background(CRBColors.searchBg)
+                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                    .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(CRBColors.borderMuted, lineWidth: 1))
+                }
+
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Survival & Amenities")
+                        .font(.system(size: 15, weight: .medium))
+                        .foregroundStyle(CRBColors.textPrimary)
+                    HStack(spacing: 10) {
+                        Button {
+                            var c = detailedTrack
+                            c.viewPointNodes[arrayIndex].hasWater.toggle()
+                            detailedTrack = c
+                        } label: {
+                            AmenityCapsule(icon: "drop.fill", label: "Water", color: Color(hex: "1E3A5F"), borderColor: Color(hex: "3B82F6").opacity(0.6), isSelected: detailedTrack.viewPointNodes[arrayIndex].hasWater)
+                        }
+                        .buttonStyle(.plain)
+                        Button {
+                            var c = detailedTrack
+                            c.viewPointNodes[arrayIndex].hasFuel.toggle()
+                            detailedTrack = c
+                        } label: {
+                            AmenityCapsule(icon: "fuelpump.fill", label: "Fuel", color: Color(hex: "78350F"), borderColor: Color(hex: "F59E0B").opacity(0.6), isSelected: detailedTrack.viewPointNodes[arrayIndex].hasFuel)
+                        }
+                        .buttonStyle(.plain)
+                        HStack(spacing: 4) {
+                            Image(systemName: "antenna.radiowaves.left.and.right")
+                                .font(.system(size: 14))
+                                .foregroundStyle(CRBColors.textMuted)
+                            SignalStrengthBar(strength: Binding(
+                                get: { detailedTrack.viewPointNodes[arrayIndex].signalStrength },
+                                set: { var c = detailedTrack; c.viewPointNodes[arrayIndex].signalStrength = min(5, max(0, $0)); detailedTrack = c }
+                            ))
+                        }
+                    }
+                }
+
+                VStack(alignment: .leading, spacing: 8) {
+                    labelWithIcon("Recommended Stay (Optional)", icon: "house.fill")
+                    TextField("Add accommodation recommendation...", text: Binding(
+                        get: { detailedTrack.viewPointNodes[arrayIndex].recommendedStay ?? "" },
+                        set: { var c = detailedTrack; c.viewPointNodes[arrayIndex].recommendedStay = $0.isEmpty ? nil : $0; detailedTrack = c }
+                    ))
+                    .textFieldStyle(.plain)
+                    .font(.system(size: 15))
+                    .foregroundStyle(CRBColors.textPrimary)
+                    .padding(12)
+                    .background(CRBColors.searchBg)
+                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                    .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(CRBColors.borderMuted, lineWidth: 1))
+                }
+            }
+            .padding(14)
+            .background(CRBColors.cardBg)
+            .clipShape(RoundedRectangle(cornerRadius: 12))
+            .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(CRBColors.borderMuted, lineWidth: 1))
+
+            viewPointPhotoRow(arrayIndex: arrayIndex)
+        }
+        .padding(16)
+        .background(CRBColors.cardNested)
+        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .overlay(RoundedRectangle(cornerRadius: 16).strokeBorder(CRBColors.borderMuted, lineWidth: 1))
+    }
+
+    private func viewPointPhotoRow(arrayIndex: Int) -> some View {
+        let nodeId = detailedTrack.viewPointNodes[arrayIndex].id
+        let photos = viewPointPhotos[nodeId] ?? []
+        return VStack(alignment: .leading, spacing: 8) {
+            labelWithIcon("Photo (Required, at least one)", icon: "photo")
+            if !photos.isEmpty {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 8) {
+                        ForEach(Array(photos.enumerated()), id: \.offset) { i, img in
+                            ZStack(alignment: .topTrailing) {
+                                Image(uiImage: img)
+                                    .resizable()
+                                    .scaledToFill()
+                                    .frame(width: 80, height: 80)
+                                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                                Button {
+                                    viewPointPhotos[nodeId]?.remove(at: i)
+                                    if (viewPointPhotos[nodeId]?.isEmpty ?? true) { viewPointPhotos[nodeId] = nil }
+                                    var c = detailedTrack
+                                    if let idx = c.viewPointNodes.firstIndex(where: { $0.id == nodeId }) {
+                                        c.viewPointNodes[idx].photoCount = max(0, (viewPointPhotos[nodeId]?.count ?? 0))
+                                    }
+                                    detailedTrack = c
+                                } label: {
+                                    Image(systemName: "xmark.circle.fill")
+                                        .font(.system(size: 22))
+                                        .foregroundStyle(.white)
+                                        .shadow(radius: 2)
+                                }
+                                .offset(x: 4, y: -4)
+                            }
+                        }
+                        addPhotoButton(arrayIndex: arrayIndex)
+                    }
+                }
+            } else {
+                addPhotoButton(arrayIndex: arrayIndex)
+            }
+        }
+    }
+
+    private func addPhotoButton(arrayIndex: Int) -> some View {
+        let nodeId = arrayIndex < detailedTrack.viewPointNodes.count ? detailedTrack.viewPointNodes[arrayIndex].id : UUID()
+        return PhotosPicker(selection: Binding(
+            get: { viewPointPhotoPickerItems[arrayIndex] ?? nil },
+            set: { new in
+                viewPointPhotoPickerItems[arrayIndex] = new
+                guard let item = new else { return }
+                Task {
+                    if let data = try? await item.loadTransferable(type: Data.self), let img = UIImage(data: data) {
+                        await MainActor.run {
+                            if arrayIndex < detailedTrack.viewPointNodes.count {
+                                viewPointPhotos[nodeId, default: []].append(img)
+                                viewPointPhotoPickerItems[arrayIndex] = nil
+                                var c = detailedTrack
+                                if let idx = c.viewPointNodes.firstIndex(where: { $0.id == nodeId }) {
+                                    c.viewPointNodes[idx].photoCount = viewPointPhotos[nodeId]?.count ?? 0
+                                }
+                                detailedTrack = c
+                            }
+                        }
+                    }
+                }
+            }
+        ), matching: .images) {
+            ZStack {
+                RoundedRectangle(cornerRadius: 8)
+                    .strokeBorder(style: StrokeStyle(lineWidth: 2, dash: [6]))
+                    .foregroundStyle(CRBColors.borderMuted)
+                    .frame(width: 80, height: 80)
+                VStack(spacing: 4) {
+                    Image(systemName: "plus.circle.fill")
+                        .font(.system(size: 28))
+                        .foregroundStyle(CRBColors.activeOrange)
+                    Text("Add")
+                        .font(.system(size: 12))
+                        .foregroundStyle(CRBColors.textMuted)
+                }
+            }
         }
         .buttonStyle(.plain)
     }
@@ -957,16 +1612,13 @@ struct CustomRouteBuilderView: View {
         .padding(.horizontal, 20)
     }
 
-    // MARK: - Journey Timeline (Macro: days | Micro: single track = flat waypoints)
+    // MARK: - Journey Timeline (Macro Journey only: Day cards, Location Picker)
     private var journeyTimelineSection: some View {
         VStack(alignment: .leading, spacing: 16) {
-            if planningStyle == .microTrack {
-                routeMapOverlay
-            }
             HStack(spacing: 8) {
-                Image(systemName: planningStyle == .microTrack ? "paperplane.fill" : "location.north.circle.fill")
+                Image(systemName: "location.north.circle.fill")
                     .foregroundStyle(CRBColors.activeOrange)
-                Text(planningStyle == .microTrack ? "The Track" : "The Journey")
+                Text("The Journey")
                     .font(.system(size: 18, weight: .bold))
                     .foregroundStyle(CRBColors.textPrimary)
             }
@@ -977,11 +1629,7 @@ struct CustomRouteBuilderView: View {
                 VStack(spacing: 12) {
                     ForEach(Array(stops.enumerated()), id: \.element.id) { index, stop in
                         Group {
-                            if planningStyle == .microTrack {
-                                microTrackDayCard(displayIndex: index + 1, arrayIndex: index, stop: binding(for: index))
-                            } else {
-                                dayCard(displayIndex: index + 1, arrayIndex: index, stop: binding(for: index))
-                            }
+                            dayCard(displayIndex: index + 1, arrayIndex: index, stop: binding(for: index))
                         }
                         .transition(.asymmetric(
                             insertion: .opacity.combined(with: .move(edge: .bottom)),
@@ -1391,6 +2039,18 @@ struct CustomRouteBuilderView: View {
         )
     }
 
+    /// 雙向綁定該 Day 的 selectedLocation，供 MapLocationPicker 即時寫回，發布驗證器可即時偵測 ✓。
+    private func bindingLocation(for dayIndex: Int) -> Binding<RouteLocation?> {
+        Binding(
+            get: { dayIndex >= 0 && dayIndex < stops.count ? stops[dayIndex].selectedLocation : nil },
+            set: { new in
+                guard dayIndex >= 0, dayIndex < stops.count else { return }
+                stops[dayIndex].selectedLocation = new
+                stops[dayIndex].cityOrPark = new?.name ?? ""
+            }
+        )
+    }
+
     private func dayCard(displayIndex: Int, arrayIndex: Int, stop: Binding<JourneyStop>) -> some View {
         VStack(alignment: .leading, spacing: 14) {
             HStack {
@@ -1431,6 +2091,7 @@ struct CustomRouteBuilderView: View {
                 .clipShape(RoundedRectangle(cornerRadius: 10))
                 .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(CRBColors.borderMuted, lineWidth: 1))
 
+            locationPickerRow(arrayIndex: arrayIndex, stop: stop)
             dateField(displayIndex: displayIndex, arrayIndex: arrayIndex, date: stop.date, dateWasPicked: stop.dateWasPicked)
             photoUploadZone(stopIndex: arrayIndex, stop: stop)
             TextField("What makes this stop special?", text: stop.briefNote, axis: .vertical)
@@ -1456,6 +2117,50 @@ struct CustomRouteBuilderView: View {
         .background(CRBColors.cardNested)
         .clipShape(RoundedRectangle(cornerRadius: 16))
         .overlay(RoundedRectangle(cornerRadius: 16).strokeBorder(CRBColors.borderMuted, lineWidth: 1))
+    }
+
+    @ViewBuilder
+    private func locationPickerRow(arrayIndex: Int, stop: Binding<JourneyStop>) -> some View {
+        if let loc = stop.selectedLocation.wrappedValue {
+            HStack(spacing: 8) {
+                Text(loc.name)
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundStyle(CRBColors.textPrimary)
+                    .lineLimit(1)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 8)
+                    .background(CRBColors.searchBg)
+                    .clipShape(Capsule())
+                Button {
+                    stop.selectedLocation.wrappedValue = nil
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .font(.system(size: 20))
+                        .foregroundStyle(CRBColors.textMuted)
+                }
+                .buttonStyle(.plain)
+                Spacer()
+            }
+        } else {
+            Button {
+                locationPickerDayIndex = arrayIndex
+            } label: {
+                HStack(spacing: 8) {
+                    Image(systemName: "mappin.circle.fill")
+                        .font(.system(size: 18))
+                        .foregroundStyle(CRBColors.activeOrange)
+                    Text("Add Location")
+                        .font(.system(size: 15, weight: .medium))
+                        .foregroundStyle(CRBColors.activeOrange)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(12)
+                .background(CRBColors.searchBg)
+                .clipShape(RoundedRectangle(cornerRadius: 10))
+                .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(CRBColors.borderMuted, lineWidth: 1))
+            }
+            .buttonStyle(.plain)
+        }
     }
 
     @ViewBuilder
@@ -1713,19 +2418,46 @@ struct CustomRouteBuilderView: View {
                     }
                     .buttonStyle(.plain)
                     .fixedSize(horizontal: true, vertical: false)
-                    Button { } label: {
-                        Text("Publish")
-                            .font(.system(size: 13, weight: .semibold))
-                            .lineLimit(1)
-                            .fixedSize(horizontal: true, vertical: false)
-                            .foregroundStyle(canPublish ? CRBColors.textPrimary : CRBColors.textMuted)
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 10)
-                            .background(canPublish ? CRBColors.activeOrange : CRBColors.inactivePill)
-                            .clipShape(RoundedRectangle(cornerRadius: 8))
+                    Button {
+                        print("🚀 Publish Button Pressed!")
+                        if planningStyle == .macroJourney {
+                            if canPublish, let json = exportMacroJourneyToJSON() {
+                                print("========== Macro Journey JSON (multi-day, days[].location for map) ==========")
+                                print(json)
+                                print("========== end ==========")
+                                publishMacroJourney(json: json)
+                            } else if !canPublish {
+                                printMacroPublishValidation()
+                            }
+                        } else if planningStyle == .microTrack {
+                            if let json = exportDetailedTrackToJSON() {
+                                print("========== Detailed Track JSON (View Points only, no Days) ==========")
+                                print(json)
+                                print("========== end ==========")
+                                publishDetailedTrack(json: json)
+                            }
+                        }
+                    } label: {
+                        Group {
+                            if isPublishing {
+                                ProgressView()
+                                    .progressViewStyle(CircularProgressViewStyle(tint: CRBColors.textPrimary))
+                                    .scaleEffect(0.9)
+                            } else {
+                                Text("Publish")
+                                    .font(.system(size: 13, weight: .semibold))
+                                    .lineLimit(1)
+                                    .fixedSize(horizontal: true, vertical: false)
+                                    .foregroundStyle(canPublish ? CRBColors.textPrimary : CRBColors.textMuted)
+                            }
+                        }
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 10)
+                        .background(canPublish && !isPublishing ? CRBColors.activeOrange : CRBColors.inactivePill)
+                        .clipShape(RoundedRectangle(cornerRadius: 8))
                     }
                     .buttonStyle(.plain)
-                    .disabled(!canPublish)
+                    .disabled(!canPublish || isPublishing)
                     .fixedSize(horizontal: true, vertical: false)
                     Button { } label: {
                         Image(systemName: "questionmark.circle")
@@ -1755,6 +2487,135 @@ struct CustomRouteBuilderView: View {
             Text(title)
                 .font(.system(size: 15, weight: .medium))
                 .foregroundStyle(CRBColors.textPrimary)
+        }
+    }
+
+}
+
+// MARK: - State Multi-Selector (Macro Journey only: collapsible, multi-select, summary with abbreviations)
+private struct StateMultiSelectorView: View {
+    @Binding var selectedStates: Set<String>
+    let stateList: [(name: String, abbr: String)]
+    let accentColor: Color
+    let backgroundColor: Color
+    let textPrimary: Color
+    let textMuted: Color
+    let borderMuted: Color
+    @State private var isExpanded: Bool = false
+
+    private var summaryText: String {
+        let abbrs = stateList
+            .filter { selectedStates.contains($0.name) }
+            .map(\.abbr)
+        if abbrs.isEmpty { return "No states selected" }
+        if abbrs.count <= 2 { return abbrs.joined(separator: ", ") }
+        return abbrs.prefix(2).joined(separator: ", ") + " +\(abbrs.count - 2) more"
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            DisclosureGroup(isExpanded: $isExpanded) {
+                LazyVGrid(columns: [
+                    GridItem(.adaptive(minimum: 140), spacing: 10),
+                    GridItem(.adaptive(minimum: 140), spacing: 10)
+                ], spacing: 10) {
+                    ForEach(stateList, id: \.name) { item in
+                        let isSelected = selectedStates.contains(item.name)
+                        Button {
+                            if isSelected {
+                                selectedStates.remove(item.name)
+                            } else {
+                                selectedStates.insert(item.name)
+                            }
+                        } label: {
+                            Text(item.name)
+                                .font(.system(size: 14, weight: .medium))
+                                .foregroundStyle(isSelected ? .white : textMuted)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 10)
+                                .background(isSelected ? accentColor : Color(hex: "1A2332"))
+                                .clipShape(RoundedRectangle(cornerRadius: 10))
+                                .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(isSelected ? accentColor.opacity(0.6) : borderMuted, lineWidth: 1))
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                .padding(.top, 12)
+            } label: {
+                HStack(spacing: 8) {
+                    Image(systemName: "map.fill")
+                        .font(.system(size: 14))
+                        .foregroundStyle(accentColor)
+                    Text("Select States")
+                        .font(.system(size: 17, weight: .semibold))
+                        .foregroundStyle(textPrimary)
+                    Spacer()
+                    if !isExpanded {
+                        Text(summaryText)
+                            .font(.system(size: 13))
+                            .foregroundStyle(textMuted)
+                            .lineLimit(1)
+                    }
+                }
+                .padding(.vertical, 4)
+            }
+            .tint(accentColor)
+        }
+        .padding(16)
+        .background(backgroundColor)
+        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .overlay(RoundedRectangle(cornerRadius: 16).strokeBorder(borderMuted, lineWidth: 1))
+    }
+}
+
+// MARK: - AmenityCapsule (Water / Fuel): 膠囊內顯示圖示+文字，選中時藍/橙底+白字，未選中灰底+灰字
+private struct AmenityCapsule: View {
+    let icon: String
+    let label: String
+    let color: Color
+    let borderColor: Color
+    var isSelected: Bool = false
+
+    var body: some View {
+        HStack(spacing: 6) {
+            Image(systemName: icon)
+                .font(.system(size: 14))
+            Text(label)
+                .font(.system(size: 14, weight: .medium))
+                .lineLimit(1)
+                .fixedSize(horizontal: true, vertical: false)
+        }
+        .foregroundStyle(isSelected ? Color.white : CRBColors.textMuted)
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
+        .background(isSelected ? color : CRBColors.searchBg)
+        .overlay(Capsule().strokeBorder(isSelected ? borderColor : CRBColors.borderMuted, lineWidth: 1))
+        .clipShape(Capsule())
+    }
+}
+
+private extension Color {
+    func contrastWithWhite() -> Color {
+        self
+    }
+}
+
+// MARK: - SignalStrengthBar: 5 格，前 signalStrength 格橘色，其餘灰
+private struct SignalStrengthBar: View {
+    @Binding var strength: Int
+    private let totalBars = 5
+    private let activeColor = Color(hex: "FF8C42")
+    private let inactiveColor = Color(hex: "374151")
+
+    var body: some View {
+        HStack(spacing: 3) {
+            ForEach(0..<totalBars, id: \.self) { index in
+                RoundedRectangle(cornerRadius: 2)
+                    .fill(index < strength ? activeColor : inactiveColor)
+                    .frame(width: 14, height: 10)
+                    .onTapGesture { strength = index + 1 }
+            }
         }
     }
 }
@@ -1787,6 +2648,79 @@ extension DropPinLocationManager: CLLocationManagerDelegate {
     }
     func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
         // keep existing fallback
+    }
+}
+
+// MARK: - Map Selection View (Set Location for View Point: long press or center pin; no manual coord input)
+struct MapSelectionView: View {
+    var initialLat: Double
+    var initialLon: Double
+    var onConfirm: (CLLocationCoordinate2D) -> Void
+    var onCancel: () -> Void
+    @State private var selectedCoordinate: CLLocationCoordinate2D?
+    @State private var mapCenter: CLLocationCoordinate2D
+    @State private var cameraPosition: MapCameraPosition
+    init(initialLat: Double, initialLon: Double, onConfirm: @escaping (CLLocationCoordinate2D) -> Void, onCancel: @escaping () -> Void) {
+        self.initialLat = initialLat
+        self.initialLon = initialLon
+        self.onConfirm = onConfirm
+        self.onCancel = onCancel
+        let center = CLLocationCoordinate2D(latitude: initialLat, longitude: initialLon)
+        _mapCenter = State(initialValue: center)
+        _cameraPosition = State(initialValue: .region(MKCoordinateRegion(center: center, span: MKCoordinateSpan(latitudeDelta: 0.02, longitudeDelta: 0.02))))
+    }
+    private var resolvedCoordinate: CLLocationCoordinate2D {
+        selectedCoordinate ?? mapCenter
+    }
+    var body: some View {
+        NavigationStack {
+            MapReader { proxy in
+                ZStack(alignment: .bottomTrailing) {
+                    Map(position: $cameraPosition, interactionModes: .all) {
+                        Annotation("", coordinate: resolvedCoordinate) {
+                            Image(systemName: "mappin.circle.fill")
+                                .font(.system(size: 40))
+                                .foregroundStyle(Color(hex: "FF8C42"))
+                        }
+                    }
+                    .mapStyle(.standard)
+                    .onMapCameraChange(frequency: .onEnd) { context in
+                        mapCenter = context.region.center
+                    }
+                    Color.clear
+                        .contentShape(Rectangle())
+                        .onTapGesture {
+                            selectedCoordinate = mapCenter
+                        }
+                        .gesture(
+                            LongPressGesture(minimumDuration: 0.5)
+                                .sequenced(before: DragGesture(minimumDistance: 0, coordinateSpace: .named("mapSelect")))
+                                .onEnded { value in
+                                    switch value {
+                                    case .second(true, let drag):
+                                        if let loc = drag?.startLocation, let coord = proxy.convert(loc, from: .named("mapSelect")) {
+                                            selectedCoordinate = coord
+                                        }
+                                    default: break
+                                    }
+                                }
+                        )
+                    .coordinateSpace(name: "mapSelect")
+                }
+            }
+            .ignoresSafeArea(.container)
+            .navigationTitle("Set Location")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { onCancel() }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Confirm") { onConfirm(resolvedCoordinate) }
+                }
+            }
+        }
+        .preferredColorScheme(.dark)
     }
 }
 
@@ -2462,4 +3396,254 @@ extension LiveTrackLocationTracker: CLLocationManagerDelegate {
     func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {}
 }
 
-#Preview { NavigationStack { CustomRouteBuilderView() } }
+// MARK: - Location Search Manager（防抖 0.3s、美國限定、過濾非美國結果）
+private final class LocationSearchManager: NSObject, ObservableObject {
+    private let completer = MKLocalSearchCompleter()
+    private var debounceWorkItem: DispatchWorkItem?
+    private let debounceInterval: TimeInterval = 0.3
+
+    @Published private(set) var results: [MKLocalSearchCompletion] = []
+    @Published private(set) var isSearching = false
+
+    var queryFragment: String = "" {
+        didSet {
+            debounceWorkItem?.cancel()
+            let query = queryFragment
+            let item = DispatchWorkItem { [weak self] in
+                self?.isSearching = true
+                self?.completer.queryFragment = query
+            }
+            debounceWorkItem = item
+            DispatchQueue.main.asyncAfter(deadline: .now() + debounceInterval, execute: item)
+        }
+    }
+
+    override init() {
+        super.init()
+        completer.delegate = self
+        completer.resultTypes = [.pointOfInterest, .query]
+        let usCenter = CLLocationCoordinate2D(latitude: 39.5, longitude: -98.5)
+        completer.region = MKCoordinateRegion(center: usCenter, span: MKCoordinateSpan(latitudeDelta: 50, longitudeDelta: 50))
+    }
+
+    func resolve(completion: MKLocalSearchCompletion, usOnly: Bool = true, completionHandler: @escaping ((name: String, coordinate: CLLocationCoordinate2D)?) -> Void) {
+        let request = MKLocalSearch.Request(completion: completion)
+        MKLocalSearch(request: request).start { response, _ in
+            guard let mapItem = response?.mapItems.first else { DispatchQueue.main.async { completionHandler(nil) }; return }
+            if usOnly, let code = mapItem.placemark.countryCode, code != "US" {
+                DispatchQueue.main.async { completionHandler(nil) }; return
+            }
+            let name = mapItem.name ?? mapItem.placemark.name ?? completion.title
+            let coord = mapItem.placemark.coordinate
+            DispatchQueue.main.async { completionHandler((name, coord)) }
+        }
+    }
+}
+
+extension LocationSearchManager: MKLocalSearchCompleterDelegate {
+    func completerDidUpdateResults(_ completer: MKLocalSearchCompleter) {
+        DispatchQueue.main.async { [weak self] in
+            self?.isSearching = false
+            self?.results = completer.results
+        }
+    }
+    func completer(_ completer: MKLocalSearchCompleter, didFailWithError error: Error) {
+        DispatchQueue.main.async { [weak self] in self?.isSearching = false }
+    }
+}
+
+// MARK: - Map Location Picker（極簡 UI：搜尋框 + 輸入時 List / 否則 Map，Binding 區域，Confirm 回傳）
+struct MapLocationPickerView: View {
+    @Binding var selectedLocation: RouteLocation?
+    var onDismiss: () -> Void
+
+    @StateObject private var searchManager = LocationSearchManager()
+    @State private var searchText = ""
+    @State private var pinCoordinate: CLLocationCoordinate2D?
+    @State private var cameraPosition: MapCameraPosition
+    @State private var pendingName: String?
+    @State private var isResolving = false
+    private let geocoder = CLGeocoder()
+    private static let defaultCenter = CLLocationCoordinate2D(latitude: 44.35, longitude: -68.21)
+    private static let defaultSpan = MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)
+
+    init(selectedLocation: Binding<RouteLocation?>, onDismiss: @escaping () -> Void) {
+        _selectedLocation = selectedLocation
+        self.onDismiss = onDismiss
+        let initial = selectedLocation.wrappedValue.map { CLLocationCoordinate2D(latitude: $0.latitude, longitude: $0.longitude) } ?? Self.defaultCenter
+        _cameraPosition = State(initialValue: .region(MKCoordinateRegion(center: initial, span: Self.defaultSpan)))
+    }
+
+    private var effectiveCoordinate: CLLocationCoordinate2D {
+        pinCoordinate ?? (selectedLocation.map { CLLocationCoordinate2D(latitude: $0.latitude, longitude: $0.longitude) } ?? Self.defaultCenter)
+    }
+
+    var body: some View {
+        NavigationStack {
+            VStack(spacing: 0) {
+                searchField
+                if showSuggestions {
+                    suggestionsList
+                } else {
+                    mapContent
+                }
+            }
+            .background(CRBColors.background)
+            .navigationTitle("Add Location")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) { Button("Cancel") { onDismiss() } }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Confirm Location") { confirmAndDismiss() }
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundStyle(CRBColors.activeOrange)
+                }
+            }
+        }
+        .preferredColorScheme(.dark)
+        .onChange(of: searchText) { _, newValue in
+            searchManager.queryFragment = newValue
+        }
+    }
+
+    private var showSuggestions: Bool {
+        !searchText.trimmingCharacters(in: .whitespaces).isEmpty
+    }
+
+    private var searchField: some View {
+        TextField("Search city or place…", text: $searchText)
+            .textFieldStyle(.plain)
+            .font(.system(size: 16))
+            .foregroundStyle(CRBColors.textPrimary)
+            .padding(12)
+            .background(CRBColors.searchBg)
+            .clipShape(RoundedRectangle(cornerRadius: 10))
+            .padding(.horizontal, 20)
+            .padding(.vertical, 12)
+    }
+
+    private var suggestionsList: some View {
+        Group {
+            if searchManager.isSearching {
+                HStack(spacing: 8) {
+                    ProgressView().tint(CRBColors.activeOrange)
+                    Text("Searching…").font(.system(size: 14)).foregroundStyle(CRBColors.textMuted)
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 24)
+            } else {
+                List {
+                    ForEach(Array(searchManager.results.enumerated()), id: \.offset) { _, completion in
+                        Button {
+                            selectCompletion(completion)
+                        } label: {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(completion.title).font(.system(size: 16, weight: .medium)).foregroundStyle(CRBColors.textPrimary)
+                                if !completion.subtitle.isEmpty {
+                                    Text(completion.subtitle).font(.system(size: 13)).foregroundStyle(CRBColors.textMuted)
+                                }
+                            }
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(.vertical, 4)
+                        }
+                        .buttonStyle(.plain)
+                        .listRowBackground(CRBColors.cardBg)
+                    }
+                    if searchManager.results.isEmpty {
+                        Text("No US results").font(.system(size: 14)).foregroundStyle(CRBColors.textMuted)
+                            .listRowBackground(CRBColors.cardBg)
+                    }
+                }
+                .listStyle(.plain)
+            }
+        }
+        .frame(maxHeight: 280)
+    }
+
+    private var mapContent: some View {
+        VStack(spacing: 0) {
+            MapReader { proxy in
+                ZStack(alignment: .center) {
+                    Map(position: $cameraPosition, interactionModes: .all) {
+                        Annotation("", coordinate: effectiveCoordinate) {
+                            Image(systemName: "mappin.circle.fill")
+                                .font(.system(size: 40))
+                                .foregroundStyle(CRBColors.activeOrange)
+                        }
+                    }
+                    .mapStyle(.standard)
+                    Color.clear
+                        .contentShape(Rectangle())
+                        .coordinateSpace(name: "mapTap")
+                        .simultaneousGesture(
+                            DragGesture(minimumDistance: 0, coordinateSpace: .named("mapTap"))
+                                .onEnded { value in
+                                    guard hypot(value.translation.width, value.translation.height) < 15,
+                                          let coord = proxy.convert(value.startLocation, from: .named("mapTap")) else { return }
+                                    pendingName = nil
+                                    pinCoordinate = coord
+                                }
+                        )
+                        .simultaneousGesture(
+                            LongPressGesture(minimumDuration: 0.4)
+                                .sequenced(before: DragGesture(minimumDistance: 0, coordinateSpace: .named("mapTap")))
+                                .onEnded { value in
+                                    if case .second(true, let drag?) = value,
+                                       let coord = proxy.convert(drag.startLocation, from: .named("mapTap")) {
+                                        pendingName = nil
+                                        pinCoordinate = coord
+                                    }
+                                }
+                        )
+                }
+            }
+            .frame(minHeight: 280)
+            .clipShape(RoundedRectangle(cornerRadius: 12))
+            .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(CRBColors.borderMuted, lineWidth: 1))
+            .padding(.horizontal, 20)
+            .padding(.bottom, 16)
+            if isResolving {
+                HStack(spacing: 8) {
+                    ProgressView().tint(CRBColors.activeOrange)
+                    Text("Getting address…").font(.system(size: 14)).foregroundStyle(CRBColors.textMuted)
+                }
+                .padding(.bottom, 8)
+            }
+        }
+    }
+
+    private func selectCompletion(_ completion: MKLocalSearchCompletion) {
+        searchManager.resolve(completion: completion, usOnly: true) { [self] result in
+            guard let result = result else { return }
+            pendingName = result.name
+            pinCoordinate = result.coordinate
+            searchText = ""
+            withAnimation(.easeInOut(duration: 0.3)) {
+                cameraPosition = .region(MKCoordinateRegion(center: result.coordinate, span: Self.defaultSpan))
+            }
+        }
+    }
+
+    private func confirmAndDismiss() {
+        let coord = effectiveCoordinate
+        if let name = pendingName {
+            selectedLocation = RouteLocation(name: name, latitude: coord.latitude, longitude: coord.longitude)
+            onDismiss()
+            return
+        }
+        isResolving = true
+        geocoder.reverseGeocodeLocation(CLLocation(latitude: coord.latitude, longitude: coord.longitude)) { placemarks, _ in
+            DispatchQueue.main.async {
+                isResolving = false
+                let name = placemarks?.first?.name
+                    ?? placemarks?.first?.locality
+                    ?? placemarks?.first?.administrativeArea
+                    ?? String(format: "%.5f, %.5f", coord.latitude, coord.longitude)
+                selectedLocation = RouteLocation(name: name, latitude: coord.latitude, longitude: coord.longitude)
+                onDismiss()
+            }
+        }
+    }
+}
+
+#Preview { NavigationStack { CustomRouteBuilderView().environmentObject(CommunityViewModel()) } }

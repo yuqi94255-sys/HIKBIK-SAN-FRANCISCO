@@ -23,17 +23,19 @@ fileprivate enum ProfileTheme {
     )
 }
 
-// MARK: - 4-Tab navigation: Posts, My Trip, Saved, Medals
+// MARK: - 5-Tab navigation: Posts, My Trip, Saved, Liked, Medals
 fileprivate enum ProfileGridTab: String, CaseIterable {
     case grid = "square.grid.3x3.fill"
     case myTrip = "map.fill"
     case folder = "folder.fill"
+    case liked = "heart.fill"
     case medals = "medal.fill"
     var label: String {
         switch self {
         case .grid: return "Posts"
         case .myTrip: return "My Trip"
         case .folder: return "Saved"
+        case .liked: return "Liked"
         case .medals: return "Medals"
         }
     }
@@ -47,7 +49,18 @@ fileprivate enum FollowListMode {
     case following, followers
 }
 
+/// 用於 Profile Liked 分頁的導航：id + journey
+fileprivate struct LikedPostItem: Identifiable, Hashable {
+    let id: String
+    let journey: CommunityJourney
+    func hash(into hasher: inout Hasher) { hasher.combine(id) }
+    static func == (l: LikedPostItem, r: LikedPostItem) -> Bool { l.id == r.id }
+}
+
 struct ProfileView: View {
+    @EnvironmentObject private var userState: UserState
+    @EnvironmentObject private var currentUser: CurrentUser
+    @EnvironmentObject private var communityViewModel: CommunityViewModel
     @State private var userName: String = UserDefaults.standard.string(forKey: "hikbik_user_name") ?? ""
     @State private var isLoggedIn: Bool = (UserDefaults.standard.data(forKey: "hikbik_user") != nil)
     @State private var selectedGridTab: ProfileGridTab = .grid
@@ -66,16 +79,27 @@ struct ProfileView: View {
     private let followersCount = 48
     private let bio = "Peak hunter based in Zurich | 🏔️ 30+ Summits"
 
+    /// Display name: registered → "Adventurer"; else stored name or "Explorer"
+    private var displayName: String {
+        userState.isRegistered ? "Adventurer" : (userName.isEmpty ? "Explorer" : userName)
+    }
+
     var body: some View {
         NavigationStack {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 0) {
-                    socialHeaderSection
-                    ProStatsDashboardCard()
-                    threeTabSection
-                    gridOrFolderOrHeartContent
+            Group {
+                if userState.isGuest {
+                    guestJoinHIKBIKContent
+                } else {
+                    ScrollView {
+                        VStack(alignment: .leading, spacing: 0) {
+                            socialHeaderSection
+                            ProStatsDashboardCard()
+                            threeTabSection
+                            gridOrFolderOrHeartContent
+                        }
+                        .padding(.bottom, 40)
+                    }
                 }
-                .padding(.bottom, 40)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background(ProfileTheme.background)
@@ -122,6 +146,9 @@ struct ProfileView: View {
             .navigationDestination(for: HonorCenterDestination.self) { _ in
                 AdventureStatsProView()
             }
+            .navigationDestination(for: LikedPostItem.self) { item in
+                CommunityMacroDetailView(journey: item.journey, journeyId: item.id)
+            }
             .fullScreenCover(item: $selectedDraftForReel) { draft in
                 PostReelFullScreenView(draft: draft) {
                     selectedDraftForReel = nil
@@ -134,7 +161,13 @@ struct ProfileView: View {
             }
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    if isLoggedIn {
+                    if userState.isGuest {
+                        Button("Sign In") {
+                            userState.showLandingFromApp = true
+                        }
+                        .font(.system(size: 15, weight: .medium))
+                        .foregroundStyle(ProfileTheme.accent)
+                    } else if isLoggedIn {
                         Button("Sign Out") {
                             UserDefaults.standard.removeObject(forKey: "hikbik_user")
                             UserDefaults.standard.removeObject(forKey: "hikbik_user_name")
@@ -145,13 +178,7 @@ struct ProfileView: View {
                         .foregroundStyle(ProfileTheme.textMuted)
                     } else {
                         Button("Sign In") {
-                            UserDefaults.standard.set("Demo User", forKey: "hikbik_user_name")
-                            let userData = ["id": "demo_\(Date().timeIntervalSince1970)", "name": "Demo User", "email": "demo@hikbik.com"]
-                            if let d = try? JSONSerialization.data(withJSONObject: userData) {
-                                UserDefaults.standard.set(d, forKey: "hikbik_user")
-                            }
-                            isLoggedIn = true
-                            userName = "Demo User"
+                            userState.showLandingFromApp = true
                         }
                         .font(.system(size: 15, weight: .medium))
                         .foregroundStyle(ProfileTheme.accent)
@@ -179,6 +206,74 @@ struct ProfileView: View {
         AchievementStore.updateFromDrafts(totalDistanceMeters: totalMeters)
     }
 
+    // MARK: - Guest: Join HIKBIK landing (benefits summary + Sign Up CTA)
+    private var guestJoinHIKBIKContent: some View {
+        ScrollView {
+            VStack(spacing: 32) {
+                VStack(spacing: 16) {
+                    Image(systemName: "person.crop.circle.badge.plus")
+                        .font(.system(size: 64))
+                        .foregroundStyle(ProfileTheme.accent)
+                    Text("Join HIKBIK")
+                        .font(.system(size: 26, weight: .bold))
+                        .foregroundStyle(ProfileTheme.textPrimary)
+                    Text("Create an account to unlock your adventure profile, stats, and more.")
+                        .font(.system(size: 15))
+                        .foregroundStyle(ProfileTheme.textMuted)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal)
+                }
+                .padding(.top, 40)
+
+                VStack(alignment: .leading, spacing: 16) {
+                    memberBenefitRow(icon: "chart.line.uptrend.xyaxis", title: "Pro Stats", subtitle: "Precision tracking for every trail.")
+                    memberBenefitRow(icon: "medal.fill", title: "Digital Medals", subtitle: "Collect exclusive National Park badges.")
+                    memberBenefitRow(icon: "lock.shield.fill", title: "Secure Sync", subtitle: "Your adventures, backed up in the cloud.")
+                    memberBenefitRow(icon: "map.fill", title: "Record Treks", subtitle: "Record live tracks and save routes as drafts.")
+                }
+                .padding(.horizontal, 20)
+
+                Button {
+                    userState.showLandingFromApp = true
+                } label: {
+                    Text("Sign Up")
+                        .font(.system(size: 17, weight: .semibold))
+                        .foregroundStyle(.black)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 16)
+                        .background(ProfileTheme.accent)
+                        .clipShape(RoundedRectangle(cornerRadius: 14))
+                }
+                .buttonStyle(.plain)
+                .padding(.horizontal, 24)
+                .padding(.top, 8)
+
+                Spacer(minLength: 60)
+            }
+        }
+    }
+
+    private func memberBenefitRow(icon: String, title: String, subtitle: String) -> some View {
+        HStack(alignment: .top, spacing: 14) {
+            Image(systemName: icon)
+                .font(.system(size: 20))
+                .foregroundStyle(ProfileTheme.accent)
+                .frame(width: 32, alignment: .center)
+            VStack(alignment: .leading, spacing: 4) {
+                Text(title)
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundStyle(ProfileTheme.textPrimary)
+                Text(subtitle)
+                    .font(.system(size: 14))
+                    .foregroundStyle(ProfileTheme.textMuted)
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(16)
+        .background(ProfileTheme.cardBg.opacity(0.8))
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+    }
+
     // MARK: - 1. Social identity (Magic Path + avatar, following/followers, share, BadgeShelf, bio, US Region)
     private var socialHeaderSection: some View {
         VStack(spacing: 16) {
@@ -191,7 +286,7 @@ struct ProfileView: View {
                     .foregroundStyle(ProfileTheme.textMuted.opacity(0.9))
             }
 
-            Text(isLoggedIn ? (userName.isEmpty ? "Explorer" : userName) : "Guest")
+            Text(userState.isGuest ? "Guest" : displayName)
                 .font(.system(size: 22, weight: .bold))
                 .foregroundStyle(ProfileTheme.textPrimary)
 
@@ -302,6 +397,8 @@ struct ProfileView: View {
                 myTripContent
             case .folder:
                 savedCollectionsSection
+            case .liked:
+                likedPostsSection
             case .medals:
                 medalsContent
             }
@@ -356,6 +453,58 @@ struct ProfileView: View {
                     ForEach(collections) { collection in
                         NavigationLink(value: collection) {
                             SavedCollectionRow(collection: collection)
+                        }
+                        .buttonStyle(.plain)
+                        .padding(.horizontal, 20)
+                    }
+                }
+            }
+        }
+    }
+
+    /// Liked: 從 CurrentUser.likedPostIds 解析出可顯示的行程（published_* 從 CommunityViewModel），點擊進入詳情。
+    private var likedPostsSection: some View {
+        let items: [LikedPostItem] = currentUser.likedPostIds.compactMap { id in
+            guard id.hasPrefix("published_"),
+                  let idx = Int(id.replacingOccurrences(of: "published_", with: "")),
+                  idx >= 0, idx < communityViewModel.publishedPosts.count else { return nil }
+            return LikedPostItem(id: id, journey: communityViewModel.publishedPosts[idx])
+        }
+        return Group {
+            if items.isEmpty {
+                Text("No liked journeys yet. Like posts in Community to see them here.")
+                    .font(.system(size: 15))
+                    .foregroundStyle(ProfileTheme.textMuted)
+                    .multilineTextAlignment(.center)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 48)
+                    .padding(.horizontal, 20)
+            } else {
+                LazyVStack(spacing: 12) {
+                    ForEach(items) { item in
+                        NavigationLink(value: item) {
+                            HStack(spacing: 12) {
+                                RoundedRectangle(cornerRadius: 10)
+                                    .fill(ProfileTheme.cardBg)
+                                    .frame(width: 56, height: 56)
+                                    .overlay(Image(systemName: "map.fill").foregroundStyle(ProfileTheme.textMuted))
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(item.journey.journeyName)
+                                        .font(.system(size: 16, weight: .semibold))
+                                        .foregroundStyle(ProfileTheme.textPrimary)
+                                        .lineLimit(1)
+                                    Text(item.journey.author?.displayName ?? "Community")
+                                        .font(.system(size: 13))
+                                        .foregroundStyle(ProfileTheme.textMuted)
+                                }
+                                Spacer()
+                                Image(systemName: "chevron.right")
+                                    .font(.system(size: 14, weight: .semibold))
+                                    .foregroundStyle(ProfileTheme.textMuted)
+                            }
+                            .padding(14)
+                            .background(ProfileTheme.cardBg)
+                            .clipShape(RoundedRectangle(cornerRadius: 14))
                         }
                         .buttonStyle(.plain)
                         .padding(.horizontal, 20)

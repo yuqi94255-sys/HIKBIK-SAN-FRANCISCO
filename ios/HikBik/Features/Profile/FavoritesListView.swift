@@ -31,7 +31,7 @@ struct FavoriteRouteItem: Identifiable {
 
 // MARK: - Mock data (6 saved routes)
 private let savedRoutes: [FavoriteRouteItem] = [
-    FavoriteRouteItem(id: "f1", title: "Yellowstone Grand Loop", imageUrl: "https://images.unsplash.com/photo-1476610182048-b716b8518aae?w=800", tag: "Official", isPro: true, rating: 5, author: "TrailGuide Official", distance: "92 mi", duration: "4 Days"),
+    FavoriteRouteItem(id: "f1", title: "Arizona Desert Explorer", imageUrl: "https://images.unsplash.com/photo-1509316785289-025f5b846b35?w=800", tag: "Official", isPro: true, rating: 5, author: "TrailGuide Official", distance: "118 mi", duration: "4 Days"),
     FavoriteRouteItem(id: "f2", title: "Pacific Coast Highway", imageUrl: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800", tag: "Official", isPro: true, rating: 4.9, author: "TrailGuide Official", distance: "655 mi", duration: "10 Days"),
     FavoriteRouteItem(id: "f3", title: "Arizona Desert Explorer", imageUrl: "https://images.unsplash.com/photo-1473580044384-7ba9967e16a0?w=800", tag: "Journey", isPro: false, rating: 4.7, author: "@desert_wanderer", distance: "580 mi", duration: "5 Days"),
     FavoriteRouteItem(id: "f4", title: "Moab Slickrock Trail", imageUrl: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=800", tag: "Track", isPro: false, rating: 4.8, author: "@trail_seeker", distance: "12.3 mi", duration: "6-8 hrs"),

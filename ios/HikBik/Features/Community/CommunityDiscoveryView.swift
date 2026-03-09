@@ -25,6 +25,7 @@ private enum CommunityViewMode: String, CaseIterable {
 // MARK: - Grand Journey Model
 struct GrandJourneyItem: Identifiable {
     let id: String
+    let authorId: String
     let authorName: String
     let authorSubtitle: String // "339 followers" or "Mountain Guide"
     let authorAvatarUrl: String?
@@ -63,6 +64,7 @@ struct DetailedTrackItem: Identifiable {
 private let mockGrandJourneys: [GrandJourneyItem] = [
     GrandJourneyItem(
         id: "1",
+        authorId: "sarah-chen",
         authorName: "Sarah Chen",
         authorSubtitle: "339 followers",
         authorAvatarUrl: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200",
@@ -79,6 +81,7 @@ private let mockGrandJourneys: [GrandJourneyItem] = [
     ),
     GrandJourneyItem(
         id: "2",
+        authorId: "emma-wilson",
         authorName: "Emma Wilson",
         authorSubtitle: "542 followers",
         authorAvatarUrl: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200",
@@ -95,6 +98,7 @@ private let mockGrandJourneys: [GrandJourneyItem] = [
     ),
     GrandJourneyItem(
         id: "3",
+        authorId: "mike-rodriguez",
         authorName: "Mike Rodriguez",
         authorSubtitle: "Mountain Guide",
         authorAvatarUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200",
@@ -111,6 +115,7 @@ private let mockGrandJourneys: [GrandJourneyItem] = [
     ),
     GrandJourneyItem(
         id: "4",
+        authorId: "alex-turner",
         authorName: "Alex Turner",
         authorSubtitle: "Desert Expert",
         authorAvatarUrl: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200",
@@ -222,11 +227,21 @@ private let stickyHeaderHeight: CGFloat = 260
 
 // MARK: - CommunityDiscoveryView
 struct CommunityDiscoveryView: View {
+    @EnvironmentObject private var communityViewModel: CommunityViewModel
+    @EnvironmentObject private var currentUser: CurrentUser
     @State private var viewMode: CommunityViewMode = .grandJourneys
     @State private var searchText = ""
     @State private var showFilterSheet = false
     @State private var followStates: [String: Bool] = [:]
     @State private var likeStates: [String: Bool] = [:]
+
+    /// Mock 數據 + 用戶剛發布的帖子（prepend 在最前）。
+    private var grandJourneyList: [GrandJourneyItem] {
+        let published = communityViewModel.publishedPosts.enumerated().map { index, journey in
+            grandJourneyItem(from: journey, publishedIndex: index)
+        }
+        return published + mockGrandJourneys
+    }
 
     var body: some View {
         NavigationStack {
@@ -236,14 +251,45 @@ struct CommunityDiscoveryView: View {
                         Color.clear
                             .frame(height: stickyHeaderHeight)
                         if viewMode == .grandJourneys {
-                            ForEach(mockGrandJourneys) { item in
-                                GrandJourneyCard(
-                                    item: item,
-                                    isFollowing: followStates[item.id] ?? item.isFollowing,
-                                    isLiked: likeStates[item.id] ?? false,
-                                    onFollowTap: { toggleFollow(item.id) },
-                                    onLikeTap: { toggleLike(item.id) }
-                                )
+                            ForEach(grandJourneyList) { item in
+                                let author = CommunityAuthor(id: item.authorId, displayName: item.authorName, avatarURL: item.authorAvatarUrl)
+                                ZStack(alignment: .topLeading) {
+                                    NavigationLink(destination: communityDetailDestination(for: item)) {
+                                        GrandJourneyCard(
+                                            item: item,
+                                            isFollowing: followStates[item.id] ?? item.isFollowing,
+                                            isLiked: currentUser.isLiked(postId: item.id),
+                                            onFollowTap: { toggleFollow(item.id) },
+                                            onLikeTap: { toggleLike(item.id) }
+                                        )
+                                    }
+                                    .buttonStyle(.plain)
+                                    // 作者區疊在上層，點擊頭像/名字跳 UserProfileView，不被整卡連結搶走
+                                    NavigationLink(destination: UserProfileView(user: author, subtitle: item.authorSubtitle)) {
+                                        HStack(spacing: 12) {
+                                            AsyncImage(url: item.authorAvatarUrl.flatMap(URL.init(string:))) { phase in
+                                                switch phase {
+                                                case .success(let img): img.resizable().aspectRatio(contentMode: .fill)
+                                                case .failure, .empty: Color.gray.opacity(0.3)
+                                                @unknown default: Color.gray.opacity(0.3)
+                                                }
+                                            }
+                                            .frame(width: 40, height: 40)
+                                            .clipShape(Circle())
+                                            VStack(alignment: .leading, spacing: 2) {
+                                                Text(item.authorName)
+                                                    .font(.system(size: 14, weight: .semibold))
+                                                    .foregroundStyle(CommunityColors.textPrimary)
+                                                Text(item.authorSubtitle)
+                                                    .font(.system(size: 12))
+                                                    .foregroundStyle(CommunityColors.textMuted)
+                                            }
+                                        }
+                                        .padding(16)
+                                        .contentShape(Rectangle())
+                                    }
+                                    .buttonStyle(PlainButtonStyle())
+                                }
                             }
                         } else {
                             ForEach(mockDetailedTracks) { item in
@@ -392,7 +438,103 @@ struct CommunityDiscoveryView: View {
     private func toggleLike(_ id: String) {
         let generator = UIImpactFeedbackGenerator(style: .light)
         generator.impactOccurred()
-        likeStates[id] = !(likeStates[id] ?? false)
+        currentUser.toggleLike(postId: id)
+    }
+
+    /// 點擊 Grand Journey 卡片進入的詳情頁。published_* 用 ViewModel 的完整 CommunityJourney，id "1" 用 Sarah 模擬數據，其餘用 placeholder。
+    @ViewBuilder
+    private func communityDetailDestination(for item: GrandJourneyItem) -> some View {
+        if item.id.hasPrefix("published_"), let idx = Int(item.id.replacingOccurrences(of: "published_", with: "")),
+           idx >= 0, idx < communityViewModel.publishedPosts.count {
+            CommunityMacroDetailView(journey: communityViewModel.publishedPosts[idx], journeyId: item.id)
+        } else if item.id == "1" {
+            CommunityMacroDetailView(journey: Self.sarahChenUtahCommunityJourney, journeyId: item.id)
+        } else {
+            CommunityMacroDetailView(journey: Self.placeholderCommunityJourney(for: item), journeyId: item.id)
+        }
+    }
+
+    /// 將 CommunityJourney 轉成列表用的 GrandJourneyItem（id = published_索引）。
+    private func grandJourneyItem(from journey: CommunityJourney, publishedIndex: Int) -> GrandJourneyItem {
+        let imageUrl = journey.days.first?.photoURL ?? "https://images.unsplash.com/photo-1476610182048-b716b8518aae?w=800"
+        return GrandJourneyItem(
+            id: "published_\(publishedIndex)",
+            authorId: journey.author?.id ?? "guest",
+            authorName: journey.author?.displayName ?? "Guest",
+            authorSubtitle: "Just published",
+            authorAvatarUrl: journey.author?.avatarURL,
+            isFollowing: false,
+            imageUrl: imageUrl,
+            days: journey.days.count,
+            label: "EPIC COLLECTION",
+            title: journey.journeyName,
+            mileage: "",
+            vehicle: journey.vehicle ?? "SUV",
+            waypoints: journey.days.compactMap { $0.locationName },
+            likeCount: journey.likeCount,
+            commentCount: journey.commentCount
+        )
+    }
+
+    /// Sarah Chen「The Ultimate Utah Mighty 5 Loop」詳情用數據：7 天、SUV、地圖連線三園座標，Day 2 信號 1 格、無水無油。
+    private static let sarahChenUtahCommunityJourney = CommunityJourney(
+        journeyName: "The Ultimate Utah Mighty 5 Loop",
+        days: [
+            CommunityJourneyDay(
+                dayNumber: 1,
+                location: CommunityGeoLocation(latitude: 38.7331, longitude: -109.5925),
+                locationName: "Arches National Park",
+                notes: "第一天從 Moab 出發。Delicate Arch 的落日絕對不能錯過，但記得帶頭燈，回程天黑很快。",
+                photoURL: "https://images.unsplash.com/photo-1504192010706-96946577af45",
+                recommendedStay: "Under Canvas Moab",
+                hasWater: true,
+                hasFuel: false,
+                signalStrength: 4
+            ),
+            CommunityJourneyDay(
+                dayNumber: 2,
+                location: CommunityGeoLocation(latitude: 38.4367, longitude: -109.8108),
+                locationName: "Canyonlands (Island in the Sky)",
+                notes: "壯闊的峽谷景觀。Shafer Trail 非常考驗駕駛技術，建議低速檔前進。荒原地帶無補給。",
+                photoURL: "https://images.unsplash.com/photo-1516939884455-1445c8652f83",
+                recommendedStay: "Willow Flat Campground",
+                hasWater: false,
+                hasFuel: false,
+                signalStrength: 1
+            ),
+            CommunityJourneyDay(
+                dayNumber: 3,
+                location: CommunityGeoLocation(latitude: 38.3670, longitude: -111.2615),
+                locationName: "Capitol Reef National Park",
+                notes: "穿過 UT-24 公路，風景像是在火星。這裡的派 (Pie) 很有名，一定要去 Gifford House 買一個！",
+                photoURL: "https://images.unsplash.com/photo-1516939884455-1445c8652f83",
+                recommendedStay: "Capitol Reef Resort (Wagons)",
+                hasWater: true,
+                hasFuel: true,
+                signalStrength: 3
+            )
+        ],
+        selectedStates: ["Utah"],
+        duration: "7 Days",
+        vehicle: "SUV",
+        pace: "Moderate",
+        author: CommunityAuthor(id: "sarah-chen", displayName: "Sarah Chen", avatarURL: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200"),
+        likeCount: 909,
+        commentCount: 45
+    )
+
+    private static func placeholderCommunityJourney(for item: GrandJourneyItem) -> CommunityJourney {
+        CommunityJourney(
+            journeyName: item.title,
+            days: [CommunityJourneyDay(dayNumber: 1, location: nil, locationName: nil, notes: "Placeholder detail.")],
+            selectedStates: [],
+            duration: "\(item.days) Days",
+            vehicle: item.vehicle,
+            pace: nil,
+            author: CommunityAuthor(id: item.id, displayName: item.authorName, avatarURL: item.authorAvatarUrl),
+            likeCount: item.likeCount,
+            commentCount: item.commentCount
+        )
     }
 }
 
@@ -421,26 +563,33 @@ struct GrandJourneyCard: View {
         )
     }
 
-    /// 獨立的卡片頭部：與圖片分離，背景與卡片一致
+    /// 獨立的卡片頭部：點擊頭像/名字跳轉 UserProfileView(user: post.author)，Follow 按鈕獨立；PlainButtonStyle 避免藍色樣式。
     private var cardHeader: some View {
-        HStack(alignment: .center, spacing: 12) {
-            AsyncImage(url: item.authorAvatarUrl.flatMap(URL.init(string:))) { phase in
-                switch phase {
-                case .success(let img): img.resizable().aspectRatio(contentMode: .fill)
-                case .failure, .empty: Color.gray.opacity(0.3)
-                @unknown default: Color.gray.opacity(0.3)
+        let author = CommunityAuthor(id: item.authorId, displayName: item.authorName, avatarURL: item.authorAvatarUrl)
+        return HStack(alignment: .center, spacing: 12) {
+            NavigationLink(destination: UserProfileView(user: author, subtitle: item.authorSubtitle)) {
+                HStack(spacing: 12) {
+                    AsyncImage(url: item.authorAvatarUrl.flatMap(URL.init(string:))) { phase in
+                        switch phase {
+                        case .success(let img): img.resizable().aspectRatio(contentMode: .fill)
+                        case .failure, .empty: Color.gray.opacity(0.3)
+                        @unknown default: Color.gray.opacity(0.3)
+                        }
+                    }
+                    .frame(width: 40, height: 40)
+                    .clipShape(Circle())
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(item.authorName)
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundStyle(CommunityColors.textPrimary)
+                        Text(item.authorSubtitle)
+                            .font(.system(size: 12))
+                            .foregroundStyle(CommunityColors.textMuted)
+                    }
                 }
+                .contentShape(Rectangle())
             }
-            .frame(width: 40, height: 40)
-            .clipShape(Circle())
-            VStack(alignment: .leading, spacing: 2) {
-                Text(item.authorName)
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(CommunityColors.textPrimary)
-                Text(item.authorSubtitle)
-                    .font(.system(size: 12))
-                    .foregroundStyle(CommunityColors.textMuted)
-            }
+            .buttonStyle(PlainButtonStyle())
             Spacer()
             Button(action: onFollowTap) {
                 Text(isFollowing ? "Following" : "Follow")
@@ -1233,6 +1382,8 @@ struct CommunityFilterSheet: View {
 // MARK: - Create Route Flow（與 Community 同款深色背景 #0B121F）
 struct CreateRouteFlowView: View {
     @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject private var userState: UserState
+    @State private var showLoginPrompt = false
 
     var body: some View {
         ScrollView {
@@ -1288,19 +1439,7 @@ struct CreateRouteFlowView: View {
                         )
                     }
                     .buttonStyle(.plain)
-                    NavigationLink(destination: LiveTrackRecordingView()) {
-                        createRouteOptionCardContent(
-                            icon: "location.fill",
-                            title: "Record Live Track",
-                            badge: nil,
-                            subtitle: "Track your route in real time. Auto-waypoints every 500m or when you stop 2+ mins. Save as draft.",
-                            trailingIcon: "chevron.right",
-                            cardBg: CommunityColors.cardBg,
-                            iconCircleColor: CommunityColors.accentGreen.opacity(0.4),
-                            borderColor: CommunityColors.accentGreen
-                        )
-                    }
-                    .buttonStyle(.plain)
+                    recordLiveTrackEntry
                 }
                 .padding(.horizontal, 20)
                 Spacer(minLength: 40)
@@ -1311,6 +1450,43 @@ struct CreateRouteFlowView: View {
         .background(CommunityColors.background)
         .navigationBarBackButtonHidden(true)
         .preferredColorScheme(.dark)
+        .sheet(isPresented: $showLoginPrompt) {
+            ZStack {
+                Color.black.opacity(0.6)
+                    .ignoresSafeArea()
+                    .onTapGesture { showLoginPrompt = false }
+                LoginPromptModal(
+                    onSignIn: {
+                        userState.showLandingFromApp = true
+                        showLoginPrompt = false
+                    },
+                    onDismiss: { showLoginPrompt = false }
+                )
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var recordLiveTrackEntry: some View {
+        let card = createRouteOptionCardContent(
+            icon: "location.fill",
+            title: "Record Live Track",
+            badge: nil,
+            subtitle: "Track your route in real time. Auto-waypoints every 500m or when you stop 2+ mins. Save as draft.",
+            trailingIcon: "chevron.right",
+            cardBg: CommunityColors.cardBg,
+            iconCircleColor: CommunityColors.accentGreen.opacity(0.4),
+            borderColor: CommunityColors.accentGreen
+        )
+        if userState.isGuest {
+            Button {
+                showLoginPrompt = true
+            } label: { card }
+            .buttonStyle(.plain)
+        } else {
+            NavigationLink(destination: LiveTrackRecordingView()) { card }
+                .buttonStyle(.plain)
+        }
     }
 
     private var backButton: some View {
@@ -1435,4 +1611,4 @@ struct CreateRouteFlowView: View {
     }
 }
 
-#Preview { CommunityDiscoveryView() }
+#Preview { CommunityDiscoveryView().environmentObject(CommunityViewModel()).environmentObject(CurrentUser()) }

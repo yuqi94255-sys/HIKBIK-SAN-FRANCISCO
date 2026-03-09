@@ -107,7 +107,7 @@ struct RecreationTab: View {
             }
         }
     }
-
+    
     var body: some View {
         ScrollView {
             VStack(spacing: 0) {
@@ -374,7 +374,7 @@ struct RecreationTab: View {
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: HikBikSpacing.md) {
                         ForEach(filteredAreas) { area in
-                            NavigationLink(value: area) {
+                NavigationLink(value: area) {
                                 RecreationCardView(
                                     area: area,
                                     isFavorite: favoriteIds.contains(String(area.id)),
@@ -434,7 +434,7 @@ private struct RecreationCardView: View {
                 .clipped()
                 LinearGradient(colors: [.clear, .black.opacity(0.4)], startPoint: .top, endPoint: .bottom)
 
-                HStack {
+                    HStack {
                     Button(action: onToggleFavorite) {
                         Image(systemName: isFavorite ? "heart.fill" : "heart")
                             .font(.system(size: 14, weight: .semibold))
@@ -456,9 +456,9 @@ private struct RecreationCardView: View {
             .frame(height: 140)
 
             VStack(alignment: .leading, spacing: HikBikSpacing.sm) {
-                Text(area.name)
-                    .font(HikBikFont.headline())
-                    .foregroundStyle(Color.hikbikPrimary)
+                            Text(area.name)
+                                .font(HikBikFont.headline())
+                                .foregroundStyle(Color.hikbikPrimary)
                     .lineLimit(2)
 
                 VStack(alignment: .leading, spacing: 4) {
@@ -642,7 +642,7 @@ struct RecreationDetailSheetContent: View {
 
     @State private var activeTab: RecreationDetailTab = .overview
     @State private var isFavorite: Bool = false
-
+    
     private var coordinate: CLLocationCoordinate2D {
         CLLocationCoordinate2D(
             latitude: area.location.coordinates.latitude,
@@ -667,7 +667,7 @@ struct RecreationDetailSheetContent: View {
         if a >= 1_000 { return "\(a / 1_000)K" }
         return "\(a)"
     }
-
+    
     var body: some View {
         VStack(spacing: 0) {
             Capsule()
@@ -683,7 +683,7 @@ struct RecreationDetailSheetContent: View {
                 agency: agencyDisplayName
             )
             quickTagsRow
-            ScrollView {
+        ScrollView {
                 VStack(alignment: .leading, spacing: 20) {
                     RecreationAccessView(area: area, coordinate: coordinate, themeColor: themeColor)
                     StartNavigationButton(coordinate: coordinate, themeColor: themeColor)
@@ -800,9 +800,9 @@ struct RecreationDetailSheetContent: View {
             quickActionsSection
             quickStatsSection
             RecreationSectionCard(title: "About This Recreation Area", icon: "camera.fill") {
-                Text(area.description)
-                    .font(HikBikFont.body())
-                    .foregroundStyle(Color.hikbikForeground)
+                    Text(area.description)
+                        .font(HikBikFont.body())
+                        .foregroundStyle(Color.hikbikForeground)
                     .fixedSize(horizontal: false, vertical: true)
             }
             RecreationSectionCard(title: "Details", icon: "info.circle.fill") {
@@ -1201,8 +1201,8 @@ private struct RecreationStatCard: View {
                 .foregroundStyle(Color.cyan)
             Text(label)
                 .font(HikBikFont.caption2())
-                .foregroundStyle(Color.hikbikMutedForeground)
-            Text(value)
+            .foregroundStyle(Color.hikbikMutedForeground)
+        Text(value)
                 .font(HikBikFont.headline())
                 .foregroundStyle(Color.hikbikPrimary)
         }
@@ -1248,7 +1248,7 @@ private struct RecreationBullet: View {
                 .padding(.top, 6)
             Text(text)
                 .font(HikBikFont.caption())
-                .foregroundStyle(Color.hikbikForeground)
+            .foregroundStyle(Color.hikbikForeground)
         }
     }
 }
