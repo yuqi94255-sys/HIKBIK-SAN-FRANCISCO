@@ -21,9 +21,9 @@ struct StateParksListView: View {
                 .background(Color.hikbikBackground)
             } else {
                 ContentUnavailableView(
-                    "暂无公园数据",
+                    "No park data",
                     systemImage: "leaf",
-                    description: Text("请将 states-parks.json 放入工程并包含本州数据，或从 Web 版导出完整数据。")
+                    description: Text("Add states-parks.json to the project with data for this state, or export full data from the web app.")
                 )
             }
         }

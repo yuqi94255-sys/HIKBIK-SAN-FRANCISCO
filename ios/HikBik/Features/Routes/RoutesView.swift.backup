@@ -7,8 +7,6 @@ private enum RouteColors {
     static let cardBg = Color(hex: "2A3540")
     static let textPrimary = Color.white
     static let textMuted = Color(hex: "9CA3AF")
-    /// Search / input placeholder only (brighter for contrast on dark backgrounds).
-    static let searchPlaceholder = Color.white.opacity(0.6)
     static let accentGreen = Color(hex: "10B981")
     static let accentOrange = Color(hex: "F97316")
     static let accentRed = Color(hex: "EF4444")
@@ -226,6 +224,7 @@ struct RoutesView: View {
 
     private var allRoutesContent: some View {
         VStack(alignment: .leading, spacing: 0) {
+            officialDetailedTrackSection
             routeSection(title: "Trending Now", icon: "chart.line.uptrend.xyaxis", routes: trendingRoutes)
             routeSection(title: "Pro Guide Routes", icon: "person.badge.shield.checkmark.fill", routes: proGuideRoutes)
             routeSection(title: "National Park National Forest", icon: "leaf.fill", routes: nationalParkForestRoutes)
@@ -247,20 +246,12 @@ struct RoutesView: View {
             }
             .padding(.top, 16)
 
-            ZStack(alignment: .leading) {
-                if aiPlannerInput.isEmpty {
-                    Text("e.g. 3-day hike in Yosemite with lakes")
-                        .font(.system(size: 16))
-                        .foregroundStyle(RouteColors.searchPlaceholder)
-                        .padding(16)
-                }
-                TextField("", text: $aiPlannerInput)
-                    .font(.system(size: 16))
-                    .foregroundStyle(RouteColors.textPrimary)
-                    .padding(16)
-            }
-            .background(RouteColors.cardBg)
-            .clipShape(RoundedRectangle(cornerRadius: 12))
+            TextField("e.g. 3-day hike in Yosemite with lakes", text: $aiPlannerInput)
+                .font(.system(size: 16))
+                .foregroundStyle(RouteColors.textPrimary)
+                .padding(16)
+                .background(RouteColors.cardBg)
+                .clipShape(RoundedRectangle(cornerRadius: 12))
 
             Button { } label: {
                 HStack {
@@ -292,42 +283,6 @@ struct RoutesView: View {
             Spacer(minLength: 80)
         }
         .animation(.easeInOut(duration: 0.25), value: activeTab)
-    }
-
-    /// Official Detailed Track 入口：Half Dome Cables，點擊進入官方詳情頁
-    private var officialDetailedTrackSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack(spacing: 8) {
-                Image(systemName: "location.north.line.fill")
-                    .font(.system(size: 18))
-                    .foregroundStyle(RouteColors.accentGreen)
-                Text("Official Detailed")
-                    .font(.system(size: 18, weight: .bold))
-                    .foregroundStyle(RouteColors.textPrimary)
-            }
-            .padding(.horizontal, 20)
-
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 16) {
-                    if let payload = OfficialTrackPayload.yosemiteHalfDome {
-                        NavigationLink(destination: OfficialDetailedTrackView(track: .yosemiteCables)) {
-                            YosemiteHalfDomeCard(
-                                title: payload.header.title,
-                                location: payload.header.location,
-                                rating: payload.header.rating,
-                                reviewsCount: payload.header.reviewsCount,
-                                imageURL: payload.heroImageURL
-                            )
-                        }
-                        .buttonStyle(.plain)
-                    }
-                }
-                .padding(.horizontal, 20)
-                .padding(.trailing, 44)
-                .padding(.vertical, 4)
-            }
-        }
-        .padding(.bottom, 12)
     }
 
     /// 骨架屏：Official 為 5 列 × 4 張，其餘為 1 列 × 4 張
@@ -416,6 +371,42 @@ struct RoutesView: View {
         .padding(.bottom, 20)
     }
 
+    /// Official Detailed Track 入口：Half Dome Cables Section，點擊進入 JSON 驅動的綠色戰術詳情頁
+    private var officialDetailedTrackSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(spacing: 8) {
+                Image(systemName: "location.north.line.fill")
+                    .font(.system(size: 18))
+                    .foregroundStyle(RouteColors.accentGreen)
+                Text("Official Detailed")
+                    .font(.system(size: 18, weight: .bold))
+                    .foregroundStyle(RouteColors.textPrimary)
+            }
+            .padding(.horizontal, 20)
+
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 16) {
+                    if let payload = OfficialTrackPayload.yosemiteHalfDome {
+                        NavigationLink(destination: OfficialDetailedTrackView(track: .yosemiteCables)) {
+                            YosemiteHalfDomeCard(
+                                title: payload.header.title,
+                                location: payload.header.location,
+                                rating: payload.header.rating,
+                                reviewsCount: payload.header.reviewsCount,
+                                imageURL: payload.heroImageURL
+                            )
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                .padding(.horizontal, 20)
+                .padding(.trailing, 44)
+                .padding(.vertical, 4)
+            }
+        }
+        .padding(.bottom, 12)
+    }
+
     private func routeSection(title: String, subtitle: String? = nil, icon: String, routes: [RouteItem]) -> some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
@@ -463,101 +454,6 @@ struct RoutesView: View {
             }
         }
         .padding(.bottom, 12)
-    }
-}
-
-// MARK: - Yosemite Half Dome 入口卡（Official Detailed，戰術紫 OFFICIAL，跳轉官方詳情頁）
-private struct YosemiteHalfDomeCard: View {
-    let title: String
-    let location: String
-    let rating: String
-    let reviewsCount: Int
-    let imageURL: URL?
-
-    private let cardWidth: CGFloat = 280
-    private let imageHeight: CGFloat = 140
-    private let tacticalPurple = Color(hex: "A855F7")
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            ZStack(alignment: .topLeading) {
-                AsyncImage(url: imageURL) { phase in
-                    switch phase {
-                    case .success(let img): img.resizable().aspectRatio(contentMode: .fill)
-                    case .failure: Color.gray.opacity(0.3)
-                    default: Color.gray.opacity(0.2)
-                    }
-                }
-                .frame(width: cardWidth, height: imageHeight)
-                .clipped()
-
-                Text("OFFICIAL")
-                    .font(.system(size: 11, weight: .bold))
-                    .foregroundStyle(.white)
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 5)
-                    .background(tacticalPurple)
-                    .clipShape(Capsule())
-                    .padding(12)
-            }
-            .frame(width: cardWidth, height: imageHeight)
-            .clipShape(RoundedRectangle(cornerRadius: 12))
-
-            VStack(alignment: .leading, spacing: 8) {
-                Text(title)
-                    .font(.system(size: 16, weight: .bold))
-                    .foregroundStyle(tacticalPurple)
-                    .lineLimit(1)
-
-                HStack(spacing: 4) {
-                    Image(systemName: "mappin")
-                        .font(.system(size: 12))
-                        .foregroundStyle(RouteColors.textMuted)
-                    Text(location)
-                        .font(.system(size: 13))
-                        .foregroundStyle(RouteColors.textMuted)
-                        .lineLimit(1)
-                }
-
-                HStack {
-                    HStack(spacing: 4) {
-                        Image(systemName: "star.fill")
-                            .font(.system(size: 12))
-                            .foregroundStyle(RouteColors.accentYellow)
-                        Text("\(rating) (\(reviewsCount))")
-                            .font(monoFontBold)
-                            .foregroundStyle(RouteColors.textPrimary)
-                    }
-                    Spacer()
-                    Text("Detailed Track")
-                        .font(.system(size: 12, weight: .medium))
-                        .foregroundStyle(tacticalPurple)
-                }
-
-                HStack {
-                    Text("Official Detailed")
-                        .font(.system(size: 12, weight: .bold))
-                        .foregroundStyle(.white)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 6)
-                        .background(tacticalPurple)
-                        .clipShape(Capsule())
-                    Spacer()
-                    HStack(spacing: 4) {
-                        Text("View")
-                            .font(.system(size: 14, weight: .semibold))
-                        Image(systemName: "arrow.right")
-                            .font(.system(size: 12, weight: .semibold))
-                    }
-                    .foregroundStyle(RouteColors.textPrimary)
-                }
-            }
-            .padding(16)
-            .frame(width: cardWidth, alignment: .leading)
-            .background(RouteColors.cardBg)
-        }
-        .frame(width: cardWidth)
-        .clipShape(RoundedRectangle(cornerRadius: 16))
     }
 }
 
@@ -738,6 +634,101 @@ struct RouteCard: View {
                         }
                         .foregroundStyle(RouteColors.textPrimary)
                     }
+                }
+            }
+            .padding(16)
+            .frame(width: cardWidth, alignment: .leading)
+            .background(RouteColors.cardBg)
+        }
+        .frame(width: cardWidth)
+        .clipShape(RoundedRectangle(cornerRadius: 16))
+    }
+}
+
+// MARK: - Yosemite Half Dome 入口卡（Official Detailed，戰術紫 OFFICIAL 標籤，跳轉 JSON 詳情頁）
+private struct YosemiteHalfDomeCard: View {
+    let title: String
+    let location: String
+    let rating: String
+    let reviewsCount: Int
+    let imageURL: URL?
+
+    private let cardWidth: CGFloat = 280
+    private let imageHeight: CGFloat = 140
+    private let tacticalPurple = Color(hex: "A855F7")
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            ZStack(alignment: .topLeading) {
+                AsyncImage(url: imageURL) { phase in
+                    switch phase {
+                    case .success(let img): img.resizable().aspectRatio(contentMode: .fill)
+                    case .failure: Color.gray.opacity(0.3)
+                    default: Color.gray.opacity(0.2)
+                    }
+                }
+                .frame(width: cardWidth, height: imageHeight)
+                .clipped()
+
+                Text("OFFICIAL")
+                    .font(.system(size: 11, weight: .bold))
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 5)
+                    .background(tacticalPurple)
+                    .clipShape(Capsule())
+                    .padding(12)
+            }
+            .frame(width: cardWidth, height: imageHeight)
+            .clipShape(RoundedRectangle(cornerRadius: 12))
+
+            VStack(alignment: .leading, spacing: 8) {
+                Text(title)
+                    .font(.system(size: 16, weight: .bold))
+                    .foregroundStyle(tacticalPurple)
+                    .lineLimit(1)
+
+                HStack(spacing: 4) {
+                    Image(systemName: "mappin")
+                        .font(.system(size: 12))
+                        .foregroundStyle(RouteColors.textMuted)
+                    Text(location)
+                        .font(.system(size: 13))
+                        .foregroundStyle(RouteColors.textMuted)
+                        .lineLimit(1)
+                }
+
+                HStack {
+                    HStack(spacing: 4) {
+                        Image(systemName: "star.fill")
+                            .font(.system(size: 12))
+                            .foregroundStyle(RouteColors.accentYellow)
+                        Text("\(rating) (\(reviewsCount))")
+                            .font(monoFontBold)
+                            .foregroundStyle(RouteColors.textPrimary)
+                    }
+                    Spacer()
+                    Text("Detailed Track")
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundStyle(tacticalPurple)
+                }
+
+                HStack {
+                    Text("Official Detailed")
+                        .font(.system(size: 12, weight: .bold))
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 6)
+                        .background(tacticalPurple)
+                        .clipShape(Capsule())
+                    Spacer()
+                    HStack(spacing: 4) {
+                        Text("View")
+                            .font(.system(size: 14, weight: .semibold))
+                        Image(systemName: "arrow.right")
+                            .font(.system(size: 12, weight: .semibold))
+                    }
+                    .foregroundStyle(RouteColors.textPrimary)
                 }
             }
             .padding(16)

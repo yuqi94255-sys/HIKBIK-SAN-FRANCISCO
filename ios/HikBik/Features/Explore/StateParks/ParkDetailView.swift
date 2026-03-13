@@ -29,7 +29,7 @@ struct ParkDetailView: View {
                         .foregroundStyle(Color.hikbikForeground)
                     
                     if !park.activities.isEmpty {
-                        Text("活动")
+                        Text("Activities")
                             .font(HikBikFont.headline())
                             .foregroundStyle(Color.hikbikPrimary)
                         FlowLayout(spacing: HikBikSpacing.sm) {
@@ -49,7 +49,7 @@ struct ParkDetailView: View {
                     if let fee = park.entryFee { Label(fee, systemImage: "dollarsign").foregroundStyle(Color.hikbikForeground) }
                     if let phone = park.phone { Label(phone, systemImage: "phone").foregroundStyle(Color.hikbikForeground) }
                     if let url = park.websiteUrl, let u = URL(string: url) {
-                        Link(destination: u) { Label("官网", systemImage: "link").foregroundStyle(Color.hikbikTabActive) }
+                        Link(destination: u) { Label("Official Site", systemImage: "link").foregroundStyle(Color.hikbikTabActive) }
                     }
                 }
                 .padding(.horizontal)
@@ -73,7 +73,7 @@ struct ParkDetailView: View {
 #Preview {
     NavigationStack {
         ParkDetailView(park: Park(
-            id: 1, name: "示例公园", description: "描述", image: "https://images.unsplash.com/photo-1501594907352-04cda38ebc29?w=400",
+            id: 1, name: "Sample Park", description: "Description", image: "https://images.unsplash.com/photo-1501594907352-04cda38ebc29?w=400",
             activities: ["Hiking", "Camping"], latitude: 37.5, longitude: -122, popularity: 8,
             hours: "8–6", entryFee: "$10", phone: nil, region: nil, county: nil, type: nil, camping: nil, websiteUrl: nil
         ))

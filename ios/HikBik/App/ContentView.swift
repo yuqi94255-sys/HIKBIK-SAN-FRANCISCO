@@ -5,23 +5,32 @@ struct ContentView: View {
     @StateObject private var cartStore = CartStore()
     @StateObject private var communityViewModel = CommunityViewModel()
     @StateObject private var currentUser = CurrentUser()
+    @StateObject private var socialManager = SocialManager()
+    @ObservedObject private var tabSelection = TabSelectionManager.shared
 
     var body: some View {
-        TabView {
+        TabView(selection: $tabSelection.selectedTabIndex) {
             HomeView()
                 .tabItem { Label("Home", systemImage: "house.fill") }
+                .tag(0)
             RoutesView()
                 .tabItem { Label("Routes", systemImage: "map.fill") }
+                .tag(1)
             ShopView()
                 .tabItem { Label("Shop", systemImage: "bag.fill") }
+                .tag(2)
             CommunityDiscoveryView()
                 .tabItem { Label("Community", systemImage: "person.2.fill") }
+                .tag(3)
             ProfileView()
                 .tabItem { Label("Profile", systemImage: "person.crop.circle.fill") }
+                .tag(4)
         }
         .environmentObject(cartStore)
         .environmentObject(communityViewModel)
         .environmentObject(currentUser)
+        .environmentObject(socialManager)
+        .environmentObject(TrackDataManager.shared)
         .tint(Color.hikbikTabActive)
         .onAppear {
             let appearance = UITabBarAppearance()
@@ -45,4 +54,6 @@ struct ContentView: View {
         .environmentObject(UserState())
         .environmentObject(CommunityViewModel())
         .environmentObject(CurrentUser())
+        .environmentObject(SocialManager())
+        .environmentObject(TrackDataManager.shared)
 }

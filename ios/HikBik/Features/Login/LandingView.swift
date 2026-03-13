@@ -90,7 +90,17 @@ private struct UnifiedLoginCard: View {
     @FocusState private var isOTPFocused: Bool
     @State private var otpTimer: Timer?
 
+    /// 實時校驗：後端返回該郵箱已存在時為 true，輸入框紅框 + "Account already exists."
+    @State private var emailAlreadyExists = false
+    @State private var isCheckingEmail = false
+    /// 註冊請求進行中，按鈕顯示 Loading，防止重複點擊
+    @State private var isSubmittingDetails = false
+    /// 註冊報錯「Email already in use」時彈窗引導去登錄
+    @State private var showAccountExistsAlert = false
+    @State private var emailCheckTask: Task<Void, Never>?
+
     private let otpLength = 6
+    private let emailDebounceNanoseconds: UInt64 = 500_000_000 // 500ms
 
     /// Standard email regex (e.g. user@example.com)
     private static let emailPredicate = NSPredicate(format: "SELF MATCHES %@", #"^[A-Z0-9a-z._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,64}$"#)
@@ -109,9 +119,9 @@ private struct UnifiedLoginCard: View {
     private static let specialChars = CharacterSet(charactersIn: "@$%!#&*()_+-=[]{}|;:'\",.<>?/\\~`")
     private var passwordRuleSpecial: Bool { password.unicodeScalars.contains(where: { Self.specialChars.contains($0) }) }
 
-    /// Step 1: Verify Email only when valid email AND terms agreed
+    /// Step 1: Verify Email only when valid email、同意條款且該郵箱未已被註冊
     private var canVerifyEmail: Bool {
-        isEmailValid && agreedToTerms
+        isEmailValid && agreedToTerms && !emailAlreadyExists
     }
 
     /// Step 2: Create Account requires email verified + all fields (name, password, terms)
@@ -162,7 +172,35 @@ private struct UnifiedLoginCard: View {
         .sheet(item: $presentedLegalType) { type in
             legalModal(for: type)
         }
+        .alert("Account Exists", isPresented: $showAccountExistsAlert) {
+            Button("Go to Log In") {
+                isExistingUser = true
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("It looks like you already have an account. Would you like to Log In instead?")
+        }
         .animation(.easeInOut(duration: 0.3), value: flowStep.rawValue)
+    }
+
+    /// 用戶停止輸入 500ms 後調用後端校驗該 Email 是否已存在，並更新 emailAlreadyExists
+    private func scheduleEmailExistsCheck() {
+        emailCheckTask?.cancel()
+        emailCheckTask = Task {
+            do {
+                try await Task.sleep(nanoseconds: emailDebounceNanoseconds)
+            } catch { return }
+            guard !Task.isCancelled else { return }
+            let current = email.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !current.isEmpty, Self.emailPredicate.evaluate(with: current) else { return }
+            await MainActor.run { isCheckingEmail = true }
+            let exists = await AuthService.checkEmailExists(email)
+            guard !Task.isCancelled else { return }
+            await MainActor.run {
+                emailAlreadyExists = exists
+                isCheckingEmail = false
+            }
+        }
     }
 
     @ViewBuilder
@@ -204,6 +242,8 @@ private struct UnifiedLoginCard: View {
                             .foregroundStyle(inputTextWhite)
                             .onChange(of: email) { _, _ in
                                 if showEmailError && isEmailValid { showEmailError = false }
+                                if emailAlreadyExists { emailAlreadyExists = false }
+                                scheduleEmailExistsCheck()
                             }
                         if email.isEmpty {
                             Text("Email")
@@ -218,14 +258,19 @@ private struct UnifiedLoginCard: View {
                     .overlay(
                         RoundedRectangle(cornerRadius: 12)
                             .strokeBorder(
-                                isEmailValid ? neonGreen : (isEmailFocused ? neonGreen : Color.white.opacity(0.2)),
+                                emailAlreadyExists ? emailErrorRed : (isEmailValid ? neonGreen : (isEmailFocused ? neonGreen : Color.white.opacity(0.2))),
                                 lineWidth: 1
                             )
                     )
-                    .shadow(color: (isEmailValid || isEmailFocused) ? neonGreen.opacity(0.35) : .clear, radius: 4)
+                    .shadow(color: emailAlreadyExists ? .clear : ((isEmailValid || isEmailFocused) ? neonGreen.opacity(0.35) : .clear), radius: 4)
 
                     if showEmailError {
                         Text("Please enter a valid email address.")
+                            .font(.system(size: 12, weight: .medium, design: .rounded))
+                            .foregroundStyle(emailErrorRed)
+                    }
+                    if emailAlreadyExists {
+                        Text("Account already exists.")
                             .font(.system(size: 12, weight: .medium, design: .rounded))
                             .foregroundStyle(emailErrorRed)
                     }
@@ -267,7 +312,10 @@ private struct UnifiedLoginCard: View {
                         Rectangle().fill(Color.white.opacity(0.2)).frame(height: 1)
                     }
                     HStack(spacing: 36) {
-                        SocialLoginButtonGhost(icon: "apple.logo", action: {})
+                        SocialLoginButtonGhost(icon: "apple.logo", action: {
+                            AuthManager.shared.mockAppleLogin()
+                            onComplete()
+                        })
                         SocialLoginButtonGhost(icon: "globe", action: {})
                         SocialLoginButtonGhost(icon: "person.2.fill", action: {})
                     }
@@ -445,18 +493,28 @@ private struct UnifiedLoginCard: View {
 
     private var detailsPrimaryButton: some View {
         Button(action: step2PrimaryTapped) {
-            Text(isExistingUser ? "Log In" : "Create Account")
-                .font(.system(size: 17, weight: .semibold, design: .rounded))
-                .foregroundStyle(canSubmitDetails ? .black : .black.opacity(0.6))
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 14)
-                .background(Capsule().fill(canSubmitDetails ? neonGreen : neonGreen.opacity(0.5)))
+            Group {
+                if isSubmittingDetails {
+                    ProgressView()
+                        .progressViewStyle(CircularProgressViewStyle(tint: .black))
+                        .scaleEffect(0.9)
+                } else {
+                    Text(isExistingUser ? "Log In" : "Create Account")
+                        .font(.system(size: 17, weight: .semibold, design: .rounded))
+                        .foregroundStyle(canSubmitDetails ? .black : .black.opacity(0.6))
+                }
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 14)
+            .background(Capsule().fill(canSubmitDetails && !isSubmittingDetails ? neonGreen : neonGreen.opacity(0.5)))
         }
         .buttonStyle(.plain)
-        .scaleEffect(canSubmitDetails && createAccountPulse ? 1.02 : 1.0)
+        .disabled(isSubmittingDetails)
+        .scaleEffect(canSubmitDetails && createAccountPulse && !isSubmittingDetails ? 1.02 : 1.0)
         .shadow(color: neonGreen.opacity(canSubmitDetails ? 0.6 : 0.25), radius: canSubmitDetails ? 14 : 10)
         .shadow(color: neonGreen.opacity(canSubmitDetails ? 0.4 : 0.15), radius: canSubmitDetails ? 24 : 20)
         .animation(.easeInOut(duration: 0.6), value: createAccountPulse)
+        .animation(.easeInOut(duration: 0.2), value: isSubmittingDetails)
         .onChange(of: canSubmitDetails) { _, ready in
             if ready {
                 createAccountPulse = true
@@ -475,14 +533,41 @@ private struct UnifiedLoginCard: View {
     }
 
     private func step2PrimaryTapped() {
-        guard canSubmitDetails else {
+        guard canSubmitDetails, !isSubmittingDetails else {
             if !agreedToTerms {
                 showTermsHint = true
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) { showTermsHint = false }
             }
             return
         }
-        onComplete()
+        if isExistingUser {
+            onComplete()
+            return
+        }
+        isSubmittingDetails = true
+        Task {
+            do {
+                try await AuthService.register(
+                    email: email,
+                    firstName: firstName.trimmingCharacters(in: .whitespaces),
+                    middleName: middleName.trimmingCharacters(in: .whitespaces),
+                    lastName: lastName.trimmingCharacters(in: .whitespaces),
+                    password: password
+                )
+                await MainActor.run {
+                    isSubmittingDetails = false
+                    onComplete()
+                }
+            } catch {
+                await MainActor.run {
+                    isSubmittingDetails = false
+                    if isEmailAlreadyInUse(error) {
+                        showAccountExistsAlert = true
+                    }
+                    // 其他錯誤可在此擴展（如 Toast 或 Alert）
+                }
+            }
+        }
     }
 
     // MARK: - Step 3: OTP (in-place, same screen; no navigation)

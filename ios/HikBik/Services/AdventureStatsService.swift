@@ -33,7 +33,7 @@ enum AdventureStatsService {
 
     /// 5 values in 0...1 for radar: [Distance, Elevation, Wilderness, Frequency, Exploration]
     static func radarValues() -> [Double] {
-        let drafts = UnifiedDraftStore.loadAll()
+        let drafts = TrackDataManager.shared.allTracks
         let recorded = drafts.filter { $0.source == .liveRecorded || $0.source == .imported }
         let miles = AchievementStore.cumulativeMiles
         let distance = min(1.0, miles / maxDistanceMiles)
@@ -85,7 +85,7 @@ enum AdventureStatsService {
 
     /// Routes sorted by remoteness (distance from nearest urban center desc, then elevation).
     static func remoteRoutes() -> [DraftItem] {
-        let drafts = UnifiedDraftStore.loadAll()
+        let drafts = TrackDataManager.shared.allTracks
             .filter { $0.source == .liveRecorded || $0.source == .imported }
         return drafts.sorted { a, b in
             let distA = minDistanceFromUrban(coordPoints: a.polyline2D ?? a.coordinate2DPoints)
@@ -154,7 +154,7 @@ enum AdventureStatsService {
 
     /// Current month vs previous month activity count for trend icon.
     static func monthlyTrend() -> (current: Int, previous: Int) {
-        let drafts = UnifiedDraftStore.loadAll()
+        let drafts = TrackDataManager.shared.allTracks
         let cal = Calendar.current
         let now = Date()
         guard let thisMonthStart = cal.date(from: cal.dateComponents([.year, .month], from: now)),

@@ -48,9 +48,6 @@
 		B001000000000000000027 /* national-parks-wildlife.json in Resources */ = {isa = PBXBuildFile; fileRef = F001000000000000000027 /* national-parks-wildlife.json */; };
 		B001000000000000000028 /* national-parks-stats.json in Resources */ = {isa = PBXBuildFile; fileRef = F001000000000000000028 /* national-parks-stats.json */; };
 		B001000000000000000029 /* national-parks-lodging.json in Resources */ = {isa = PBXBuildFile; fileRef = F001000000000000000029 /* national-parks-lodging.json */; };
-		B001000000000000000036 /* ParkBackupData.json in Resources */ = {isa = PBXBuildFile; fileRef = F001000000000000000036 /* ParkBackupData.json */; };
-		B00100000000000000003D /* arizona-trip-itinerary.json in Resources */ = {isa = PBXBuildFile; fileRef = F00100000000000000003D /* arizona-trip-itinerary.json */; };
-		B001000000000000000060 /* MistTrail.gpx in Resources */ = {isa = PBXBuildFile; fileRef = F001000000000000000060 /* MistTrail.gpx */; };
 		B00100000000000000002A /* ParkCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00100000000000000002A /* ParkCardView.swift */; };
 		B00100000000000000002B /* RoutesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00100000000000000002B /* RoutesView.swift */; };
 		B00100000000000000002C /* ShopView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00100000000000000002C /* ShopView.swift */; };
@@ -63,33 +60,14 @@
 		B001000000000000000033 /* NPSAPIService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F001000000000000000033 /* NPSAPIService.swift */; };
 		B001000000000000000034 /* ParkDetailModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = F001000000000000000034 /* ParkDetailModels.swift */; };
 		B001000000000000000035 /* AccessLogisticsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F001000000000000000035 /* AccessLogisticsView.swift */; };
+		B001000000000000000036 /* ParkBackupData.json in Resources */ = {isa = PBXBuildFile; fileRef = F001000000000000000036 /* ParkBackupData.json */; };
 		B001000000000000000037 /* ForestDetailSheetContent.swift in Sources */ = {isa = PBXBuildFile; fileRef = F001000000000000000037 /* ForestDetailSheetContent.swift */; };
 		B001000000000000000038 /* ForestAccessView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F001000000000000000038 /* ForestAccessView.swift */; };
 		B001000000000000000039 /* GrasslandDetailSheetContent.swift in Sources */ = {isa = PBXBuildFile; fileRef = F001000000000000000039 /* GrasslandDetailSheetContent.swift */; };
 		B00100000000000000003A /* GrasslandAccessView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00100000000000000003A /* GrasslandAccessView.swift */; };
 		B00100000000000000003B /* RecreationAccessView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00100000000000000003B /* RecreationAccessView.swift */; };
 		B00100000000000000003C /* CustomRouteBuilderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00100000000000000003C /* CustomRouteBuilderView.swift */; };
-		B001000000000000000054 /* OfficialRouteDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F001000000000000000054 /* OfficialRouteDetailView.swift */; };
-		B001000000000000000055 /* RouteDetailData.swift in Sources */ = {isa = PBXBuildFile; fileRef = F001000000000000000055 /* RouteDetailData.swift */; };
-		B00100000000000000005A /* OfficialMacroModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00100000000000000005A /* OfficialMacroModels.swift */; };
-		B001000000000000000061 /* DetailedTrackModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F001000000000000000061 /* DetailedTrackModel.swift */; };
-		B001000000000000000062 /* MacroJourneyModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F001000000000000000062 /* MacroJourneyModel.swift */; };
-		B001000000000000000063 /* OfficialJourney.swift in Sources */ = {isa = PBXBuildFile; fileRef = F001000000000000000063 /* OfficialJourney.swift */; };
-		B001000000000000000064 /* CommunityJourney.swift in Sources */ = {isa = PBXBuildFile; fileRef = F001000000000000000064 /* CommunityJourney.swift */; };
-		B001000000000000000065 /* CommunityMacroDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F001000000000000000065 /* CommunityMacroDetailView.swift */; };
-		B001000000000000000066 /* CommunityViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F001000000000000000066 /* CommunityViewModel.swift */; };
-		B001000000000000000067 /* CurrentUser.swift in Sources */ = {isa = PBXBuildFile; fileRef = F001000000000000000067 /* CurrentUser.swift */; };
-		B001000000000000000068 /* UserProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F001000000000000000068 /* UserProfileView.swift */; };
-		B001000000000000000069 /* ImageUploadService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F001000000000000000069 /* ImageUploadService.swift */; };
-		B00100000000000000005B /* OfficialMacroNavigationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00100000000000000005B /* OfficialMacroNavigationView.swift */; };
-		B00100000000000000005C /* OfficialMacroJourneyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00100000000000000005C /* OfficialMacroJourneyView.swift */; };
-		B00100000000000000005D /* OfficialDetailedTrackNavigationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00100000000000000005D /* OfficialDetailedTrackNavigationView.swift */; };
-		B00100000000000000005E /* GPXParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00100000000000000005E /* GPXParser.swift */; };
-		B00100000000000000005F /* NavigationEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00100000000000000005F /* NavigationEngine.swift */; };
-		B001000000000000000056 /* WeatherModuleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F001000000000000000056 /* WeatherModuleView.swift */; };
-		B001000000000000000057 /* LiveTrailReportsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F001000000000000000057 /* LiveTrailReportsView.swift */; };
-		B001000000000000000058 /* OverallRouteReviewsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F001000000000000000058 /* OverallRouteReviewsView.swift */; };
-		B001000000000000000059 /* ReviewManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F001000000000000000059 /* ReviewManager.swift */; };
+		B00100000000000000003D /* arizona-trip-itinerary.json in Resources */ = {isa = PBXBuildFile; fileRef = F00100000000000000003D /* arizona-trip-itinerary.json */; };
 		B00100000000000000003E /* UnifiedDraftBox.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00100000000000000003E /* UnifiedDraftBox.swift */; };
 		B001000000000000000044 /* ProfileCollectionsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = F001000000000000000044 /* ProfileCollectionsStore.swift */; };
 		B001000000000000000045 /* ProfileAchievementsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = F001000000000000000045 /* ProfileAchievementsStore.swift */; };
@@ -97,6 +75,7 @@
 		B001000000000000000047 /* AchievementStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = F001000000000000000047 /* AchievementStore.swift */; };
 		B001000000000000000048 /* HonorCenterView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F001000000000000000048 /* HonorCenterView.swift */; };
 		B001000000000000000049 /* AdventureStatsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F001000000000000000049 /* AdventureStatsService.swift */; };
+		B0010000000000000000FE /* TrackDataManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0010000000000000000FE /* TrackDataManager.swift */; };
 		B00100000000000000004A /* RadarChartView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00100000000000000004A /* RadarChartView.swift */; };
 		B00100000000000000004B /* AdventureStatsProView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00100000000000000004B /* AdventureStatsProView.swift */; };
 		B00100000000000000004C /* ParkLandmarkIcons.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00100000000000000004C /* ParkLandmarkIcons.swift */; };
@@ -107,9 +86,46 @@
 		B001000000000000000051 /* LegalModal.swift in Sources */ = {isa = PBXBuildFile; fileRef = F001000000000000000051 /* LegalModal.swift */; };
 		B001000000000000000052 /* UserState.swift in Sources */ = {isa = PBXBuildFile; fileRef = F001000000000000000052 /* UserState.swift */; };
 		B001000000000000000053 /* LoginPromptModal.swift in Sources */ = {isa = PBXBuildFile; fileRef = F001000000000000000053 /* LoginPromptModal.swift */; };
+		B001000000000000000054 /* OfficialRouteDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F001000000000000000054 /* OfficialRouteDetailView.swift */; };
+		B001000000000000000055 /* RouteDetailData.swift in Sources */ = {isa = PBXBuildFile; fileRef = F001000000000000000055 /* RouteDetailData.swift */; };
+		B001000000000000000056 /* WeatherModuleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F001000000000000000056 /* WeatherModuleView.swift */; };
+		B001000000000000000057 /* LiveTrailReportsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F001000000000000000057 /* LiveTrailReportsView.swift */; };
+		B001000000000000000058 /* OverallRouteReviewsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F001000000000000000058 /* OverallRouteReviewsView.swift */; };
+		B001000000000000000059 /* ReviewManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F001000000000000000059 /* ReviewManager.swift */; };
+		B00100000000000000005A /* OfficialMacroModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00100000000000000005A /* OfficialMacroModels.swift */; };
+		B00100000000000000005B /* OfficialMacroNavigationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00100000000000000005B /* OfficialMacroNavigationView.swift */; };
+		B00100000000000000005C /* OfficialMacroJourneyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00100000000000000005C /* OfficialMacroJourneyView.swift */; };
+		B00100000000000000005D /* OfficialDetailedTrackNavigationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00100000000000000005D /* OfficialDetailedTrackNavigationView.swift */; };
+		B00100000000000000005E /* GPXParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00100000000000000005E /* GPXParser.swift */; };
+		B00100000000000000005F /* NavigationEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00100000000000000005F /* NavigationEngine.swift */; };
+		B001000000000000000060 /* MistTrail.gpx in Resources */ = {isa = PBXBuildFile; fileRef = F001000000000000000060 /* MistTrail.gpx */; };
+		B001000000000000000061 /* DetailedTrackModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F001000000000000000061 /* DetailedTrackModel.swift */; };
+		B001000000000000000062 /* MacroJourneyModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F001000000000000000062 /* MacroJourneyModel.swift */; };
+		B001000000000000000063 /* OfficialJourney.swift in Sources */ = {isa = PBXBuildFile; fileRef = F001000000000000000063 /* OfficialJourney.swift */; };
+		B001000000000000000064 /* CommunityJourney.swift in Sources */ = {isa = PBXBuildFile; fileRef = F001000000000000000064 /* CommunityJourney.swift */; };
+		B001000000000000000065 /* CommunityMacroDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F001000000000000000065 /* CommunityMacroDetailView.swift */; };
+		B001000000000000000066 /* CommunityViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F001000000000000000066 /* CommunityViewModel.swift */; };
+		B001000000000000000067 /* CurrentUser.swift in Sources */ = {isa = PBXBuildFile; fileRef = F001000000000000000067 /* CurrentUser.swift */; };
+		B001000000000000000068 /* UserProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F001000000000000000068 /* UserProfileView.swift */; };
+		B001000000000000000069 /* ImageUploadService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F001000000000000000069 /* ImageUploadService.swift */; };
+		B00100000000000000006A /* SocialManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00100000000000000006A /* SocialManager.swift */; };
+		B00100000000000000006B /* ManualJourneyDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00100000000000000006B /* ManualJourneyDetailView.swift */; };
+		B00100000000000000006C /* WeatherManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00100000000000000006C /* WeatherManager.swift */; };
+		B00100000000000000006D /* WeatherOverviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00100000000000000006D /* WeatherOverviewView.swift */; };
+		B00100000000000000006E /* RouteDetailViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00100000000000000006E /* RouteDetailViewModel.swift */; };
+		B00100000000000000006F /* SocialDataManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00100000000000000006F /* SocialDataManager.swift */; };
+		B001000000000000000070 /* AuthService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F001000000000000000070 /* AuthService.swift */; };
+		B001000000000000000071 /* AuthManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F001000000000000000071 /* AuthManager.swift */; };
+		B001000000000000000072 /* TrackRecorderEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = F001000000000000000072 /* TrackRecorderEngine.swift */; };
+		B001000000000000000073 /* PostEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F001000000000000000073 /* PostEditorView.swift */; };
+		B001000000000000000074 /* RouteFollowingNavigationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F001000000000000000074 /* RouteFollowingNavigationView.swift */; };
+		B001000000000000000075 /* TabSelectionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F001000000000000000075 /* TabSelectionManager.swift */; };
+		B001000000000000000076 /* TrackRecordingLiveActivityAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = F001000000000000000076 /* TrackRecordingLiveActivityAttributes.swift */; };
+		B001000000000000000077 /* TrackRecordingLiveActivityManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F001000000000000000077 /* TrackRecordingLiveActivityManager.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		C5C26F922F617F50004109D1 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		F001000000000000000001 /* HikBikApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HikBikApp.swift; sourceTree = "<group>"; };
 		F001000000000000000002 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		F001000000000000000003 /* StateModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StateModels.swift; sourceTree = "<group>"; };
@@ -151,15 +167,31 @@
 		F001000000000000000027 /* national-parks-wildlife.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "national-parks-wildlife.json"; sourceTree = "<group>"; };
 		F001000000000000000028 /* national-parks-stats.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "national-parks-stats.json"; sourceTree = "<group>"; };
 		F001000000000000000029 /* national-parks-lodging.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "national-parks-lodging.json"; sourceTree = "<group>"; };
+		F00100000000000000002A /* ParkCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ParkCardView.swift; sourceTree = "<group>"; };
+		F00100000000000000002B /* RoutesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoutesView.swift; sourceTree = "<group>"; };
+		F00100000000000000002C /* ShopView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShopView.swift; sourceTree = "<group>"; };
+		F00100000000000000003F /* UserProfileManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserProfileManager.swift; sourceTree = "<group>"; };
+		F001000000000000000040 /* CheckoutViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CheckoutViewModel.swift; sourceTree = "<group>"; };
+		F001000000000000000041 /* ShippingAddressForm.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShippingAddressForm.swift; sourceTree = "<group>"; };
+		F001000000000000000042 /* PaymentMethodSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaymentMethodSection.swift; sourceTree = "<group>"; };
+		F001000000000000000043 /* OrderSuccessView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OrderSuccessView.swift; sourceTree = "<group>"; };
+		F00100000000000000002D /* OrdersView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OrdersView.swift; sourceTree = "<group>"; };
+		F00100000000000000002E /* CommunityDiscoveryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommunityDiscoveryView.swift; sourceTree = "<group>"; };
+		F00100000000000000002F /* ParkDetailFlightyComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ParkDetailFlightyComponents.swift; sourceTree = "<group>"; };
+		F001000000000000000030 /* NPSAPIModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NPSAPIModels.swift; sourceTree = "<group>"; };
+		F001000000000000000031 /* NPSMockData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NPSMockData.swift; sourceTree = "<group>"; };
+		F001000000000000000032 /* NPSAPIConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NPSAPIConfig.swift; sourceTree = "<group>"; };
+		F001000000000000000033 /* NPSAPIService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NPSAPIService.swift; sourceTree = "<group>"; };
+		F001000000000000000034 /* ParkDetailModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ParkDetailModels.swift; sourceTree = "<group>"; };
+		F001000000000000000035 /* AccessLogisticsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccessLogisticsView.swift; sourceTree = "<group>"; };
 		F001000000000000000036 /* ParkBackupData.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = ParkBackupData.json; sourceTree = "<group>"; };
-		F00100000000000000003D /* arizona-trip-itinerary.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "arizona-trip-itinerary.json"; sourceTree = "<group>"; };
-		F001000000000000000060 /* MistTrail.gpx */ = {isa = PBXFileReference; lastKnownFileType = text; path = MistTrail.gpx; sourceTree = "<group>"; };
 		F001000000000000000037 /* ForestDetailSheetContent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ForestDetailSheetContent.swift; sourceTree = "<group>"; };
 		F001000000000000000038 /* ForestAccessView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ForestAccessView.swift; sourceTree = "<group>"; };
 		F001000000000000000039 /* GrasslandDetailSheetContent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GrasslandDetailSheetContent.swift; sourceTree = "<group>"; };
 		F00100000000000000003A /* GrasslandAccessView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GrasslandAccessView.swift; sourceTree = "<group>"; };
 		F00100000000000000003B /* RecreationAccessView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecreationAccessView.swift; sourceTree = "<group>"; };
 		F00100000000000000003C /* CustomRouteBuilderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomRouteBuilderView.swift; sourceTree = "<group>"; };
+		F00100000000000000003D /* arizona-trip-itinerary.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "arizona-trip-itinerary.json"; sourceTree = "<group>"; };
 		F00100000000000000003E /* UnifiedDraftBox.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnifiedDraftBox.swift; sourceTree = "<group>"; };
 		F001000000000000000044 /* ProfileCollectionsStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileCollectionsStore.swift; sourceTree = "<group>"; };
 		F001000000000000000045 /* ProfileAchievementsStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileAchievementsStore.swift; sourceTree = "<group>"; };
@@ -167,6 +199,9 @@
 		F001000000000000000047 /* AchievementStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AchievementStore.swift; sourceTree = "<group>"; };
 		F001000000000000000048 /* HonorCenterView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HonorCenterView.swift; sourceTree = "<group>"; };
 		F001000000000000000049 /* AdventureStatsService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdventureStatsService.swift; sourceTree = "<group>"; };
+		F0010000000000000000FE /* TrackDataManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrackDataManager.swift; sourceTree = "<group>"; };
+		F001000000000000000076 /* TrackRecordingLiveActivityAttributes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrackRecordingLiveActivityAttributes.swift; sourceTree = "<group>"; };
+		F001000000000000000077 /* TrackRecordingLiveActivityManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrackRecordingLiveActivityManager.swift; sourceTree = "<group>"; };
 		F00100000000000000004A /* RadarChartView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RadarChartView.swift; sourceTree = "<group>"; };
 		F00100000000000000004B /* AdventureStatsProView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdventureStatsProView.swift; sourceTree = "<group>"; };
 		F00100000000000000004C /* ParkLandmarkIcons.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ParkLandmarkIcons.swift; sourceTree = "<group>"; };
@@ -179,7 +214,17 @@
 		F001000000000000000053 /* LoginPromptModal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginPromptModal.swift; sourceTree = "<group>"; };
 		F001000000000000000054 /* OfficialRouteDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OfficialRouteDetailView.swift; sourceTree = "<group>"; };
 		F001000000000000000055 /* RouteDetailData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RouteDetailData.swift; sourceTree = "<group>"; };
+		F001000000000000000056 /* WeatherModuleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeatherModuleView.swift; sourceTree = "<group>"; };
+		F001000000000000000057 /* LiveTrailReportsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveTrailReportsView.swift; sourceTree = "<group>"; };
+		F001000000000000000058 /* OverallRouteReviewsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OverallRouteReviewsView.swift; sourceTree = "<group>"; };
+		F001000000000000000059 /* ReviewManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReviewManager.swift; sourceTree = "<group>"; };
 		F00100000000000000005A /* OfficialMacroModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OfficialMacroModels.swift; sourceTree = "<group>"; };
+		F00100000000000000005B /* OfficialMacroNavigationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OfficialMacroNavigationView.swift; sourceTree = "<group>"; };
+		F00100000000000000005C /* OfficialMacroJourneyView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OfficialMacroJourneyView.swift; sourceTree = "<group>"; };
+		F00100000000000000005D /* OfficialDetailedTrackNavigationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OfficialDetailedTrackNavigationView.swift; sourceTree = "<group>"; };
+		F00100000000000000005E /* GPXParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GPXParser.swift; sourceTree = "<group>"; };
+		F00100000000000000005F /* NavigationEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NavigationEngine.swift; sourceTree = "<group>"; };
+		F001000000000000000060 /* MistTrail.gpx */ = {isa = PBXFileReference; lastKnownFileType = text; path = MistTrail.gpx; sourceTree = "<group>"; };
 		F001000000000000000061 /* DetailedTrackModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DetailedTrackModel.swift; sourceTree = "<group>"; };
 		F001000000000000000062 /* MacroJourneyModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacroJourneyModel.swift; sourceTree = "<group>"; };
 		F001000000000000000063 /* OfficialJourney.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OfficialJourney.swift; sourceTree = "<group>"; };
@@ -189,27 +234,18 @@
 		F001000000000000000067 /* CurrentUser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CurrentUser.swift; sourceTree = "<group>"; };
 		F001000000000000000068 /* UserProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserProfileView.swift; sourceTree = "<group>"; };
 		F001000000000000000069 /* ImageUploadService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageUploadService.swift; sourceTree = "<group>"; };
-		F00100000000000000005B /* OfficialMacroNavigationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OfficialMacroNavigationView.swift; sourceTree = "<group>"; };
-		F00100000000000000005C /* OfficialMacroJourneyView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OfficialMacroJourneyView.swift; sourceTree = "<group>"; };
-		F00100000000000000005D /* OfficialDetailedTrackNavigationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OfficialDetailedTrackNavigationView.swift; sourceTree = "<group>"; };
-		F00100000000000000005E /* GPXParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GPXParser.swift; sourceTree = "<group>"; };
-		F00100000000000000005F /* NavigationEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NavigationEngine.swift; sourceTree = "<group>"; };
-		F001000000000000000056 /* WeatherModuleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeatherModuleView.swift; sourceTree = "<group>"; };
-		F001000000000000000057 /* LiveTrailReportsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveTrailReportsView.swift; sourceTree = "<group>"; };
-		F001000000000000000058 /* OverallRouteReviewsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OverallRouteReviewsView.swift; sourceTree = "<group>"; };
-		F001000000000000000059 /* ReviewManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReviewManager.swift; sourceTree = "<group>"; };
-		F00100000000000000002A /* ParkCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ParkCardView.swift; sourceTree = "<group>"; };
-		F00100000000000000002B /* RoutesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoutesView.swift; sourceTree = "<group>"; };
-		F00100000000000000002C /* ShopView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShopView.swift; sourceTree = "<group>"; };
-		F00100000000000000002D /* OrdersView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OrdersView.swift; sourceTree = "<group>"; };
-		F00100000000000000002E /* CommunityDiscoveryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommunityDiscoveryView.swift; sourceTree = "<group>"; };
-		F00100000000000000002F /* ParkDetailFlightyComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ParkDetailFlightyComponents.swift; sourceTree = "<group>"; };
-		F001000000000000000030 /* NPSAPIModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NPSAPIModels.swift; sourceTree = "<group>"; };
-		F001000000000000000031 /* NPSMockData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NPSMockData.swift; sourceTree = "<group>"; };
-		F001000000000000000032 /* NPSAPIConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NPSAPIConfig.swift; sourceTree = "<group>"; };
-		F001000000000000000033 /* NPSAPIService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NPSAPIService.swift; sourceTree = "<group>"; };
-		F001000000000000000034 /* ParkDetailModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ParkDetailModels.swift; sourceTree = "<group>"; };
-		F001000000000000000035 /* AccessLogisticsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccessLogisticsView.swift; sourceTree = "<group>"; };
+		F00100000000000000006A /* SocialManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SocialManager.swift; sourceTree = "<group>"; };
+		F001000000000000000075 /* TabSelectionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TabSelectionManager.swift; sourceTree = "<group>"; };
+		F00100000000000000006B /* ManualJourneyDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ManualJourneyDetailView.swift; sourceTree = "<group>"; };
+		F00100000000000000006C /* WeatherManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeatherManager.swift; sourceTree = "<group>"; };
+		F00100000000000000006D /* WeatherOverviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeatherOverviewView.swift; sourceTree = "<group>"; };
+		F00100000000000000006E /* RouteDetailViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RouteDetailViewModel.swift; sourceTree = "<group>"; };
+		F001000000000000000074 /* RouteFollowingNavigationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RouteFollowingNavigationView.swift; sourceTree = "<group>"; };
+		F00100000000000000006F /* SocialDataManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SocialDataManager.swift; sourceTree = "<group>"; };
+		F001000000000000000070 /* AuthService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthService.swift; sourceTree = "<group>"; };
+		F001000000000000000071 /* AuthManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthManager.swift; sourceTree = "<group>"; };
+		F001000000000000000072 /* TrackRecorderEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrackRecorderEngine.swift; sourceTree = "<group>"; };
+		F001000000000000000073 /* PostEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostEditorView.swift; sourceTree = "<group>"; };
 		T001000000000000000001 /* HikBik.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = HikBik.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -235,6 +271,7 @@
 		G001000000000000000002 /* HikBik */ = {
 			isa = PBXGroup;
 			children = (
+				C5C26F922F617F50004109D1 /* Info.plist */,
 				G001000000000000000009 /* App */,
 				G00100000000000000000A /* Core */,
 				G00100000000000000000B /* Features */,
@@ -277,12 +314,18 @@
 		G001000000000000000006 /* Services */ = {
 			isa = PBXGroup;
 			children = (
+				F00100000000000000006C /* WeatherManager.swift */,
+				F001000000000000000070 /* AuthService.swift */,
+				F00100000000000000006F /* SocialDataManager.swift */,
 				F001000000000000000069 /* ImageUploadService.swift */,
 				F001000000000000000005 /* DataLoader.swift */,
 				F001000000000000000044 /* ProfileCollectionsStore.swift */,
 				F001000000000000000045 /* ProfileAchievementsStore.swift */,
 				F001000000000000000047 /* AchievementStore.swift */,
 				F001000000000000000049 /* AdventureStatsService.swift */,
+				F0010000000000000000FE /* TrackDataManager.swift */,
+				F001000000000000000076 /* TrackRecordingLiveActivityAttributes.swift */,
+				F001000000000000000077 /* TrackRecordingLiveActivityManager.swift */,
 				F00100000000000000004D /* ProfileLikedStore.swift */,
 				F001000000000000000032 /* NPSAPIConfig.swift */,
 				F001000000000000000033 /* NPSAPIService.swift */,
@@ -329,7 +372,10 @@
 			children = (
 				F001000000000000000001 /* HikBikApp.swift */,
 				F001000000000000000002 /* ContentView.swift */,
+				F001000000000000000071 /* AuthManager.swift */,
 				F001000000000000000052 /* UserState.swift */,
+				F00100000000000000006A /* SocialManager.swift */,
+				F001000000000000000075 /* TabSelectionManager.swift */,
 			);
 			path = App;
 			sourceTree = "<group>";
@@ -342,14 +388,6 @@
 				G00100000000000000001B /* Legal */,
 			);
 			path = Core;
-			sourceTree = "<group>";
-		};
-		G00100000000000000001B /* Legal */ = {
-			isa = PBXGroup;
-			children = (
-				F001000000000000000050 /* LegalData.swift */,
-			);
-			path = Legal;
 			sourceTree = "<group>";
 		};
 		G00100000000000000000B /* Features */ = {
@@ -366,16 +404,6 @@
 				G00100000000000000001A /* Login */,
 			);
 			path = Features;
-			sourceTree = "<group>";
-		};
-		G00100000000000000001A /* Login */ = {
-			isa = PBXGroup;
-			children = (
-				F00100000000000000004F /* LandingView.swift */,
-				F001000000000000000051 /* LegalModal.swift */,
-				F001000000000000000053 /* LoginPromptModal.swift */,
-			);
-			path = Login;
 			sourceTree = "<group>";
 		};
 		G00100000000000000000C /* Components */ = {
@@ -487,6 +515,12 @@
 			children = (
 				F00100000000000000002B /* RoutesView.swift */,
 				F00100000000000000003C /* CustomRouteBuilderView.swift */,
+				F00100000000000000006B /* ManualJourneyDetailView.swift */,
+				F00100000000000000006E /* RouteDetailViewModel.swift */,
+				F001000000000000000074 /* RouteFollowingNavigationView.swift */,
+				F001000000000000000072 /* TrackRecorderEngine.swift */,
+				F001000000000000000073 /* PostEditorView.swift */,
+				F00100000000000000006D /* WeatherOverviewView.swift */,
 				F001000000000000000054 /* OfficialRouteDetailView.swift */,
 				F001000000000000000055 /* RouteDetailData.swift */,
 				F00100000000000000005B /* OfficialMacroNavigationView.swift */,
@@ -529,6 +563,24 @@
 				F001000000000000000068 /* UserProfileView.swift */,
 			);
 			path = Community;
+			sourceTree = "<group>";
+		};
+		G00100000000000000001A /* Login */ = {
+			isa = PBXGroup;
+			children = (
+				F00100000000000000004F /* LandingView.swift */,
+				F001000000000000000051 /* LegalModal.swift */,
+				F001000000000000000053 /* LoginPromptModal.swift */,
+			);
+			path = Login;
+			sourceTree = "<group>";
+		};
+		G00100000000000000001B /* Legal */ = {
+			isa = PBXGroup;
+			children = (
+				F001000000000000000050 /* LegalData.swift */,
+			);
+			path = Legal;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -644,6 +696,7 @@
 				B001000000000000000020 /* ProfileView.swift in Sources */,
 				B001000000000000000048 /* HonorCenterView.swift in Sources */,
 				B001000000000000000049 /* AdventureStatsService.swift in Sources */,
+				B0010000000000000000FE /* TrackDataManager.swift in Sources */,
 				B00100000000000000004A /* RadarChartView.swift in Sources */,
 				B00100000000000000004B /* AdventureStatsProView.swift in Sources */,
 				B00100000000000000004C /* ParkLandmarkIcons.swift in Sources */,
@@ -700,6 +753,20 @@
 				B001000000000000000051 /* LegalModal.swift in Sources */,
 				B001000000000000000052 /* UserState.swift in Sources */,
 				B001000000000000000053 /* LoginPromptModal.swift in Sources */,
+				B00100000000000000006A /* SocialManager.swift in Sources */,
+				B00100000000000000006B /* ManualJourneyDetailView.swift in Sources */,
+				B00100000000000000006C /* WeatherManager.swift in Sources */,
+				B00100000000000000006D /* WeatherOverviewView.swift in Sources */,
+				B00100000000000000006E /* RouteDetailViewModel.swift in Sources */,
+				B00100000000000000006F /* SocialDataManager.swift in Sources */,
+				B001000000000000000070 /* AuthService.swift in Sources */,
+				B001000000000000000071 /* AuthManager.swift in Sources */,
+				B001000000000000000072 /* TrackRecorderEngine.swift in Sources */,
+				B001000000000000000073 /* PostEditorView.swift in Sources */,
+				B001000000000000000074 /* RouteFollowingNavigationView.swift in Sources */,
+				B001000000000000000075 /* TabSelectionManager.swift in Sources */,
+				B001000000000000000076 /* TrackRecordingLiveActivityAttributes.swift in Sources */,
+				B001000000000000000077 /* TrackRecordingLiveActivityManager.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -788,12 +855,13 @@
 				DEVELOPMENT_TEAM = Z76UD4DWSJ;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = HikBik/Info.plist;
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "HikBik needs location access to record your live track and create route waypoints.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "HikBik needs location access to record your live track and create route waypoints.";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -818,12 +886,13 @@
 				DEVELOPMENT_TEAM = Z76UD4DWSJ;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = HikBik/Info.plist;
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "HikBik needs location access to record your live track and create route waypoints.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "HikBik needs location access to record your live track and create route waypoints.";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",

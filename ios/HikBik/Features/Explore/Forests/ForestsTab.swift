@@ -290,9 +290,9 @@ struct ForestsTab: View {
         Group {
             if forests.isEmpty {
                 ContentUnavailableView(
-                    "暂无国家森林数据",
+                    "No national forest data",
                     systemImage: "tree.fill",
-                    description: Text("请确保 national-forests.json 已加入 Resources。")
+                    description: Text("Ensure national-forests.json is added to Resources.")
                 )
                 .padding(.vertical, 40)
             } else if filteredForests.isEmpty {

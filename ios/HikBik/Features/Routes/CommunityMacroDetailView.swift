@@ -15,11 +15,20 @@ private let textPrimary = Color.white
 private let textMuted = Color(hex: "9CA3AF")
 private let borderMuted = Color(hex: "374151")
 private let mapLineColor = Color(hex: "FF8C42")
+/// 強制視圖寬度限制，禁止標題/頭像飛出屏幕。
+private var screenWidth: CGFloat { UIScreen.main.bounds.width }
+private let heroContentHorizontalPadding: CGFloat = 20
+/// 地圖區域：標準卡片高度，禁止縮小。
 private let mapHeight: CGFloat = 220
 private let pad: CGFloat = 20
-private let heroCardHeight: CGFloat = 350
+/// Hero 背景圖高度：屏幕 25%-30%，橫向 Banner 感，配合 .clipped() 中心裁切。
+private var heroCardHeight: CGFloat {
+    UIScreen.main.bounds.height * 0.28
+}
 private let heroHorizontalPadding: CGFloat = 16
 private let heroTextPadding: CGFloat = 20
+/// 標題區塊距卡片底部的額外間距，讓標題不貼照片邊緣（參考 Utah 範本）
+private let heroTitleBottomPadding: CGFloat = 28
 
 /// 用於 Hero 視差：追蹤卡片在 ScrollView 中的 Y 偏移
 private struct HeroScrollOffsetKey: PreferenceKey {
@@ -27,12 +36,48 @@ private struct HeroScrollOffsetKey: PreferenceKey {
     static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) { value = nextValue() }
 }
 
-/// 單條評論（模擬發送用）
+/// 單條評論（含點讚，TikTok 風格）
 struct CommunityComment: Identifiable {
-    let id = UUID()
+    let id: UUID
     let authorName: String
     let text: String
     let date: Date
+    var likeCount: Int
+    var isLiked: Bool
+
+    init(id: UUID = UUID(), authorName: String, text: String, date: Date, likeCount: Int = 0, isLiked: Bool = false) {
+        self.id = id
+        self.authorName = authorName
+        self.text = text
+        self.date = date
+        self.likeCount = likeCount
+        self.isLiked = isLiked
+    }
+}
+
+/// 評論存儲：點讚切換與排序（Hot 優先，再按時間）
+final class CommentStore: ObservableObject {
+    @Published var comments: [CommunityComment] = []
+
+    var sortedComments: [CommunityComment] {
+        comments.sorted { c1, c2 in
+            if c1.likeCount != c2.likeCount { return c1.likeCount > c2.likeCount }
+            return c1.date > c2.date
+        }
+    }
+
+    func addComment(authorName: String, text: String, date: Date = Date()) {
+        comments.append(CommunityComment(authorName: authorName, text: text, date: date))
+    }
+
+    func toggleCommentLike(id: UUID) {
+        guard let i = comments.firstIndex(where: { $0.id == id }) else { return }
+        var c = comments[i]
+        c.isLiked.toggle()
+        c.likeCount += c.isLiked ? 1 : -1
+        c.likeCount = max(0, c.likeCount)
+        comments[i] = c
+    }
 }
 
 struct CommunityMacroDetailView: View {
@@ -40,7 +85,10 @@ struct CommunityMacroDetailView: View {
     let journey: CommunityJourney
     /// 行程 ID，用於打卡與「Been There」標記；從列表點擊傳入 item.id。
     var journeyId: String?
+    /// 用戶在 Builder 上傳的封面圖 Data；非 nil 時優先於 coverImageURL 顯示，避免錯誤的默認風景圖。
+    var coverImageData: Data? = nil
     @EnvironmentObject private var currentUser: CurrentUser
+    @EnvironmentObject private var socialManager: SocialManager
     @State private var isLiked: Bool
     @State private var isFavorited: Bool
     @State private var likeCount: Int
@@ -49,8 +97,8 @@ struct CommunityMacroDetailView: View {
     @State private var isLoadingRoadRoutes = false
     /// 地圖視野：有道路段時為「所有 polyline 的 Union Bounding Box」，否則為 day 點範圍。
     @State private var mapCameraPosition: MapCameraPosition = .automatic
-    /// 評論區：半屏 sheet + 列表 + 輸入框
-    @State private var comments: [CommunityComment] = []
+    /// 評論區：半屏 sheet + CommentStore
+    @StateObject private var commentStore = CommentStore()
     @State private var showCommentSheet = false
     @State private var commentDraft = ""
     /// 打卡：記錄到 Completed Journeys
@@ -59,10 +107,20 @@ struct CommunityMacroDetailView: View {
     @State private var heroScrollOffset: CGFloat = 0
     /// 原生分享表單
     @State private var showShareSheet = false
+    /// 海報預覽彈窗（生成成功後先預覽，再決定是否打開系統分享）
+    @State private var isShowingPreview = false
+    /// Check-in 成功後顯示紙屑動畫
+    @State private var showConfetti = false
+    @State private var confettiStartTime = Date()
+    /// 分享海報生成中（顯示 ProgressView）
+    @State private var isGeneratingShareImage = false
+    /// 已生成的海報圖，用於 ShareSheet
+    @State private var generatedShareImage: UIImage?
 
-    init(journey: CommunityJourney, journeyId: String? = nil) {
+    init(journey: CommunityJourney, journeyId: String? = nil, coverImageData: Data? = nil) {
         self.journey = journey
         self.journeyId = journeyId
+        self.coverImageData = coverImageData
         _isLiked = State(initialValue: journey.isLiked)
         _isFavorited = State(initialValue: journey.isFavorited)
         _likeCount = State(initialValue: journey.likeCount)
@@ -94,78 +152,66 @@ struct CommunityMacroDetailView: View {
     /// 仿官方評分展示（無真實評分時用 likeCount 推估）
     private var displayRating: String { "4.7 (\(max(likeCount, 1)))" }
 
-    /// 分享內容：標題 + 描述 + 行程 ID / App 連結，供 UIActivityViewController 使用（微信 / WhatsApp / LINE / Message 等）
+    /// 分享內容：海報圖（若有）+ 推薦文字 + App 連結，供 UIActivityViewController 使用（微信 / WhatsApp / LINE / Instagram 等）
     private var shareActivityItems: [Any] {
         let location = journey.selectedStates.isEmpty ? "amazing spots" : journey.selectedStates.joined(separator: ", ")
         let title = "Join my Grand Journey: \(journey.journeyName)"
         let subtitle = "Check out this awesome route through \(location)!"
-        let body = "\(title)\n\n\(subtitle)\n\nTrip ID: \(effectiveJourneyId)\n— Shared from HikBik"
-        return [body]
+        let appLink = "https://apps.apple.com/app/hikbik" // 佔位，上線後替換為真實連結
+        let body = "\(title)\n\n\(subtitle)\n\nTrip ID: \(effectiveJourneyId)\n\nDownload HikBik: \(appLink)\n— Shared from HikBik"
+        var items: [Any] = [body]
+        if let img = generatedShareImage {
+            items.insert(img, at: 0)
+        }
+        return items
     }
 
     var body: some View {
-        ScrollView(.vertical, showsIndicators: false) {
-            VStack(alignment: .leading, spacing: 0) {
-                heroCard
-                    .background(
-                        GeometryReader { geo in
-                            Color.clear.preference(
-                                key: HeroScrollOffsetKey.self,
-                                value: geo.frame(in: .named("scroll")).minY
-                            )
-                        }
-                    )
-                descriptionSection
-                mapSection
-                timelineSection
-                inlineCheckInSection
-                Spacer(minLength: 80)
+        GeometryReader { geometry in
+            ScrollView(.vertical, showsIndicators: false) {
+                VStack(alignment: .leading, spacing: 20) {
+                    heroCard(topSafeInset: geometry.safeAreaInsets.top)
+                        .background(
+                            GeometryReader { geo in
+                                Color.clear.preference(
+                                    key: HeroScrollOffsetKey.self,
+                                    value: geo.frame(in: .named("scroll")).minY
+                                )
+                            }
+                        )
+                    descriptionSection
+                    mapSection
+                    timelineSection
+                    inlineCheckInSection
+                    Spacer(minLength: 40)
+                }
+                .frame(width: screenWidth)
+                .padding(.bottom, 160)
             }
-            .frame(maxWidth: CGFloat.infinity)
-        }
-        .coordinateSpace(name: "scroll")
-        .onPreferenceChange(HeroScrollOffsetKey.self) { heroScrollOffset = $0 }
-        .frame(maxWidth: CGFloat.infinity, maxHeight: CGFloat.infinity)
-        .background(bg)
-        .safeAreaInset(edge: .bottom, spacing: 0) {
-            socialInteractionBar
+            .coordinateSpace(name: "scroll")
+            .onPreferenceChange(HeroScrollOffsetKey.self) { heroScrollOffset = $0 }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(bg)
+            .ignoresSafeArea(.all, edges: .top)
+            .scrollDismissesKeyboard(.immediately)
+            .scrollBounceBehavior(.basedOnSize)
+            .safeAreaInset(edge: .bottom, spacing: 0) {
+                socialInteractionBar
+            }
         }
         .navigationBarTitleDisplayMode(.inline)
+        .navigationBarBackButtonHidden(true)
         .toolbarBackground(.hidden, for: .navigationBar)
-        .toolbar {
-            ToolbarItem(placement: .navigationBarLeading) {
-                Button { dismissAction() } label: {
-                    HStack(spacing: 4) {
-                        Image(systemName: "chevron.left")
-                        Text("Back")
-                    }
-                    .font(.system(size: 17, weight: .medium))
-                    .foregroundStyle(.white)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 8)
-                    .background(.ultraThinMaterial, in: Capsule())
-                }
-                .buttonStyle(.plain)
-            }
-            ToolbarItem(placement: .navigationBarTrailing) {
-                Button {
-                    isFavorited.toggle()
-                } label: {
-                    Image(systemName: isFavorited ? "heart.fill" : "heart")
-                        .font(.system(size: 20))
-                        .foregroundStyle(.white)
-                        .frame(width: 44, height: 44)
-                        .background(.ultraThinMaterial, in: Circle())
-                }
-                .buttonStyle(.plain)
-            }
-        }
+        .toolbar(.hidden, for: .navigationBar)
         .preferredColorScheme(.dark)
         .onAppear {
             mapCameraPosition = .region(regionForCoordinates(routeCoordinates))
             fetchRoadRoutesIfNeeded()
             isLiked = currentUser.isLiked(postId: effectivePostId)
             hasCheckedIn = currentUser.hasCompleted(journeyId: effectiveJourneyId)
+            if let a = journey.author, socialManager.users[a.id] == nil {
+                socialManager.ensureUser(id: a.id, username: a.displayName, initialFollowersCount: 0)
+            }
         }
         .sheet(isPresented: $showCommentSheet) {
             commentSheet
@@ -175,69 +221,173 @@ struct CommunityMacroDetailView: View {
         .sheet(isPresented: $showShareSheet) {
             ShareSheet(activityItems: shareActivityItems)
         }
+        .sheet(isPresented: $isShowingPreview) {
+            SharePreviewSheet(
+                image: generatedShareImage,
+                onConfirmShare: {
+                    isShowingPreview = false
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                        showShareSheet = true
+                    }
+                }
+            )
+        }
+        .overlay {
+            if isGeneratingShareImage {
+                Color.black.opacity(0.5)
+                    .ignoresSafeArea()
+                VStack(spacing: 16) {
+                    ProgressView()
+                        .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                        .scaleEffect(1.2)
+                    Text("Generating your poster...")
+                        .font(.system(size: 15, weight: .medium))
+                        .foregroundStyle(.white)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            }
+        }
+        .overlay {
+            if showConfetti {
+                CheckInConfettiView(startTime: confettiStartTime)
+                    .ignoresSafeArea()
+                    .allowsHitTesting(false)
+            }
+        }
+    }
+
+    /// 後台載入封面圖 → 用 ImageRenderer 生成海報 → 先彈預覽，確認後再打開系統分享
+    private func triggerSharePoster() {
+        isGeneratingShareImage = true
+        let startTime = Date()
+        let journeyName = journey.journeyName
+        let authorName = journey.author?.displayName ?? "Guest"
+        let coverURLString = coverImageURL
+        Task {
+            let loadedImage = await loadImageFromURL(coverURLString)
+            var resultImage: UIImage?
+            await MainActor.run {
+                let poster = SharePosterView(
+                    coverImage: loadedImage,
+                    title: journeyName,
+                    authorUsername: authorName
+                )
+                let renderer = ImageRenderer(content: poster)
+                renderer.scale = UIScreen.main.scale
+                resultImage = renderer.uiImage
+                if let img = resultImage {
+                    print("海報生成成功：寬 \(img.size.width) 高 \(img.size.height)")
+                } else {
+                    print("海報生成失敗")
+                }
+            }
+            let minDisplayDuration: TimeInterval = 0.8
+            let elapsed = Date().timeIntervalSince(startTime)
+            if elapsed < minDisplayDuration {
+                try? await Task.sleep(nanoseconds: UInt64((minDisplayDuration - elapsed) * 1_000_000_000))
+            }
+            await MainActor.run {
+                generatedShareImage = resultImage
+                isGeneratingShareImage = false
+                isShowingPreview = true
+            }
+        }
+    }
+
+    private func loadImageFromURL(_ urlString: String) async -> UIImage? {
+        guard let url = URL(string: urlString) else { return nil }
+        do {
+            let (data, _) = try await URLSession.shared.data(from: url)
+            return UIImage(data: data)
+        } catch {
+            return nil
+        }
     }
 
     @Environment(\.dismiss) private var dismiss
     private func dismissAction() { dismiss() }
 
-    // MARK: - Hero Card：頂部懸浮面板，容器 .padding(.horizontal, 16)，圖片自適應 + overlay 固定定位
-    private var heroCard: some View {
+    // MARK: - Hero Card：頂部全屏沉浸（衝進 Safe Area），標題/標籤/作者壓底
+    private func heroCard(topSafeInset: CGFloat = 0) -> some View {
         let author = journey.author.map { CommunityAuthor(id: $0.id, displayName: $0.displayName, avatarURL: $0.avatarURL) }
         let parallaxScale = heroScrollOffset > 0 ? 1 + (heroScrollOffset / heroCardHeight) * 0.15 : 1.0
+        let totalHeroHeight = heroCardHeight + topSafeInset
 
         return VStack(spacing: 0) {
-            ZStack(alignment: .topLeading) {
-                // 背景：封面圖（固定高度、寬度自適應容器），支持視差
+            ZStack(alignment: .bottomLeading) {
+                // 1. 背景圖 ZStack 最底層，衝進 Safe Area，禁止頂部黑邊
                 coverImageForHero
                     .scaleEffect(parallaxScale)
-                    .frame(height: heroCardHeight)
-                    .frame(maxWidth: CGFloat.infinity)
+                    .frame(width: screenWidth, height: totalHeroHeight)
                     .clipped()
+                    .ignoresSafeArea(.all, edges: .top)
                     .overlay(alignment: .bottomLeading) {
-                        // 底部漸變：純黑 → 透明，高度佔卡片 1/2
-                        VStack(spacing: 0) {
-                            Spacer()
-                            LinearGradient(
-                                colors: [.black, .black.opacity(0.6), .clear],
-                                startPoint: .bottom,
-                                endPoint: .top
-                            )
-                            .frame(height: heroCardHeight / 2)
-                        }
-                        .frame(maxWidth: CGFloat.infinity, maxHeight: heroCardHeight)
+                        LinearGradient(
+                            colors: [.clear, .black.opacity(0.5), .black.opacity(0.8)],
+                            startPoint: .top,
+                            endPoint: .bottom
+                        )
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
                         .allowsHitTesting(false)
                     }
                     .overlay(alignment: .bottomLeading) {
-                        // 文字 Overlay：標籤、標題、作者，統一內邊距，不貼邊
-                        VStack(alignment: .leading, spacing: 10) {
+                        // 2. 標題與標籤物理壓底：巨大 Spacer 推到 Hero 最底部（圖 1 雜誌級）
+                        VStack(alignment: .leading, spacing: 8) {
+                            Spacer()
                             heroPillTags
+                                .frame(maxWidth: screenWidth - heroContentHorizontalPadding * 2, alignment: .leading)
                             Text(journey.journeyName)
                                 .font(.system(size: 34, weight: .bold))
                                 .foregroundStyle(.white)
-                                .multilineTextAlignment(.leading)
+                                .lineLimit(2)
+                                .fixedSize(horizontal: false, vertical: true)
+                                .frame(maxWidth: screenWidth - heroContentHorizontalPadding * 2, alignment: .leading)
                             if let a = author {
-                                NavigationLink(destination: UserProfileView(user: a, subtitle: nil)) {
-                                    HStack(alignment: .center, spacing: 8) {
-                                        smallAvatarView(url: a.avatarURL)
-                                        Text("@" + a.displayName.replacingOccurrences(of: " ", with: "_").lowercased())
-                                            .font(.system(size: 14, weight: .medium))
-                                            .foregroundStyle(.white.opacity(0.95))
-                                        Image(systemName: "star.fill")
-                                            .font(.system(size: 12))
-                                            .foregroundStyle(Color(hex: "FBBF24"))
-                                        Text(displayRating)
-                                            .font(.system(size: 13, weight: .medium))
-                                            .foregroundStyle(.white.opacity(0.9))
+                                let isFollowing = socialManager.users[a.id]?.isFollowing ?? false
+                                HStack(alignment: .center, spacing: 12) {
+                                    NavigationLink(destination: UserProfileView(user: a, subtitle: nil)) {
+                                        HStack(alignment: .center, spacing: 8) {
+                                            smallAvatarView(url: a.avatarURL)
+                                            Text("@" + a.displayName.replacingOccurrences(of: " ", with: "_").lowercased())
+                                                .font(.system(size: 14, weight: .medium))
+                                                .foregroundStyle(.white.opacity(0.95))
+                                                .lineLimit(1)
+                                                .fixedSize(horizontal: false, vertical: true)
+                                            Image(systemName: "star.fill")
+                                                .font(.system(size: 12))
+                                                .foregroundStyle(Color(hex: "FBBF24"))
+                                            Text(displayRating)
+                                                .font(.system(size: 13, weight: .medium))
+                                                .foregroundStyle(.white.opacity(0.9))
+                                        }
+                                        .contentShape(Rectangle())
                                     }
-                                    .contentShape(Rectangle())
+                                    .buttonStyle(PlainButtonStyle())
+                                    Spacer(minLength: 8)
+                                    Button {
+                                        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                                        socialManager.toggleFollow(for: a.id, currentUserId: socialManager.currentUserId)
+                                    } label: {
+                                        Text(isFollowing ? "Following" : "Follow")
+                                            .font(.system(size: 14, weight: .semibold))
+                                            .foregroundStyle(isFollowing ? textMuted : .white)
+                                            .padding(.horizontal, 16)
+                                            .padding(.vertical, 8)
+                                            .background(isFollowing ? Color.white.opacity(0.2) : accent)
+                                            .clipShape(Capsule())
+                                    }
+                                    .buttonStyle(.plain)
+                                    .animation(.spring(response: 0.3, dampingFraction: 0.6), value: isFollowing)
                                 }
-                                .buttonStyle(PlainButtonStyle())
+                                .frame(maxWidth: screenWidth - heroContentHorizontalPadding * 2)
+                                .fixedSize(horizontal: false, vertical: true)
                             } else {
                                 HStack(alignment: .center, spacing: 8) {
                                     smallAvatarView(url: nil)
                                     Text("@community")
                                         .font(.system(size: 14, weight: .medium))
                                         .foregroundStyle(.white.opacity(0.95))
+                                        .fixedSize(horizontal: false, vertical: true)
                                     Image(systemName: "star.fill")
                                         .font(.system(size: 12))
                                         .foregroundStyle(Color(hex: "FBBF24"))
@@ -245,26 +395,33 @@ struct CommunityMacroDetailView: View {
                                         .font(.system(size: 13, weight: .medium))
                                         .foregroundStyle(.white.opacity(0.9))
                                 }
+                                .frame(maxWidth: screenWidth - heroContentHorizontalPadding * 2)
+                                .fixedSize(horizontal: false, vertical: true)
                             }
                         }
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding([.leading, .bottom], heroTextPadding)
+                        .frame(width: screenWidth, alignment: .leading)
+                        .padding(.horizontal, heroContentHorizontalPadding)
+                        .padding(.bottom, heroTitleBottomPadding)
                     }
 
-                // 左上：圓形毛玻璃 Back（在 overlay 之上）
-                Button { dismissAction() } label: {
-                    Image(systemName: "chevron.left")
-                        .font(.system(size: 18, weight: .semibold))
-                        .foregroundStyle(.white)
-                        .frame(width: 44, height: 44)
-                        .background(.ultraThinMaterial, in: Circle())
+                // 返回鍵（左上，留出 Safe Area）
+                VStack {
+                    Button { dismissAction() } label: {
+                        Image(systemName: "chevron.left")
+                            .font(.system(size: 18, weight: .semibold))
+                            .foregroundStyle(.white)
+                            .frame(width: 44, height: 44)
+                            .contentShape(Rectangle())
+                            .background(.ultraThinMaterial, in: Circle())
+                    }
+                    .buttonStyle(.plain)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    Spacer()
                 }
-                .buttonStyle(.plain)
                 .padding(.leading, heroHorizontalPadding)
-                .padding(.top, 12)
+                .padding(.top, 16 + topSafeInset)
             }
-            .frame(height: heroCardHeight)
-            .frame(maxWidth: CGFloat.infinity)
+            .frame(width: screenWidth, height: totalHeroHeight)
             .clipShape(UnevenRoundedRectangle(
                 topLeadingRadius: 0,
                 bottomLeadingRadius: 32,
@@ -272,20 +429,24 @@ struct CommunityMacroDetailView: View {
                 topTrailingRadius: 0
             ))
         }
-        .padding(.horizontal, heroHorizontalPadding)
+        .frame(width: screenWidth)
     }
 
-    /// 鐵金剛渲染：上傳即 16:10 優化，渲染即完美。success → scaledToFill + clipped；failure → DefaultCoverView；empty → ShimmerPlaceholder
+    /// 封面：橫/豎/方照統一 .aspectRatio(contentMode: .fill) + .clipped() 中心裁切，填滿 Hero 橫向區域不變形。
     private var coverImageForHero: some View {
-        let url = URL(string: coverImageURL)
-        return Group {
-            if let u = url {
+        Group {
+            if let data = coverImageData, let uiImage = UIImage(data: data) {
+                Image(uiImage: uiImage)
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+                    .clipped()
+            } else if let u = URL(string: coverImageURL) {
                 AsyncImage(url: u) { phase in
                     switch phase {
                     case .success(let image):
                         image
                             .resizable()
-                            .scaledToFill()
+                            .aspectRatio(contentMode: .fill)
                             .clipped()
                     case .failure:
                         DefaultCoverView()
@@ -295,21 +456,35 @@ struct CommunityMacroDetailView: View {
                         EmptyView()
                     }
                 }
-                .aspectRatio(16.0 / 10.0, contentMode: .fit)
             } else {
                 DefaultCoverView()
-                    .aspectRatio(16.0 / 10.0, contentMode: .fit)
             }
         }
     }
 
+    /// 首位標籤 = journey.state（JSON）；再拼 tags / 天數 / 載具（Utah 模板感）
     private var heroPillTags: some View {
         let tags: [String] = {
-            var t = journey.selectedStates
-            if let d = journey.duration, !d.isEmpty { t.append(d) }
-            if let v = journey.vehicle, !v.isEmpty { t.append(v) }
-            if let p = journey.pace, !p.isEmpty { t.append(p) }
-            return t
+            var row: [String] = []
+            let st = journey.state.trimmingCharacters(in: .whitespaces)
+            if !st.isEmpty { row.append(st) }
+            if let spec = journey.tags {
+                for x in spec where !x.trimmingCharacters(in: .whitespaces).isEmpty && x != st && !row.contains(x) {
+                    row.append(x)
+                }
+            }
+            if row.count <= 1 {
+                if let d = journey.duration, !d.isEmpty, !row.contains(d) { row.append(d) }
+                if let v = journey.vehicle, !v.isEmpty, !row.contains(v) { row.append(v) }
+                if let p = journey.pace, !p.isEmpty, !row.contains(p) { row.append(p) }
+            }
+            if row.isEmpty {
+                row = journey.selectedStates
+                if let d = journey.duration, !d.isEmpty { row.append(d) }
+                if let v = journey.vehicle, !v.isEmpty { row.append(v) }
+            }
+            if row.isEmpty { row.append("Macro Journey") }
+            return row
         }()
         return Group {
             if !tags.isEmpty {
@@ -318,11 +493,14 @@ struct CommunityMacroDetailView: View {
                         Text(tag.uppercased())
                             .font(.system(size: 11, weight: .semibold))
                             .foregroundStyle(.white)
+                            .lineLimit(1)
                             .padding(.horizontal, 12)
                             .padding(.vertical, 6)
                             .background(.ultraThinMaterial, in: Capsule())
                     }
                 }
+                .frame(maxWidth: screenWidth - heroContentHorizontalPadding * 2, alignment: .leading)
+                .fixedSize(horizontal: false, vertical: true)
             }
         }
     }
@@ -361,13 +539,15 @@ struct CommunityMacroDetailView: View {
         .clipShape(Circle())
     }
 
-    /// 行程描述（首日筆記或佔位），緊接 Hero 下方
+    /// 行程描述（首日筆記或佔位），緊接 Hero 下方；約束寬度並自動換行，禁止橫向撐開。
     private var descriptionSection: some View {
-        let desc = journey.days.first?.notes ?? "A curated journey through iconic stops."
+        let desc = journey.days.first?.text ?? journey.days.first?.description ?? journey.days.first?.notes ?? "A curated journey through iconic stops."
         return Text(desc)
             .font(.system(size: 15))
             .foregroundStyle(.white.opacity(0.9))
-            .lineLimit(5)
+            .lineLimit(5...10)
+            .fixedSize(horizontal: false, vertical: true)
+            .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.horizontal, pad)
             .padding(.top, 24)
     }
@@ -376,10 +556,17 @@ struct CommunityMacroDetailView: View {
     private var tagCloudSection: some View {
         let tags: [String] = {
             var t: [String] = ["User Shared"]
-            t.append(contentsOf: journey.selectedStates)
-            if let d = journey.duration, !d.isEmpty { t.append(d) }
-            if let v = journey.vehicle, !v.isEmpty { t.append(v) }
-            if let p = journey.pace, !p.isEmpty { t.append(p) }
+            let st = journey.state.trimmingCharacters(in: .whitespaces)
+            if !st.isEmpty { t.append(st) }
+            if let spec = journey.tags, !spec.isEmpty {
+                for x in spec where !x.isEmpty && x != st && !t.contains(x) { t.append(x) }
+            } else {
+                for s in journey.selectedStates where s != st && !t.contains(s) { t.append(s) }
+                if let d = journey.duration, !d.isEmpty, !t.contains(d) { t.append(d) }
+                if let v = journey.vehicle, !v.isEmpty, !t.contains(v) { t.append(v) }
+                if let p = journey.pace, !p.isEmpty, !t.contains(p) { t.append(p) }
+                if let diff = journey.difficulty, !diff.isEmpty, !t.contains(diff) { t.append(diff) }
+            }
             return t
         }()
         return Group {
@@ -459,12 +646,13 @@ struct CommunityMacroDetailView: View {
                 }
             }
         }
-        .frame(height: mapHeight)
-        .frame(maxWidth: CGFloat.infinity)
-        .clipShape(RoundedRectangle(cornerRadius: 16))
-        .overlay(RoundedRectangle(cornerRadius: 16).strokeBorder(.white.opacity(0.2), lineWidth: 1))
+        .aspectRatio(16/9, contentMode: .fit)
+        .frame(maxWidth: .infinity)
+        .clipShape(RoundedRectangle(cornerRadius: 20))
+        .overlay(RoundedRectangle(cornerRadius: 20).strokeBorder(.white.opacity(0.2), lineWidth: 1))
         .padding(.horizontal, pad)
-        .padding(.top, 20)
+        .padding(.top, 24)
+        .padding(.bottom, 20)
     }
 
     /// 遍歷相鄰地點，MKDirections.Request(transportType: .automobile)，提取 MKRoute.polyline 並緩存。
@@ -546,34 +734,24 @@ struct CommunityMacroDetailView: View {
                 Text(day.locationName ?? "Stop \(day.dayNumber)")
                     .font(.system(size: 17, weight: .semibold))
                     .foregroundStyle(.white)
+                    .lineLimit(2)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .frame(maxWidth: .infinity, alignment: .leading)
             }
             .padding(.horizontal, pad)
 
-            if let urlString = day.photoURL, let url = URL(string: urlString), !urlString.isEmpty {
-                AsyncImage(url: url) { phase in
-                    if let img = phase.image {
-                        img.resizable().scaledToFill()
-                            .frame(height: 180)
-                            .clipped()
-                    } else {
-                        RoundedRectangle(cornerRadius: 12)
-                            .fill(.black.opacity(0.3))
-                            .frame(height: 120)
-                            .overlay(ProgressView().tint(.white))
-                    }
-                }
-                .clipShape(RoundedRectangle(cornerRadius: 12))
-                .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(.white.opacity(0.2), lineWidth: 1))
-                .padding(.horizontal, pad)
-            }
+            // 每日照片牆：橫向滾動 dayPhotos（無則不顯示；保留單圖 photoURL 兼容）
+            dayPhotosRow(day: day)
 
-            if let notes = day.notes, !notes.trimmingCharacters(in: .whitespaces).isEmpty {
-                Text(notes)
+            // 富文本介紹：規格 text → description → notes
+            if let desc = day.text ?? day.description ?? day.notes, !desc.trimmingCharacters(in: .whitespaces).isEmpty {
+                Text(desc)
                     .font(.system(size: 15))
                     .foregroundStyle(.white.opacity(0.9))
-                    .lineLimit(5...10)
-                    .padding(14)
+                    .lineSpacing(6)
+                    .fixedSize(horizontal: false, vertical: true)
                     .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(14)
                     .background(.black.opacity(0.3))
                     .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
                     .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(.white.opacity(0.2), lineWidth: 1))
@@ -605,6 +783,9 @@ struct CommunityMacroDetailView: View {
                 .padding(.horizontal, pad)
             }
 
+            // 推薦卡片（含 link 時渲染為可點擊按鈕，如 Book on Airbnb）
+            recommendationsRow(day: day)
+
             if let stay = day.recommendedStay, !stay.trimmingCharacters(in: .whitespaces).isEmpty {
                 HStack(spacing: 8) {
                     Image(systemName: "house.fill")
@@ -628,6 +809,122 @@ struct CommunityMacroDetailView: View {
         .padding(.horizontal, pad)
     }
 
+    /// 當日照片牆：橫向滾動 dayPhotos；若為空則用單張 photoURL 兼容
+    private func dayPhotosRow(day: CommunityJourneyDay) -> some View {
+        let urls: [String] = {
+            if let im = day.images, !im.isEmpty { return im }
+            if let dp = day.dayPhotos, !dp.isEmpty { return dp }
+            if let u = day.photoURL, !u.isEmpty { return [u] }
+            return []
+        }()
+        guard !urls.isEmpty else { return AnyView(EmptyView()) }
+        return AnyView(
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 12) {
+                    ForEach(Array(urls.enumerated()), id: \.offset) { _, urlString in
+                        let url = URL(string: urlString) ?? (urlString.hasPrefix("/") ? URL(fileURLWithPath: urlString) : nil)
+                        if let url = url, !urlString.isEmpty {
+                            AsyncImage(url: url) { phase in
+                                if let img = phase.image {
+                                    img.resizable().scaledToFill()
+                                        .frame(width: 200, height: 140)
+                                        .clipped()
+                                } else {
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .fill(.black.opacity(0.3))
+                                        .frame(width: 200, height: 140)
+                                        .overlay(ProgressView().tint(.white))
+                                }
+                            }
+                            .clipShape(RoundedRectangle(cornerRadius: 12))
+                            .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(.white.opacity(0.2), lineWidth: 1))
+                        }
+                    }
+                }
+                .padding(.horizontal, pad)
+            }
+            .padding(.vertical, 4)
+        )
+    }
+
+    /// 推薦卡片：airbnbLink 或 recommendations[].link
+    private func recommendationsRow(day: CommunityJourneyDay) -> some View {
+        let link = day.airbnbLink?.trimmingCharacters(in: .whitespaces) ?? ""
+        let hasRecs = day.recommendations?.isEmpty == false
+        if link.isEmpty && !hasRecs { return AnyView(EmptyView()) }
+        return AnyView(
+            VStack(alignment: .leading, spacing: 10) {
+                if !link.isEmpty, let openURL = URL(string: link) {
+                    Button { UIApplication.shared.open(openURL) } label: {
+                        HStack(spacing: 10) {
+                            Image(systemName: "link")
+                                .foregroundStyle(accent)
+                            Text("Book on Airbnb")
+                                .font(.system(size: 15, weight: .semibold))
+                                .foregroundStyle(.white)
+                            Spacer()
+                            Image(systemName: "arrow.up.right")
+                                .font(.system(size: 12))
+                                .foregroundStyle(accent)
+                        }
+                        .padding(14)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(.black.opacity(0.3))
+                        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
+                        .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(.white.opacity(0.2), lineWidth: 1))
+                    }
+                    .buttonStyle(.plain)
+                    .padding(.horizontal, pad)
+                }
+                if let recs = day.recommendations {
+                ForEach(Array(recs.enumerated()), id: \.offset) { _, rec in
+                    let title = (rec.title?.trimmingCharacters(in: .whitespaces)).flatMap { $0.isEmpty ? nil : $0 } ?? "Book on Airbnb"
+                    let link = (rec.link?.trimmingCharacters(in: .whitespaces)).flatMap { $0.isEmpty ? nil : $0 }
+                    if let link = link, let openURL = URL(string: link) {
+                        Button {
+                            UIApplication.shared.open(openURL)
+                        } label: {
+                            HStack(spacing: 10) {
+                                Image(systemName: "link")
+                                    .font(.system(size: 16))
+                                    .foregroundStyle(accent)
+                                Text(title)
+                                    .font(.system(size: 15, weight: .semibold))
+                                    .foregroundStyle(.white)
+                                Spacer()
+                                Image(systemName: "arrow.up.right")
+                                    .font(.system(size: 12, weight: .medium))
+                                    .foregroundStyle(accent)
+                            }
+                            .padding(14)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .background(.black.opacity(0.3))
+                            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
+                            .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(.white.opacity(0.2), lineWidth: 1))
+                        }
+                        .buttonStyle(.plain)
+                        .padding(.horizontal, pad)
+                    } else if !title.isEmpty {
+                        HStack(spacing: 8) {
+                            Image(systemName: "house.fill")
+                                .font(.system(size: 14))
+                                .foregroundStyle(accent)
+                            Text(title)
+                                .font(.system(size: 14))
+                                .foregroundStyle(.white.opacity(0.9))
+                        }
+                        .padding(12)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(.black.opacity(0.3))
+                        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 10))
+                        .padding(.horizontal, pad)
+                    }
+                }
+                }
+            }
+        )
+    }
+
     private func amenityCapsule(icon: String, label: String) -> some View {
         HStack(spacing: 6) {
             Image(systemName: icon)
@@ -641,7 +938,7 @@ struct CommunityMacroDetailView: View {
         .background(.ultraThinMaterial, in: Capsule())
     }
 
-    // MARK: - 社交導航欄固定：.safeAreaInset(edge: .bottom)，位於 Main Tab Bar 正上方，.ultraThinMaterial 懸浮感
+    /// 工具欄物理隔離：置於 ScrollView 外、屏幕最下方，不透明背景禁止內容穿透，與 TabBar 分離。
     private var socialInteractionBar: some View {
         HStack(spacing: 0) {
             Button {
@@ -667,7 +964,7 @@ struct CommunityMacroDetailView: View {
                 HStack(spacing: 6) {
                     Image(systemName: "bubble.right")
                         .font(.system(size: 20))
-                    Text("\(journey.commentCount + comments.count)")
+                    Text("\(journey.commentCount + commentStore.comments.count)")
                         .font(.system(size: 16, weight: .semibold))
                 }
                 .foregroundStyle(textMuted)
@@ -691,7 +988,7 @@ struct CommunityMacroDetailView: View {
 
             Button {
                 UIImpactFeedbackGenerator(style: .light).impactOccurred()
-                showShareSheet = true
+                triggerSharePoster()
             } label: {
                 HStack(spacing: 6) {
                     Image(systemName: "square.and.arrow.up")
@@ -703,108 +1000,195 @@ struct CommunityMacroDetailView: View {
                 .frame(maxWidth: .infinity)
             }
             .buttonStyle(.plain)
+            .disabled(isGeneratingShareImage)
         }
         .padding(.vertical, 16)
         .padding(.horizontal, pad)
-        .background(.ultraThinMaterial)
+        .frame(maxWidth: .infinity)
+        .background(bg)
+        .overlay(alignment: .top) {
+            Rectangle()
+                .fill(.white.opacity(0.2))
+                .frame(height: 1)
+        }
     }
 
-    // MARK: - 內聯 Check-in：放在 ScrollView 末尾、Itinerary 下方，上下約 40pt 儀式感
+    // MARK: - 內聯 Check-in：放在 ScrollView 末尾、Itinerary 下方，儀式感（紙屑 + 彈簧 + ✓ Arrived）
     private var inlineCheckInSection: some View {
         Button {
-                if !hasCheckedIn {
-                    UIImpactFeedbackGenerator(style: .medium).impactOccurred()
-                    currentUser.checkIn(journeyId: effectiveJourneyId)
-                    hasCheckedIn = true
+            if !hasCheckedIn {
+                UIImpactFeedbackGenerator(style: .heavy).impactOccurred()
+                currentUser.checkIn(journeyId: effectiveJourneyId)
+                hasCheckedIn = true
+                confettiStartTime = Date()
+                showConfetti = true
+                DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
+                    showConfetti = false
                 }
-            } label: {
-                HStack(spacing: 8) {
-                    if hasCheckedIn {
-                        Image(systemName: "checkmark.circle.fill")
-                            .font(.system(size: 22))
-                        Text("You've Checked in")
-                            .font(.system(size: 17, weight: .semibold))
-                    } else {
-                        Image(systemName: "mappin.circle.fill")
-                            .font(.system(size: 22))
-                        Text("I'm Here / Check-in")
-                            .font(.system(size: 17, weight: .semibold))
-                    }
-                }
-                .foregroundStyle(.white)
-                .frame(maxWidth: CGFloat.infinity)
-                .frame(height: 56)
-                .background(
-                    Group {
-                        if hasCheckedIn {
-                            Color(hex: "16A34A")
-                        } else {
-                            LinearGradient(
-                                colors: [accent, Color(hex: "E67A2E")],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        }
-                    }
-                )
-                .clipShape(RoundedRectangle(cornerRadius: 28))
             }
-            .buttonStyle(.plain)
-            .disabled(hasCheckedIn)
-            .padding(.horizontal, pad)
-            .padding(.vertical, 40)
+        } label: {
+            HStack(spacing: 8) {
+                if hasCheckedIn {
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.system(size: 22))
+                    Text("✓ Arrived")
+                        .font(.system(size: 17, weight: .semibold))
+                } else {
+                    Image(systemName: "mappin.circle.fill")
+                        .font(.system(size: 22))
+                    Text("I'm Here / Check-in")
+                        .font(.system(size: 17, weight: .semibold))
+                }
+            }
+            .foregroundStyle(.white)
+            .frame(maxWidth: CGFloat.infinity)
+            .frame(height: 56)
+            .background(
+                Group {
+                    if hasCheckedIn {
+                        Color(hex: "16A34A")
+                    } else {
+                        LinearGradient(
+                            colors: [accent, Color(hex: "E67A2E")],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    }
+                }
+            )
+            .clipShape(RoundedRectangle(cornerRadius: 28))
+            .scaleEffect(hasCheckedIn ? 1.02 : 1.0)
+            .animation(.spring(response: 0.35, dampingFraction: 0.7), value: hasCheckedIn)
+        }
+        .buttonStyle(.plain)
+        .disabled(hasCheckedIn)
+        .padding(.horizontal, pad)
+        .padding(.vertical, 40)
     }
 
-    // MARK: - 評論半屏：列表 + 輸入框 + 發送（模擬 append 當前用戶名與時間）
+    // MARK: - 評論半屏（TikTok 風格）：頭像 + 用戶名/時間 + 內容 + 點讚，底部固定輸入框
     private var commentSheet: some View {
         NavigationStack {
-            VStack(spacing: 0) {
-                List {
-                    ForEach(comments) { c in
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text(c.authorName)
-                                .font(.system(size: 13, weight: .semibold))
-                                .foregroundStyle(textPrimary)
-                            Text(c.text)
-                                .font(.system(size: 15))
-                                .foregroundStyle(textMuted)
-                            Text(c.date, style: .time)
-                                .font(.system(size: 11))
-                                .foregroundStyle(textMuted.opacity(0.8))
+            ZStack(alignment: .bottom) {
+                ScrollView {
+                    LazyVStack(alignment: .leading, spacing: 0) {
+                        ForEach(commentStore.sortedComments) { c in
+                            CommentRowView(comment: c, accent: accent, onLike: {
+                                UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                                commentStore.toggleCommentLike(id: c.id)
+                            })
+                            .padding(.horizontal, pad)
+                            .padding(.vertical, 12)
                         }
-                        .listRowBackground(card)
                     }
+                    .padding(.bottom, 80)
                 }
-                .listStyle(.plain)
-                Divider().background(borderMuted)
-                HStack(spacing: 12) {
-                    TextField("Add a comment…", text: $commentDraft, axis: .vertical)
-                        .textFieldStyle(.plain)
-                        .lineLimit(1...4)
-                        .padding(10)
-                        .background(surface)
-                        .clipShape(RoundedRectangle(cornerRadius: 10))
-                    Button {
+                .scrollContentBackground(.hidden)
+                .background(.ultraThinMaterial)
+
+                CommentInputBar(
+                    draft: $commentDraft,
+                    accent: accent,
+                    textMuted: textMuted,
+                    surface: surface,
+                    onSubmit: {
                         let text = commentDraft.trimmingCharacters(in: .whitespaces)
                         guard !text.isEmpty else { return }
-                        comments.append(CommunityComment(authorName: currentUser.displayName, text: text, date: Date()))
+                        commentStore.addComment(authorName: currentUser.displayName, text: text, date: Date())
                         commentDraft = ""
-                    } label: {
-                        Image(systemName: "arrow.up.circle.fill")
-                            .font(.system(size: 32))
-                            .foregroundStyle(accent)
                     }
-                    .buttonStyle(.plain)
-                }
-                .padding(.horizontal, pad)
-                .padding(.vertical, 10)
-                .background(bg)
+                )
             }
-            .background(bg)
+            .background(bg.opacity(0.3))
             .navigationTitle("Comments")
             .navigationBarTitleDisplayMode(.inline)
             .preferredColorScheme(.dark)
         }
+    }
+}
+
+// MARK: - 單條評論行（TikTok 風格：左頭像，右用戶名+時間+內容，右側愛心+數）
+private struct CommentRowView: View {
+    let comment: CommunityComment
+    let accent: Color
+    let onLike: () -> Void
+
+    private var timeAgo: String {
+        let s = Date().timeIntervalSince(comment.date)
+        if s < 60 { return "now" }
+        if s < 3600 { return "\(Int(s/60))m" }
+        if s < 86400 { return "\(Int(s/3600))h" }
+        return "\(Int(s/86400))d"
+    }
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 12) {
+            Image(systemName: "person.circle.fill")
+                .font(.system(size: 36))
+                .foregroundStyle(Color(hex: "4B5563"))
+            VStack(alignment: .leading, spacing: 4) {
+                HStack(alignment: .center, spacing: 6) {
+                    Text(comment.authorName)
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundStyle(Color.white.opacity(0.6))
+                    Text(timeAgo)
+                        .font(.system(size: 11, weight: .regular))
+                        .foregroundStyle(Color.white.opacity(0.4))
+                }
+                Text(comment.text)
+                    .font(.system(size: 15))
+                    .foregroundStyle(.white)
+                    .multilineTextAlignment(.leading)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            VStack(spacing: 4) {
+                Button(action: onLike) {
+                    Image(systemName: comment.isLiked ? "heart.fill" : "heart")
+                        .font(.system(size: 14))
+                        .foregroundStyle(comment.isLiked ? Color(hex: "EF4444") : Color.white.opacity(0.5))
+                        .scaleEffect(comment.isLiked ? 1.15 : 1.0)
+                        .animation(.spring(response: 0.3, dampingFraction: 0.6), value: comment.isLiked)
+                }
+                .buttonStyle(.plain)
+                Text("\(comment.likeCount)")
+                    .font(.system(size: 11))
+                    .foregroundStyle(Color.white.opacity(0.5))
+            }
+            .frame(width: 36)
+        }
+    }
+}
+
+// MARK: - 底部固定輸入條（圓角背景，有字時發送按鈕橘色）
+private struct CommentInputBar: View {
+    @Binding var draft: String
+    let accent: Color
+    let textMuted: Color
+    let surface: Color
+    let onSubmit: () -> Void
+
+    private var canSend: Bool { !draft.trimmingCharacters(in: .whitespaces).isEmpty }
+
+    var body: some View {
+        HStack(spacing: 12) {
+            TextField("Add a comment…", text: $draft, axis: .vertical)
+                .textFieldStyle(.plain)
+                .lineLimit(1...4)
+                .padding(.horizontal, 14)
+                .padding(.vertical, 10)
+                .background(surface)
+                .clipShape(RoundedRectangle(cornerRadius: 20))
+            Button(action: onSubmit) {
+                Image(systemName: "arrow.up.circle.fill")
+                    .font(.system(size: 32))
+                    .foregroundStyle(canSend ? accent : textMuted.opacity(0.6))
+            }
+            .buttonStyle(.plain)
+            .disabled(!canSend)
+        }
+        .padding(.horizontal, pad)
+        .padding(.vertical, 12)
+        .background(.ultraThinMaterial)
     }
 }
 
@@ -842,6 +1226,171 @@ private struct ShimmerPlaceholder: View {
     }
 }
 
+// MARK: - 分享海報視圖（僅供 ImageRenderer 生成圖片，不顯示在 UI 中）
+private struct SharePosterView: View {
+    let coverImage: UIImage?
+    let title: String
+    let authorUsername: String
+
+    private let posterWidth: CGFloat = 800
+    private let posterHeight: CGFloat = 1000 // 4:5
+
+    var body: some View {
+        ZStack(alignment: .bottomLeading) {
+            // 背景：16:10 Hero 圖 scaledToFill
+            Group {
+                if let img = coverImage {
+                    Image(uiImage: img)
+                        .resizable()
+                        .scaledToFill()
+                } else {
+                    LinearGradient(
+                        colors: [Color(hex: "1A2332"), Color(hex: "0B121F")],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                }
+            }
+            .frame(width: posterWidth, height: posterHeight)
+            .clipped()
+
+            // 遮罩層：底部深色漸變，確保文字清晰
+            LinearGradient(
+                colors: [.clear, .black.opacity(0.3), .black.opacity(0.85)],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .frame(width: posterWidth, height: posterHeight)
+
+            // 信息層：左下角標題 + @用戶名
+            VStack(alignment: .leading, spacing: 6) {
+                Text(title)
+                    .font(.system(size: 32, weight: .bold))
+                    .foregroundStyle(.white)
+                    .multilineTextAlignment(.leading)
+                    .lineLimit(3)
+                Text("@\(authorUsername.replacingOccurrences(of: " ", with: "_").lowercased())")
+                    .font(.system(size: 18, weight: .medium))
+                    .foregroundStyle(.white.opacity(0.9))
+            }
+            .padding(.leading, 24)
+            .padding(.bottom, 80)
+
+            // 品牌層：右下角 Grand Journey
+            VStack(alignment: .trailing, spacing: 4) {
+                Text("Grand Journey")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(.white.opacity(0.9))
+                Text("HikBik")
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundStyle(.white.opacity(0.6))
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
+            .padding(.trailing, 24)
+            .padding(.bottom, 24)
+        }
+        .frame(width: posterWidth, height: posterHeight)
+    }
+}
+
+// MARK: - Check-in 紙屑動畫（品牌色：橘、白、金），Canvas 粒子下落
+private struct CheckInConfettiView: View {
+    let startTime: Date
+    private static let particleCount = 55
+    private static let duration: Double = 2.5
+    private static let colors: [Color] = [
+        Color(hex: "FF8C42"),
+        .white,
+        Color(hex: "FBBF24")
+    ]
+
+    var body: some View {
+        GeometryReader { geo in
+            TimelineView(.animation(minimumInterval: 1/30)) { context in
+                Canvas { ctx, size in
+                    let t = context.date.timeIntervalSince(startTime)
+                    let progress = min(1, t / CheckInConfettiView.duration)
+                    for i in 0..<CheckInConfettiView.particleCount {
+                        let seed = Double(i) * 0.137
+                        let startX = (seed * 317).truncatingRemainder(dividingBy: Double(size.width))
+                        let startY = -20 - (seed * 47).truncatingRemainder(dividingBy: 80)
+                        let speed = 180 + (seed * 120).truncatingRemainder(dividingBy: 100)
+                        let y = startY + t * speed
+                        let opacity = 1.0 - progress
+                        let colorIdx = Int((seed * 7).truncatingRemainder(dividingBy: 3))
+                        let rect = CGRect(
+                            x: startX - 4,
+                            y: y - 4,
+                            width: 8,
+                            height: 8
+                        )
+                        ctx.fill(
+                            Path(ellipseIn: rect),
+                            with: .color(CheckInConfettiView.colors[colorIdx].opacity(opacity))
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+// MARK: - 海報預覽彈窗：顯示生成的海報圖 +「Confirm and Share」按鈕，確認後再打開系統分享
+private struct SharePreviewSheet: View {
+    let image: UIImage?
+    let onConfirmShare: () -> Void
+
+    private let accentOrange = Color(hex: "FF8C42")
+    private let previewCorner: CGFloat = 16
+    private let previewShadowRadius: CGFloat = 20
+
+    var body: some View {
+        NavigationStack {
+            VStack(spacing: 24) {
+                if let img = image {
+                    Image(uiImage: img)
+                        .resizable()
+                        .aspectRatio(4/5, contentMode: .fit)
+                        .clipShape(RoundedRectangle(cornerRadius: previewCorner))
+                        .shadow(color: .black.opacity(0.35), radius: previewShadowRadius, x: 0, y: 8)
+                        .padding(.horizontal, 24)
+                } else {
+                    RoundedRectangle(cornerRadius: previewCorner)
+                        .fill(Color(hex: "1A2332"))
+                        .aspectRatio(4/5, contentMode: .fit)
+                        .overlay {
+                            Text("Poster could not be generated")
+                                .font(.system(size: 15))
+                                .foregroundStyle(Color(hex: "9CA3AF"))
+                        }
+                        .padding(.horizontal, 24)
+                }
+
+                Button(action: onConfirmShare) {
+                    Text("Confirm and Share")
+                        .font(.system(size: 17, weight: .semibold))
+                        .foregroundStyle(.white)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 52)
+                        .background(accentOrange)
+                        .clipShape(RoundedRectangle(cornerRadius: 14))
+                }
+                .buttonStyle(.plain)
+                .padding(.horizontal, 24)
+                .padding(.bottom, 8)
+                .disabled(image == nil)
+                .opacity(image == nil ? 0.6 : 1)
+            }
+            .padding(.top, 20)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color(hex: "0B121F"))
+            .navigationTitle("Share Poster")
+            .navigationBarTitleDisplayMode(.inline)
+            .preferredColorScheme(.dark)
+        }
+    }
+}
+
 // MARK: - 原生分享表單（UIActivityViewController），自動顯示微信 / WhatsApp / LINE / Message 等已安裝 App
 struct ShareSheet: UIViewControllerRepresentable {
     let activityItems: [Any]
@@ -870,39 +1419,52 @@ extension CommunityMacroDetailView {
                     dayNumber: 1,
                     location: CommunityGeoLocation(latitude: 38.7331, longitude: -109.5925),
                     locationName: "Arches National Park",
-                    notes: "第一天從 Moab 出發。Delicate Arch 的落日絕對不能錯過，但記得帶頭燈，回程天黑很快。",
+                    notes: "Day one from Moab. Don’t miss sunset at Delicate Arch—bring a headlamp; it gets dark fast on the way back.",
                     photoURL: "https://images.unsplash.com/photo-1504192010706-96946577af45",
                     recommendedStay: "Under Canvas Moab",
                     hasWater: true,
                     hasFuel: false,
-                    signalStrength: 4
+                    signalStrength: 4,
+                    dayPhotos: ["https://images.unsplash.com/photo-1504192010706-96946577af45"],
+                    images: ["https://images.unsplash.com/photo-1504192010706-96946577af45"],
+                    text: "Day one from Moab. Don’t miss sunset at Delicate Arch—bring a headlamp; it gets dark fast on the way back.",
+                    airbnbLink: "https://www.airbnb.com/"
                 ),
                 CommunityJourneyDay(
                     dayNumber: 2,
                     location: CommunityGeoLocation(latitude: 38.4367, longitude: -109.8108),
                     locationName: "Canyonlands (Island in the Sky)",
-                    notes: "壯闊的峽谷景觀。Shafer Trail 非常考驗駕駛技術，建議低速檔前進。",
+                    notes: "Stunning canyon views. Shafer Trail is demanding—use low gear.",
                     photoURL: "https://images.unsplash.com/photo-1516939884455-1445c8652f83",
                     recommendedStay: "Willow Flat Campground",
                     hasWater: false,
                     hasFuel: false,
-                    signalStrength: 1
+                    signalStrength: 1,
+                    dayPhotos: ["https://images.unsplash.com/photo-1516939884455-1445c8652f83"],
+                    images: ["https://images.unsplash.com/photo-1516939884455-1445c8652f83"],
+                    text: "Stunning canyon views. Shafer Trail is demanding—use low gear."
                 ),
                 CommunityJourneyDay(
                     dayNumber: 3,
                     location: CommunityGeoLocation(latitude: 38.3670, longitude: -111.2615),
                     locationName: "Capitol Reef National Park",
-                    notes: "穿過 UT-24 公路，風景像是在火星。這裡的派 (Pie) 很有名，一定要去 Gifford House 買一個！",
+                    notes: "Drive UT-24—scenery like Mars. The pie here is famous; grab one at Gifford House.",
                     recommendedStay: "Capitol Reef Resort (Wagons)",
                     hasWater: true,
                     hasFuel: true,
-                    signalStrength: 3
+                    signalStrength: 3,
+                    dayPhotos: ["https://images.unsplash.com/photo-1516939884455-1445c8652f83"],
+                    images: ["https://images.unsplash.com/photo-1516939884455-1445c8652f83"],
+                    text: "Drive UT-24—scenery like Mars. The pie here is famous; grab one at Gifford House."
                 )
             ],
             selectedStates: ["Utah"],
             duration: "7 Days",
             vehicle: "High Clearance 4WD",
             pace: "Moderate",
+            difficulty: "Moderate",
+            tags: ["Utah", "7 Days", "High Clearance 4WD", "Moderate", "Difficulty · Moderate", "National Parks"],
+            state: "Utah",
             author: CommunityAuthor(id: "alex", displayName: "Alex Explorer", avatarURL: "https://example.com/avatar.jpg"),
             likeCount: 1240,
             commentCount: 85

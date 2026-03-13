@@ -1,118 +1,419 @@
-// Record Live Track – CoreLocation foreground tracking, auto-waypoints, save as draft
+// LiveTrackRecordingView – Record → Edit preview → Title/cover required → Publish only
 import SwiftUI
 import MapKit
 import CoreLocation
 
+private let neonGreen = Color(hex: "10B981")
+private let bgDark = Color(hex: "0B121F")
+private let cardBg = Color(hex: "2A3540")
+private let textMuted = Color(hex: "9CA3AF")
+
+private let defaultCenter = CLLocationCoordinate2D(latitude: 37.7749, longitude: -122.4194)
+private let defaultSpan = MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)
+
+private struct PostEditorSheetItem: Identifiable {
+    let id = UUID()
+    let draft: LiveTrackDraft
+    let distanceMeters: Double
+    let elevationMeters: Double
+    let durationSeconds: TimeInterval
+    let defaultTitle: String
+}
+
 // MARK: - Live Track Recording View
 struct LiveTrackRecordingView: View {
     @Environment(\.dismiss) private var dismiss
-    @StateObject private var tracker = LiveTrackLocationTracker()
+    @ObservedObject private var trackDataManager = TrackDataManager.shared
+    @ObservedObject private var engine = TrackRecorderEngine.shared
+
+    @State private var mapRegion = MKCoordinateRegion(center: defaultCenter, span: defaultSpan)
+    @State private var position: MapCameraPosition = .userLocation(followsHeading: false, fallback: .region(MKCoordinateRegion(center: defaultCenter, span: defaultSpan)))
+    @State private var hasInitialFocus = false
+    @State private var sportType: SportType = .hiking
+    @State private var showSportPicker = false
+    @State private var showFinishConfirm = false
+    @State private var editorSheetItem: PostEditorSheetItem?
+    @State private var finishedJourney: ManualJourney?
+    @State private var navigateToDetail = false
+    @State private var showCancelConfirm = false
+    @State private var useSatelliteMap = false
 
     var body: some View {
         ZStack(alignment: .top) {
-            liveTrackMap
-            liveTrackStatsOverlay
-            liveTrackControls
+            mapView
+            topStatsOverlay
+            bottomControlBar
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Color(hex: "0B121F"))
+        .background(bgDark)
         .navigationBarBackButtonHidden(true)
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {
-                Button("Cancel") { dismiss() }
-                    .foregroundStyle(Color(hex: "9CA3AF"))
+                Button("Cancel") { showCancelConfirm = true }
+                    .foregroundStyle(textMuted)
             }
         }
+        .confirmationDialog("Exit recording?", isPresented: $showCancelConfirm, titleVisibility: .visible) {
+            Button("Save to Draft") {
+                saveRecordingToDraftAndExit()
+            }
+            Button("Discard", role: .destructive) {
+                engine.stopRecording()
+                showCancelConfirm = false
+                dismiss()
+            }
+            Button("Resume", role: .cancel) {
+                showCancelConfirm = false
+            }
+        } message: {
+            Text("Save your current track to Draft Box (Live Recorded) to edit later, or discard and exit.")
+        }
         .onAppear {
-            tracker.requestAuthorization()
+            engine.requestAuthorization()
+            engine.startRecording()
+            TrackRecordingLiveActivityManager.start(activityType: sportType.rawValue)
+        }
+        .onDisappear {
+            if !engine.isRecording {
+                engine.stopLocationUpdatesForDisplay()
+            }
+            TrackRecordingLiveActivityManager.endIfNeeded()
+        }
+        .onChange(of: engine.locations.count) { _, newCount in
+            if !hasInitialFocus && newCount >= 1 {
+                hasInitialFocus = true
+                withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
+                    position = .userLocation(followsHeading: false, fallback: .automatic)
+                }
+            }
+        }
+        .onChange(of: engine.distance) { _, _ in
+            TrackRecordingLiveActivityManager.update(
+                distanceMeters: engine.distance,
+                durationSeconds: engine.elapsedSeconds,
+                elevationMeters: engine.elevation,
+                isPaused: engine.isPaused
+            )
+        }
+        .onChange(of: engine.elapsedSeconds) { _, _ in
+            TrackRecordingLiveActivityManager.update(
+                distanceMeters: engine.distance,
+                durationSeconds: engine.elapsedSeconds,
+                elevationMeters: engine.elevation,
+                isPaused: engine.isPaused
+            )
+        }
+        .onChange(of: engine.elevation) { _, _ in
+            TrackRecordingLiveActivityManager.update(
+                distanceMeters: engine.distance,
+                durationSeconds: engine.elapsedSeconds,
+                elevationMeters: engine.elevation,
+                isPaused: engine.isPaused
+            )
+        }
+        .onChange(of: engine.isPaused) { _, _ in
+            TrackRecordingLiveActivityManager.update(
+                distanceMeters: engine.distance,
+                durationSeconds: engine.elapsedSeconds,
+                elevationMeters: engine.elevation,
+                isPaused: engine.isPaused
+            )
+        }
+        .confirmationDialog("Sport Type", isPresented: $showSportPicker, titleVisibility: .visible) {
+            ForEach(SportType.allCases, id: \.self) { sport in
+                Button(sport.rawValue) { sportType = sport }
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: { Text("Choose activity type.") }
+        .confirmationDialog("Stop Recording", isPresented: $showFinishConfirm, titleVisibility: .visible) {
+            Button("Resume") {
+                showFinishConfirm = false
+            }
+            Button("Finish & Edit") {
+                finishAndOpenEditor()
+                showFinishConfirm = false
+            }
+            Button("Discard", role: .destructive) {
+                TrackRecorderEngine.shared.forceResetRecording()
+                TrackRecordingLiveActivityManager.endIfNeeded()
+                showFinishConfirm = false
+                dismiss()
+            }
+        } message: { Text("Resume to keep recording. Finish & Edit to open the editor. Discard to delete this recording and exit.") }
+        .fullScreenCover(item: $editorSheetItem) { item in
+            PostEditorView(
+                draft: item.draft,
+                distanceMeters: item.distanceMeters,
+                elevationMeters: item.elevationMeters,
+                durationSeconds: item.durationSeconds,
+                sportType: sportType,
+                initialTitle: item.defaultTitle.isEmpty ? nil : item.defaultTitle,
+                onSaveToDrafts: { title in
+                    let waypoints = item.draft.waypoints.map { (latitude: $0.latitude, longitude: $0.longitude, elevation: $0.elevation, timestamp: $0.timestamp) }
+                    let polyline = item.draft.waypoints.map { CLLocationCoordinate2D(latitude: $0.latitude, longitude: $0.longitude) }
+                    let draftItem = DraftItem.fromLiveTrack(waypoints: waypoints, polyline: polyline, durationSeconds: item.durationSeconds, title: title.isEmpty ? nil : title)
+                    trackDataManager.addDraft(draftItem)
+                    TrackRecorderEngine.shared.forceResetRecording()
+                    editorSheetItem = nil
+                    dismiss()
+                },
+                onPublish: { journey in
+                    // 直接寫入 publishedTracks，不經草稿；全新 Draft 由 fromLiveTrack 組裝
+                    let waypoints = engine.locations.map { (latitude: $0.coordinate.latitude, longitude: $0.coordinate.longitude, elevation: $0.altitude, timestamp: $0.timestamp) }
+                    let start = waypoints.first
+                    Task {
+                        let locationName = await DraftItem.geocodeStartLocation(
+                            latitude: start?.latitude ?? 0,
+                            longitude: start?.longitude ?? 0
+                        ) ?? "Trail Start"
+                        let (weather, facilities) = DraftItem.injectContextForStart(
+                            latitude: start?.latitude ?? 0,
+                            longitude: start?.longitude ?? 0
+                        )
+                        let newPost = DraftItem.fromLiveTrack(
+                            waypoints: waypoints,
+                            polyline: engine.routePolyline,
+                            durationSeconds: engine.elapsedSeconds,
+                            title: journey.routeName,
+                            locationName: locationName,
+                            currentWeather: weather,
+                            nearbyFacilities: facilities
+                        )
+                        await MainActor.run {
+                            printPublishPayloadsToConsole(newPost)
+                            trackDataManager.addPublished(newPost)
+                            trackDataManager.objectWillChange.send()
+                            TrackRecordingLiveActivityManager.startPublishedActivity(
+                                distanceMeters: newPost.totalDistanceMeters,
+                                durationSeconds: newPost.durationSeconds ?? 0,
+                                elevationMeters: newPost.elevationGainMeters
+                            )
+                            TrackRecorderEngine.shared.forceResetRecording()
+                        }
+                    }
+                },
+                onPublishComplete: {
+                    TrackRecorderEngine.shared.forceResetRecording()
+                    editorSheetItem = nil
+                    dismiss()
+                    DispatchQueue.main.async {
+                        TabSelectionManager.shared.switchToCommunity()
+                    }
+                }
+            )
+            .environmentObject(trackDataManager)
         }
         .preferredColorScheme(.dark)
     }
 
-    private var liveTrackMap: some View {
-        Map(initialPosition: .region(tracker.mapRegion), interactionModes: .all) {
-            if let polyline = tracker.routePolyline {
-                MapPolyline(coordinates: polyline)
-                    .stroke(Color(hex: "10B981"), lineWidth: 4)
-            }
-            ForEach(Array(tracker.waypoints.enumerated()), id: \.offset) { idx, pt in
-                Annotation("", coordinate: CLLocationCoordinate2D(latitude: pt.latitude, longitude: pt.longitude)) {
-                    Image(systemName: "mappin.circle.fill")
-                        .font(.system(size: 20))
-                        .foregroundStyle(idx == 0 ? Color(hex: "10B981") : Color(hex: "FF8C42"))
-                }
+    private var defaultJourney: ManualJourney {
+        DetailedTrackPost(routeName: "", totalDurationMinutes: 0, viewPointNodes: [])
+    }
+
+    // MARK: - Map: live polyline, auto focus, location + map-type buttons
+    private var mapView: some View {
+        Map(position: $position, interactionModes: .all) {
+            UserAnnotation()
+            if !engine.locations.isEmpty {
+                MapPolyline(coordinates: engine.routePolyline)
+                    .stroke(neonGreen, lineWidth: 6)
+                    .id(engine.locations.count)
             }
         }
-        .mapStyle(.standard)
+        .mapStyle(useSatelliteMap ? .imagery(elevation: .realistic) : .standard(elevation: .realistic))
+        .overlay(alignment: .topTrailing) {
+            Button {
+                useSatelliteMap.toggle()
+            } label: {
+                ZStack {
+                    Circle()
+                        .fill(.white.opacity(0.95))
+                        .frame(width: 44, height: 44)
+                        .shadow(color: .black.opacity(0.25), radius: 6, x: 0, y: 2)
+                    Circle()
+                        .stroke(neonGreen.opacity(0.4), lineWidth: 1)
+                        .frame(width: 44, height: 44)
+                    Image(systemName: "map.fill")
+                        .font(.system(size: 18, weight: .medium))
+                        .foregroundStyle(neonGreen)
+                }
+            }
+            .buttonStyle(.plain)
+            .padding(.trailing, 20)
+            .padding(.top, 72)
+        }
+        .overlay(alignment: .bottomTrailing) {
+            Button(action: {
+                withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                    position = .userLocation(followsHeading: false, fallback: .automatic)
+                }
+            }) {
+                ZStack {
+                    Circle()
+                        .fill(.white.opacity(0.95))
+                        .frame(width: 52, height: 52)
+                        .shadow(color: .black.opacity(0.25), radius: 8, x: 0, y: 4)
+                    Circle()
+                        .stroke(neonGreen.opacity(0.4), lineWidth: 1)
+                        .frame(width: 52, height: 52)
+                    Image(systemName: "location.fill")
+                        .font(.system(size: 22, weight: .medium))
+                        .foregroundStyle(neonGreen)
+                }
+            }
+            .buttonStyle(.plain)
+            .padding(.trailing, 20)
+            .padding(.bottom, 130)
+        }
+        .overlay(alignment: .bottom) {
+            if engine.authorizationStatus == .denied || engine.authorizationStatus == .restricted {
+                Button {
+                    if let url = URL(string: UIApplication.openSettingsURLString) {
+                        UIApplication.shared.open(url)
+                    }
+                } label: {
+                    Label("Enable location in Settings", systemImage: "location.fill")
+                        .font(.subheadline.weight(.medium))
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 20)
+                        .padding(.vertical, 12)
+                        .background(neonGreen)
+                        .clipShape(Capsule())
+                }
+                .padding(.bottom, 100)
+            } else if engine.locations.isEmpty && engine.isRecording {
+                Text("Getting location…")
+                    .font(.caption)
+                    .foregroundStyle(.white.opacity(0.9))
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 8)
+                    .background(.black.opacity(0.6))
+                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                    .padding(.bottom, 100)
+            }
+        }
+        .onReceive(engine.$locations) { locations in
+            guard let last = locations.last else { return }
+            mapRegion = MKCoordinateRegion(center: last.coordinate, span: mapRegion.span)
+            position = .region(mapRegion)
+        }
         .ignoresSafeArea(.container)
     }
 
-    private var liveTrackStatsOverlay: some View {
-        VStack(spacing: 12) {
-            HStack(spacing: 16) {
-                statCard(icon: "clock.fill", value: tracker.elapsedTimeFormatted, label: "Elapsed")
-                statCard(icon: "arrow.triangle.swap", value: tracker.distanceFormatted, label: "Distance")
-                statCard(icon: "arrow.up.right", value: tracker.elevationFormatted, label: "Elevation")
+    private var topStatsOverlay: some View {
+        VStack(spacing: 0) {
+            HStack(spacing: 20) {
+                if engine.isPaused {
+                    Text("Paused")
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 6)
+                        .background(Color(hex: "EF4444"))
+                        .clipShape(Capsule())
+                }
+                statPill(icon: "arrow.triangle.swap", value: distanceFormatted, label: "Distance")
+                statPill(icon: "clock.fill", value: timeFormatted, label: "Time")
+                statPill(icon: "arrow.up.right", value: elevationFormatted, label: "Elevation Gain")
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 12)
+            .padding(.horizontal, 20)
+            .padding(.vertical, 14)
             .background(.ultraThinMaterial)
-            .clipShape(RoundedRectangle(cornerRadius: 12))
+            .clipShape(RoundedRectangle(cornerRadius: 16))
             .padding(.top, 16)
             .padding(.horizontal, 20)
             Spacer()
         }
     }
 
-    private func statCard(icon: String, value: String, label: String) -> some View {
+    private func statPill(icon: String, value: String, label: String) -> some View {
         VStack(spacing: 4) {
             Image(systemName: icon)
                 .font(.system(size: 14))
-                .foregroundStyle(Color(hex: "10B981"))
+                .foregroundStyle(neonGreen)
             Text(value)
-                .font(.system(size: 16, weight: .bold))
+                .font(.system(size: 17, weight: .bold, design: .rounded))
                 .foregroundStyle(.white)
             Text(label)
-                .font(.system(size: 11))
-                .foregroundStyle(Color(hex: "9CA3AF"))
+                .font(.system(size: 11, weight: .medium))
+                .foregroundStyle(textMuted)
         }
         .frame(maxWidth: .infinity)
     }
 
-    private var liveTrackControls: some View {
-        VStack {
+    private var distanceFormatted: String {
+        let miles = engine.distance * 0.000621371
+        return miles < 0.01 ? "0 mi" : String(format: "%.2f mi", miles)
+    }
+
+    private var timeFormatted: String {
+        let t = Int(engine.elapsedSeconds)
+        let h = t / 3600, m = (t % 3600) / 60, s = t % 60
+        return h > 0 ? String(format: "%d:%02d:%02d", h, m, s) : String(format: "%d:%02d", m, s)
+    }
+
+    private var elevationFormatted: String {
+        let ft = engine.elevation * 3.28084
+        return ft < 1 ? "0 ft" : String(format: "%.0f ft", ft)
+    }
+
+    private var bottomControlBar: some View {
+        VStack(spacing: 0) {
             Spacer()
-            HStack(spacing: 16) {
-                if tracker.isRecording {
+            HStack(spacing: 12) {
+                if engine.isRecording {
+                    Button { showFinishConfirm = true } label: {
+                        Text("Stop")
+                            .font(.system(size: 17, weight: .semibold))
+                            .foregroundStyle(.white)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 16)
+                            .background(cardBg)
+                            .clipShape(RoundedRectangle(cornerRadius: 14))
+                    }
+                    .buttonStyle(.plain)
+
                     Button {
-                        tracker.stopRecording()
+                        if engine.isPaused { engine.resumeRecording() } else { engine.pauseRecording() }
                     } label: {
                         HStack(spacing: 8) {
-                            Image(systemName: "stop.fill")
-                            Text("Stop")
+                            Image(systemName: engine.isPaused ? "play.fill" : "pause.fill")
+                            Text(engine.isPaused ? "Resume" : "Pause")
                                 .font(.system(size: 17, weight: .semibold))
                         }
                         .foregroundStyle(.white)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 16)
-                        .background(Color(hex: "EF4444"))
+                        .background(engine.isPaused ? neonGreen : Color(hex: "EF4444"))
                         .clipShape(RoundedRectangle(cornerRadius: 14))
                     }
                     .buttonStyle(.plain)
                 } else {
-                    Button {
-                        tracker.startRecording()
-                    } label: {
+                    Button { showSportPicker = true } label: {
                         HStack(spacing: 8) {
-                            Image(systemName: "record.circle")
-                            Text("Start Recording")
-                                .font(.system(size: 17, weight: .semibold))
+                            Image(systemName: "figure.hiking")
+                            Text("\(sportType.rawValue)")
+                                .font(.system(size: 15, weight: .medium))
                         }
                         .foregroundStyle(.white)
-                        .frame(maxWidth: .infinity)
+                        .padding(.horizontal, 16)
                         .padding(.vertical, 16)
-                        .background(Color(hex: "10B981"))
+                        .background(cardBg)
                         .clipShape(RoundedRectangle(cornerRadius: 14))
+                    }
+                    .buttonStyle(.plain)
+
+                    Button {
+                        TrackRecordingLiveActivityManager.start(activityType: sportType.rawValue)
+                        engine.startRecording()
+                    } label: {
+                        Text("Start")
+                            .font(.system(size: 17, weight: .semibold))
+                            .foregroundStyle(bgDark)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 16)
+                            .background(neonGreen)
+                            .clipShape(RoundedRectangle(cornerRadius: 14))
                     }
                     .buttonStyle(.plain)
                 }
@@ -120,201 +421,66 @@ struct LiveTrackRecordingView: View {
             .padding(.horizontal, 20)
             .padding(.bottom, 40)
         }
-        .overlay(alignment: .bottom) {
-            if tracker.hasRecordedTrack, !tracker.isRecording {
-                NavigationLink(destination: CustomRouteBuilderView(liveTrackDraft: tracker.buildDraft())) {
-                    HStack(spacing: 8) {
-                        Image(systemName: "square.and.arrow.down")
-                        Text("Save as Draft")
-                            .font(.system(size: 17, weight: .semibold))
-                    }
-                    .foregroundStyle(.white)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 16)
-                    .background(Color(hex: "FF8C42"))
-                    .clipShape(RoundedRectangle(cornerRadius: 14))
+    }
+
+    /// Save Draft path: add to draftTracks at 0, end Live Activity, dismiss to previous page.
+    private func saveRecordingToDraftAndExit() {
+        let draft = engine.buildDraft()
+        let item = DraftItem.fromLiveTrack(
+            waypoints: draft.waypoints,
+            polyline: engine.routePolyline,
+            durationSeconds: engine.elapsedSeconds
+        )
+        engine.stopRecording()
+        TrackRecordingLiveActivityManager.endIfNeeded()
+        trackDataManager.addDraft(item)
+        showCancelConfirm = false
+        dismiss()
+    }
+
+    /// Publish flow: stop engine, delay 0.2s then build data and present editor sheet.
+    private func finishAndOpenEditor() {
+        engine.stopRecording()
+        showFinishConfirm = false
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+            let draft = engine.buildDraft()
+            let distance = engine.distance
+            let elevation = engine.elevation
+            let duration = engine.elapsedSeconds
+            Task {
+                let title = await geocodeDefaultTitle(draft: draft)
+                await MainActor.run {
+                    editorSheetItem = PostEditorSheetItem(
+                        draft: draft,
+                        distanceMeters: distance,
+                        elevationMeters: elevation,
+                        durationSeconds: duration,
+                        defaultTitle: title
+                    )
                 }
-                .buttonStyle(.plain)
-                .padding(.horizontal, 20)
-                .padding(.bottom, 20)
             }
         }
     }
-}
 
-// MARK: - Live Track Location Tracker
-private final class LiveTrackLocationTracker: NSObject, ObservableObject {
-    @Published var isRecording = false
-    @Published var waypoints: [(latitude: Double, longitude: Double, elevation: Double, timestamp: Date)] = []
-    @Published var totalDistanceMeters: Double = 0
-    @Published var currentElevation: Double = 0
-    @Published var elapsedSeconds: TimeInterval = 0
-    @Published var mapRegion = MKCoordinateRegion(
-        center: CLLocationCoordinate2D(latitude: 39.5, longitude: -98.5),
-        span: MKCoordinateSpan(latitudeDelta: 0.1, longitudeDelta: 0.1)
-    )
-
-    private let locationManager = CLLocationManager()
-    private var recordingStartDate: Date?
-    private var lastLocation: CLLocation?
-    private var lastWaypointLocation: CLLocation?
-    private var lastWaypointTime: Date?
-    private var timer: Timer?
-    private let autoWaypointDistanceMeters: Double = 500
-    private let autoWaypointStopDurationSeconds: TimeInterval = 120
-
-    var elapsedTimeFormatted: String {
-        let mins = Int(elapsedSeconds) / 60
-        let secs = Int(elapsedSeconds) % 60
-        return String(format: "%d:%02d", mins, secs)
-    }
-
-    var distanceFormatted: String {
-        if totalDistanceMeters < 1000 {
-            return String(format: "%.0f m", totalDistanceMeters)
+    private func geocodeDefaultTitle(draft: LiveTrackDraft) async -> String {
+        guard let lastPoint = draft.waypoints.last else {
+            return "\(sportType.rawValue) · \(dateString)"
         }
-        return String(format: "%.2f km", totalDistanceMeters / 1000)
-    }
-
-    var elevationFormatted: String {
-        if currentElevation > 0 {
-            return String(format: "%.0f m", currentElevation)
-        }
-        return "—"
-    }
-
-    var routePolyline: [CLLocationCoordinate2D]? {
-        guard waypoints.count >= 2 else { return nil }
-        return waypoints.map { CLLocationCoordinate2D(latitude: $0.latitude, longitude: $0.longitude) }
-    }
-
-    var hasRecordedTrack: Bool { !waypoints.isEmpty }
-
-    override init() {
-        super.init()
-        locationManager.delegate = self
-        locationManager.desiredAccuracy = kCLLocationAccuracyBest
-        locationManager.distanceFilter = 5
-        locationManager.allowsBackgroundLocationUpdates = false
-    }
-
-    func requestAuthorization() {
-        locationManager.requestWhenInUseAuthorization()
-    }
-
-    func startRecording() {
-        guard !isRecording else { return }
-        waypoints = []
-        totalDistanceMeters = 0
-        currentElevation = 0
-        elapsedSeconds = 0
-        lastLocation = nil
-        lastWaypointLocation = nil
-        lastWaypointTime = nil
-        recordingStartDate = Date()
-        isRecording = true
-        locationManager.startUpdatingLocation()
-        timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
-            self?.tick()
-        }
-        RunLoop.current.add(timer!, forMode: .common)
-    }
-
-    func stopRecording() {
-        guard isRecording else { return }
-        isRecording = false
-        locationManager.stopUpdatingLocation()
-        timer?.invalidate()
-        timer = nil
-    }
-
-    func buildDraft() -> LiveTrackDraft {
-        LiveTrackDraft(waypoints: waypoints)
-    }
-
-    private func tick() {
-        guard let start = recordingStartDate else { return }
-        elapsedSeconds = Date().timeIntervalSince(start)
-    }
-
-    private func addWaypoint(from location: CLLocation) {
-        let pt = (
-            latitude: location.coordinate.latitude,
-            longitude: location.coordinate.longitude,
-            elevation: location.altitude,
-            timestamp: Date()
-        )
-        waypoints.append(pt)
-        lastWaypointLocation = location
-        lastWaypointTime = Date()
-        updateMapRegion()
-    }
-
-    private func updateMapRegion() {
-        guard !waypoints.isEmpty else { return }
-        let lats = waypoints.map(\.latitude)
-        let lons = waypoints.map(\.longitude)
-        let minLat = lats.min() ?? 0
-        let maxLat = lats.max() ?? 0
-        let minLon = lons.min() ?? 0
-        let maxLon = lons.max() ?? 0
-        let center = CLLocationCoordinate2D(
-            latitude: (minLat + maxLat) / 2,
-            longitude: (minLon + maxLon) / 2
-        )
-        let span = MKCoordinateSpan(
-            latitudeDelta: max(0.01, (maxLat - minLat) * 1.5 + 0.005),
-            longitudeDelta: max(0.01, (maxLon - minLon) * 1.5 + 0.005)
-        )
-        mapRegion = MKCoordinateRegion(center: center, span: span)
-    }
-
-    private func processLocation(_ location: CLLocation) {
-        currentElevation = location.altitude
-
-        if waypoints.isEmpty {
-            addWaypoint(from: location)
-            lastLocation = location
-            return
-        }
-
-        if let last = lastLocation {
-            totalDistanceMeters += location.distance(from: last)
-        }
-        lastLocation = location
-
-        // Auto-waypoint: every 500m
-        if let lastWp = lastWaypointLocation {
-            let distFromLastWp = location.distance(from: lastWp)
-            if distFromLastWp >= autoWaypointDistanceMeters {
-                addWaypoint(from: location)
-                return
+        let loc = CLLocation(latitude: lastPoint.latitude, longitude: lastPoint.longitude)
+        let geocoder = CLGeocoder()
+        do {
+            let placemarks = try await geocoder.reverseGeocodeLocation(loc)
+            let name = placemarks.first?.locality ?? placemarks.first?.administrativeArea ?? placemarks.first?.name
+            if let n = name, !n.isEmpty {
+                return "\(n) · \(dateString) · \(sportType.rawValue)"
             }
-        }
-
-        // Auto-waypoint: stopped 2+ mins (speed < 0.5 m/s for 2 mins)
-        let speed = location.speed >= 0 ? location.speed : 0
-        if speed < 0.5 {
-            if let lastTime = lastWaypointTime {
-                if Date().timeIntervalSince(lastTime) >= autoWaypointStopDurationSeconds {
-                    addWaypoint(from: location)
-                }
-            } else {
-                lastWaypointTime = Date()
-            }
-        } else {
-            lastWaypointTime = nil
-        }
-    }
-}
-
-extension LiveTrackLocationTracker: CLLocationManagerDelegate {
-    func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
-        guard isRecording, let location = locations.last, location.horizontalAccuracy >= 0 else { return }
-        DispatchQueue.main.async { [weak self] in
-            self?.processLocation(location)
-        }
+        } catch {}
+        return "\(dateString) · \(sportType.rawValue)"
     }
 
-    func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {}
+    private var dateString: String {
+        let f = DateFormatter()
+        f.dateStyle = .medium
+        return f.string(from: Date())
+    }
 }

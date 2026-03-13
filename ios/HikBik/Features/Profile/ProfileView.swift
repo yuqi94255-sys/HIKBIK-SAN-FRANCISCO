@@ -61,11 +61,13 @@ struct ProfileView: View {
     @EnvironmentObject private var userState: UserState
     @EnvironmentObject private var currentUser: CurrentUser
     @EnvironmentObject private var communityViewModel: CommunityViewModel
+    @EnvironmentObject private var trackDataManager: TrackDataManager
     @State private var userName: String = UserDefaults.standard.string(forKey: "hikbik_user_name") ?? ""
     @State private var isLoggedIn: Bool = (UserDefaults.standard.data(forKey: "hikbik_user") != nil)
     @State private var selectedGridTab: ProfileGridTab = .grid
-    @State private var drafts: [DraftItem] = []
     @State private var collections: [ProfileCollection] = []
+    /// Drafts list bound to DataManager.draftTracks (single source of truth; no local copy to avoid list shaking).
+    private var drafts: [DraftItem] { trackDataManager.draftTracks }
     @State private var showShareSheet = false
     @State private var showCreateCollection = false
     @State private var newCollectionName = ""
@@ -90,14 +92,15 @@ struct ProfileView: View {
                 if userState.isGuest {
                     guestJoinHIKBIKContent
                 } else {
-                    ScrollView {
+                    ScrollView(.vertical, showsIndicators: false) {
                         VStack(alignment: .leading, spacing: 0) {
                             socialHeaderSection
                             ProStatsDashboardCard()
                             threeTabSection
                             gridOrFolderOrHeartContent
+                            Color.clear.frame(height: 80)
                         }
-                        .padding(.bottom, 40)
+                        .padding(.bottom, 80)
                     }
                 }
             }
@@ -108,6 +111,10 @@ struct ProfileView: View {
             .toolbarBackground(ProfileTheme.background, for: .navigationBar)
             .toolbarColorScheme(.dark, for: .navigationBar)
             .onAppear {
+                trackDataManager.reloadFromStore()
+                loadData()
+            }
+            .onReceive(NotificationCenter.default.publisher(for: .unifiedDraftsDidChange)) { _ in
                 loadData()
             }
             .sheet(isPresented: $showShareSheet) {
@@ -134,7 +141,9 @@ struct ProfileView: View {
                 FollowListSheet(mode: followListMode)
             }
             .navigationDestination(for: DraftItem.self) { draft in
-                if draft.isEditable {
+                if trackDataManager.publishedTracks.contains(where: { $0.id == draft.id }) {
+                    ManualJourneyDetailView(journey: draft.toManualJourney())
+                } else if draft.isEditable {
                     CustomRouteBuilderView(liveTrackDraft: LiveTrackDraft.from(draftItem: draft))
                 } else {
                     LiveTrackDetailView(draft: draft)
@@ -196,13 +205,13 @@ struct ProfileView: View {
             userName = name
             isLoggedIn = true
         }
-        drafts = UnifiedDraftStore.loadAll()
         collections = ProfileCollectionsStore.loadAll()
-        ProfileAchievementsStore.updateFromDrafts(drafts)
-        if drafts.contains(where: { $0.source == .imported }) {
+        let draftList = trackDataManager.draftTracks
+        ProfileAchievementsStore.updateFromDrafts(draftList)
+        if draftList.contains(where: { $0.source == .imported }) {
             ProfileAchievementsStore.markGPXImported()
         }
-        let totalMeters = drafts.reduce(0.0) { $0 + $1.totalDistanceMeters }
+        let totalMeters = draftList.reduce(0.0) { $0 + $1.totalDistanceMeters }
         AchievementStore.updateFromDrafts(totalDistanceMeters: totalMeters)
     }
 
@@ -406,24 +415,56 @@ struct ProfileView: View {
         .padding(.top, 16)
     }
 
+    /// Profile Posts = published only。宏觀 / 微觀 / 實時 三種卡片與導航完全分流。
     private var myPostsGrid: some View {
-        let posts = drafts.filter { $0.source == .liveRecorded || $0.source == .imported }
+        let posts = trackDataManager.publishedTracks
         return Group {
             if posts.isEmpty {
-                Text("No posts yet. Record or import a route.")
+                Text("No posts yet. Publish a recording from Community to see it here.")
                     .font(.system(size: 15))
                     .foregroundStyle(ProfileTheme.textMuted)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 48)
             } else {
-                LazyVGrid(columns: [GridItem(.flexible(), spacing: 2), GridItem(.flexible(), spacing: 2), GridItem(.flexible(), spacing: 2)], spacing: 2) {
-                    ForEach(posts) { draft in
-                        PostGridCell(draft: draft) {
-                            selectedDraftForReel = draft
-                        }
+                LazyVStack(spacing: 16) {
+                    ForEach(posts, id: \.id) { draft in
+                        profilePostRow(draft: draft)
                     }
                 }
+                .id(trackDataManager.publishedTracks.count)
+                .padding(.horizontal, 20)
             }
+        }
+    }
+
+    @ViewBuilder
+    private func profilePostRow(draft: DraftItem) -> some View {
+        switch draft.category {
+        case .grandJourney:
+            NavigationLink {
+                CommunityMacroDetailView(
+                    journey: draft.communityJourneyForMacroDetail(),
+                    journeyId: draft.id.uuidString,
+                    coverImageData: draft.coverImageData
+                )
+            } label: {
+                ProfileGrandJourneyCard(draft: draft)
+            }
+            .buttonStyle(.plain)
+        case .detailedTrack:
+            NavigationLink {
+                ManualJourneyDetailView(journey: draft.toManualJourney())
+            } label: {
+                ProfileDetailedTrackCard(draft: draft)
+            }
+            .buttonStyle(.plain)
+        case .livelyActivity:
+            NavigationLink {
+                ActivityDetailView(draft: draft)
+            } label: {
+                ProfileLivelyActivityCard(draft: draft)
+            }
+            .buttonStyle(.plain)
         }
     }
 
@@ -458,11 +499,12 @@ struct ProfileView: View {
                         .padding(.horizontal, 20)
                     }
                 }
+                .scrollDisabled(true)
             }
         }
     }
 
-    /// Liked: 從 CurrentUser.likedPostIds 解析出可顯示的行程（published_* 從 CommunityViewModel），點擊進入詳情。
+    /// Liked: resolve CurrentUser.likedPostIds to journey items; tap opens detail.
     private var likedPostsSection: some View {
         let items: [LikedPostItem] = currentUser.likedPostIds.compactMap { id in
             guard id.hasPrefix("published_"),
@@ -510,6 +552,7 @@ struct ProfileView: View {
                         .padding(.horizontal, 20)
                     }
                 }
+                .scrollDisabled(true)
             }
         }
     }
@@ -521,10 +564,10 @@ struct ProfileView: View {
             if groups.isEmpty {
                 MyTripEmptyState()
             } else {
-            List {
-                    ForEach(groups) { group in
-                Section {
-                            ForEach(group.trips) { draft in
+                List {
+                    ForEach(groups, id: \.id) { group in
+                        Section {
+                            ForEach(group.trips, id: \.id) { draft in
                                 NavigationLink(value: draft) {
                                     MyTripCard(draft: draft)
                                 }
@@ -545,11 +588,12 @@ struct ProfileView: View {
                 }
                 .listStyle(.plain)
                 .scrollContentBackground(.hidden)
+                .scrollDisabled(true)
             }
         }
     }
 
-    /// Medals: 3D trophy case from Achievement system (Parks, Milestones, Technical)
+    /// Medals: trophy case from Achievement system (Parks, Milestones, Technical)
     private var medalsContent: some View {
         let grouped = AchievementStore.achievementsByCategory()
         return VStack(alignment: .leading, spacing: 20) {
@@ -578,6 +622,7 @@ struct ProfileView: View {
                             }
                         }
                     }
+                    .scrollDisabled(true)
                     .padding(.horizontal, 20)
                 }
             }
@@ -592,7 +637,7 @@ private struct HonorCenterDestination: Hashable {}
 struct ProStatsDashboardCard: View {
     private var miles: Double { AchievementStore.cumulativeMiles }
     private var elevation: Double {
-        UnifiedDraftStore.loadAll()
+        TrackDataManager.shared.allTracks
             .filter { $0.source == .liveRecorded || $0.source == .imported }
             .reduce(0.0) { $0 + $1.elevationGainMeters }
     }
@@ -721,21 +766,287 @@ struct MiniRadarView: View {
     }
 }
 
-// MARK: - 3-column grid cell (My Posts): map thumbnail + polyline icon overlay
+// MARK: - Profile 宏觀卡片（大圖封面 + 高級感，僅 Posts 列表用）
+private let profileGrandCorner: CGFloat = 20
+struct ProfileGrandJourneyCard: View {
+    let draft: DraftItem
+    private var dayCount: Int {
+        if let j = draft.macroJourneyJSON, let d = j.data(using: .utf8),
+           let p = try? JSONDecoder().decode(MacroJourneyPost.self, from: d) {
+            return max(1, p.days.count)
+        }
+        return max(1, draft.waypoints.count)
+    }
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            ZStack(alignment: .bottomLeading) {
+                Group {
+                    if let data = draft.coverImageData, let ui = UIImage(data: data) {
+                        Image(uiImage: ui)
+                            .resizable()
+                            .scaledToFill()
+                    } else {
+                        ProfileMiniCardThumbnail(draft: draft)
+                            .scaleEffect(1.2)
+                    }
+                }
+                .frame(height: 200)
+                .frame(maxWidth: .infinity)
+                .clipped()
+                LinearGradient(colors: [.clear, .black.opacity(0.85)], startPoint: .top, endPoint: .bottom)
+                    .frame(height: 200)
+                    .allowsHitTesting(false)
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("GRAND JOURNEY")
+                        .font(.system(size: 10, weight: .heavy, design: .rounded))
+                        .foregroundStyle(Color(hex: "FF8C42"))
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(.black.opacity(0.5))
+                        .clipShape(Capsule())
+                    Text(draft.title.isEmpty ? "Macro Journey" : draft.title)
+                        .font(.system(size: 18, weight: .bold))
+                        .foregroundStyle(.white)
+                        .lineLimit(2)
+                    Text("\(dayCount) day\(dayCount == 1 ? "" : "s") · Itinerary")
+                        .font(.system(size: 12, weight: .medium, design: .monospaced))
+                        .foregroundStyle(.white.opacity(0.85))
+                }
+                .padding(16)
+            }
+            .clipShape(RoundedRectangle(cornerRadius: profileGrandCorner))
+            .overlay(RoundedRectangle(cornerRadius: profileGrandCorner).strokeBorder(Color.white.opacity(0.08), lineWidth: 1))
+        }
+        .background(ProfileTheme.cardBg)
+        .clipShape(RoundedRectangle(cornerRadius: profileGrandCorner))
+    }
+}
+
+// MARK: - Profile 微觀卡片（精簡專業，與宏觀區分）
+struct ProfileDetailedTrackCard: View {
+    let draft: DraftItem
+    private var mileageFormatted: String {
+        let km = draft.totalDistanceMeters / 1000
+        return km < 0.01 ? "—" : String(format: "%.1f km", km)
+    }
+    var body: some View {
+        HStack(spacing: 14) {
+            ZStack {
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(Color(hex: "1E3A5F").opacity(0.6))
+                if let coverData = draft.coverImageData, let ui = UIImage(data: coverData) {
+                    Image(uiImage: ui)
+                        .resizable()
+                        .scaledToFill()
+                } else {
+                    ProfileMiniCardThumbnail(draft: draft)
+                }
+            }
+            .frame(width: 80, height: 80)
+            .clipShape(RoundedRectangle(cornerRadius: 12))
+            .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(Color(hex: "3B82F6").opacity(0.5), lineWidth: 1))
+            VStack(alignment: .leading, spacing: 6) {
+                Text("DETAILED TRACK")
+                    .font(.system(size: 9, weight: .heavy))
+                    .foregroundStyle(Color(hex: "60A5FA"))
+                Text(draft.title.isEmpty ? "Micro route" : draft.title)
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundStyle(ProfileTheme.textPrimary)
+                    .lineLimit(2)
+                Text(mileageFormatted)
+                    .font(.system(size: 13, weight: .medium, design: .monospaced))
+                    .foregroundStyle(ProfileTheme.textMuted)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            Image(systemName: "chevron.right")
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundStyle(ProfileTheme.textMuted)
+        }
+        .padding(14)
+        .background(ProfileTheme.cardBg)
+        .clipShape(RoundedRectangle(cornerRadius: 14))
+        .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(Color(hex: "3B82F6").opacity(0.15), lineWidth: 1))
+    }
+}
+
+// MARK: - Profile 實時紀錄卡片（紅色動態標識）
+struct ProfileLivelyActivityCard: View {
+    let draft: DraftItem
+    private var mileageFormatted: String {
+        let km = draft.totalDistanceMeters / 1000
+        return km < 0.01 ? "—" : String(format: "%.1f km", km)
+    }
+    var body: some View {
+        HStack(spacing: 14) {
+            RoundedRectangle(cornerRadius: 3)
+                .fill(Color(hex: "EF4444"))
+                .frame(width: 4)
+                .frame(maxHeight: .infinity)
+            ZStack {
+                if let coverData = draft.coverImageData, let ui = UIImage(data: coverData) {
+                    Image(uiImage: ui)
+                        .resizable()
+                        .scaledToFill()
+                } else {
+                    ProfileMiniCardThumbnail(draft: draft)
+                }
+            }
+            .frame(width: 72, height: 72)
+            .clipShape(RoundedRectangle(cornerRadius: 12))
+            VStack(alignment: .leading, spacing: 6) {
+                HStack(spacing: 6) {
+                    Circle()
+                        .fill(Color(hex: "EF4444"))
+                        .frame(width: 8, height: 8)
+                    Text("LIVELY · 紀錄")
+                        .font(.system(size: 10, weight: .heavy))
+                        .foregroundStyle(Color(hex: "F87171"))
+                }
+                Text(draft.title.isEmpty ? "Live activity" : draft.title)
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundStyle(ProfileTheme.textPrimary)
+                    .lineLimit(2)
+                Text(mileageFormatted)
+                    .font(.system(size: 13, weight: .medium, design: .monospaced))
+                    .foregroundStyle(ProfileTheme.textMuted)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            Image(systemName: "chevron.right")
+                .foregroundStyle(ProfileTheme.textMuted)
+        }
+        .padding(.vertical, 10)
+        .padding(.trailing, 14)
+        .padding(.leading, 10)
+        .background(ProfileTheme.cardBg)
+        .clipShape(RoundedRectangle(cornerRadius: 14))
+        .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(Color(hex: "EF4444").opacity(0.2), lineWidth: 1))
+    }
+}
+
+// MARK: - ProfileMiniCardView (Template B: 水平佈局，左正方形縮略圖，右標題+總里程，極簡)
+struct ProfileMiniCardView: View {
+    let draft: DraftItem
+
+    private var mileageFormatted: String {
+        let km = draft.totalDistanceMeters / 1000
+        return km < 0.01 ? "0 km" : String(format: "%.1f km", km)
+    }
+
+    var body: some View {
+        HStack(spacing: 14) {
+            ZStack {
+                if let coverData = draft.coverImageData, let uiImage = UIImage(data: coverData) {
+                    Image(uiImage: uiImage)
+                        .resizable()
+                        .scaledToFill()
+                        .frame(width: 72, height: 72)
+                        .clipped()
+                } else {
+                    ProfileMiniCardThumbnail(draft: draft)
+                }
+            }
+            .frame(width: 72, height: 72)
+            .clipShape(RoundedRectangle(cornerRadius: 12))
+            VStack(alignment: .leading, spacing: 4) {
+                Text(draft.title.isEmpty ? "Route" : draft.title)
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundStyle(ProfileTheme.textPrimary)
+                    .lineLimit(2)
+                Text(mileageFormatted)
+                    .font(.system(size: 14, weight: .medium, design: .monospaced))
+                    .foregroundStyle(ProfileTheme.textMuted)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            Image(systemName: "chevron.right")
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundStyle(ProfileTheme.textMuted)
+        }
+        .padding(14)
+        .background(ProfileTheme.cardBg)
+        .clipShape(RoundedRectangle(cornerRadius: 14))
+    }
+}
+
+private struct ProfileMiniCardThumbnail: View {
+    let draft: DraftItem
+    var body: some View {
+        let coords = draft.polyline2D ?? draft.coordinate2DPoints
+        Group {
+            if coords.count >= 2 {
+                Map(initialPosition: .region(region), interactionModes: []) {
+                    MapPolyline(coordinates: coords)
+                        .stroke(ProfileTheme.accent, lineWidth: 3)
+                }
+                .mapStyle(.standard(elevation: .flat))
+            } else {
+                Rectangle()
+                    .fill(ProfileTheme.background)
+                Image(systemName: "map")
+                    .font(.system(size: 24))
+                    .foregroundStyle(ProfileTheme.textMuted.opacity(0.5))
+            }
+        }
+    }
+    private var region: MKCoordinateRegion {
+        let coords = draft.polyline2D ?? draft.coordinate2DPoints
+        guard !coords.isEmpty else {
+            return MKCoordinateRegion(center: CLLocationCoordinate2D(latitude: 39.5, longitude: -98.5), span: MKCoordinateSpan(latitudeDelta: 0.1, longitudeDelta: 0.1))
+        }
+        let lats = coords.map(\.latitude)
+        let lons = coords.map(\.longitude)
+        let center = CLLocationCoordinate2D(latitude: (lats.min()! + lats.max()!) / 2, longitude: (lons.min()! + lons.max()!) / 2)
+        let span = MKCoordinateSpan(latitudeDelta: max(0.02, (lats.max()! - lats.min()!) * 1.8), longitudeDelta: max(0.02, (lons.max()! - lons.min()!) * 1.8))
+        return MKCoordinateRegion(center: center, span: span)
+    }
+}
+
+// MARK: - PostGridCell (legacy / reel 等仍用)
 struct PostGridCell: View {
     let draft: DraftItem
     var onTap: () -> Void
 
+    private var mileageFormatted: String {
+        let km = draft.totalDistanceMeters / 1000
+        return km < 0.01 ? "0 km" : String(format: "%.1f km", km)
+    }
+    private static var dateFormatter: DateFormatter {
+        let f = DateFormatter()
+        f.dateStyle = .short
+        return f
+    }
+
     var body: some View {
         Button(action: onTap) {
             GeometryReader { geo in
-                ZStack(alignment: .topTrailing) {
+                ZStack(alignment: .bottom) {
                     PostGridCellBackground(draft: draft)
                     Image(systemName: "map.fill")
                         .font(.system(size: 14))
                         .foregroundStyle(.white.opacity(0.9))
                         .shadow(color: .black.opacity(0.5), radius: 2)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
                         .padding(6)
+                    LinearGradient(colors: [.clear, .black.opacity(0.85)], startPoint: .top, endPoint: .bottom)
+                        .frame(height: geo.size.height * 0.55)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(draft.title.isEmpty ? "Route" : draft.title)
+                            .font(.system(size: 11, weight: .semibold))
+                            .foregroundStyle(.white)
+                            .lineLimit(1)
+                        HStack(spacing: 6) {
+                            Text(Self.dateFormatter.string(from: draft.createdAt))
+                                .font(.system(size: 9))
+                                .foregroundStyle(.white.opacity(0.85))
+                            Text("·")
+                                .foregroundStyle(.white.opacity(0.6))
+                            Text(mileageFormatted)
+                                .font(.system(size: 9, weight: .medium, design: .monospaced))
+                                .foregroundStyle(.white.opacity(0.85))
+                        }
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(8)
                 }
             }
             .aspectRatio(1, contentMode: .fill)
@@ -1695,7 +2006,7 @@ struct CollectionDetailView: View {
 
     private func reloadDrafts() {
         collectionDraftIds = ProfileCollectionsStore.loadAll().first(where: { $0.id == collection.id })?.draftIds ?? []
-        let all = UnifiedDraftStore.loadAll()
+        let all = TrackDataManager.shared.allTracks
         drafts = collectionDraftIds.compactMap { id in all.first { $0.id == id } }.sorted { $0.createdAt > $1.createdAt }
     }
 }
@@ -1750,10 +2061,10 @@ struct AddRouteToCollectionSheet: View {
                 }
             }
             .toolbarBackground(ProfileTheme.background, for: .navigationBar)
-            .onAppear { allDrafts = UnifiedDraftStore.loadAll().sorted { $0.createdAt > $1.createdAt } }
+            .onAppear { allDrafts = TrackDataManager.shared.allTracks.sorted { $0.createdAt > $1.createdAt } }
             .preferredColorScheme(.dark)
         }
     }
 }
 
-#Preview { ProfileView() }
+#Preview { ProfileView().environmentObject(UserState()).environmentObject(CurrentUser()).environmentObject(CommunityViewModel()).environmentObject(TrackDataManager.shared) }

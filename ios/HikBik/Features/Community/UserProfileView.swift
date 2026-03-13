@@ -8,6 +8,10 @@ struct UserProfileView: View {
     let avatarURL: String?
     let subtitle: String?
 
+    @EnvironmentObject private var socialManager: SocialManager
+
+    private let accentOrange = Color(hex: "FF8C42")
+
     init(authorId: String, displayName: String, avatarURL: String? = nil, subtitle: String? = nil) {
         self.authorId = authorId
         self.displayName = displayName
@@ -45,10 +49,36 @@ struct UserProfileView: View {
                 Text(displayName)
                     .font(.system(size: 22, weight: .bold))
                     .foregroundStyle(textPrimary)
-                if let sub = subtitle, !sub.isEmpty {
-                    Text(sub)
+                // 粉絲數優先從 SocialManager 讀取，才能隨 Follow 即時跳動
+                let followersCount = socialManager.users[authorId]?.followersCount
+                let fallbackSubtitle = subtitle ?? ""
+                if let count = followersCount {
+                    Text("\(count) followers")
                         .font(.system(size: 14))
                         .foregroundStyle(textMuted)
+                        .contentTransition(.numericText())
+                } else if !fallbackSubtitle.isEmpty {
+                    Text(fallbackSubtitle)
+                        .font(.system(size: 14))
+                        .foregroundStyle(textMuted)
+                }
+                if authorId != socialManager.currentUserId {
+                    let isFollowing = socialManager.users[authorId]?.isFollowing ?? false
+                    Button {
+                        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                        socialManager.toggleFollow(for: authorId, currentUserId: socialManager.currentUserId)
+                    } label: {
+                        Text(isFollowing ? "Following" : "Follow")
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundStyle(isFollowing ? textMuted : .white)
+                            .padding(.horizontal, 20)
+                            .padding(.vertical, 10)
+                            .background(isFollowing ? Color.white.opacity(0.2) : accentOrange)
+                            .clipShape(Capsule())
+                    }
+                    .buttonStyle(.plain)
+                    .animation(.spring(response: 0.3, dampingFraction: 0.6), value: isFollowing)
+                    .padding(.top, 8)
                 }
                 Text("Posts & liked journeys will show here.")
                     .font(.system(size: 14))
@@ -63,5 +93,11 @@ struct UserProfileView: View {
         .navigationTitle(displayName)
         .navigationBarTitleDisplayMode(.inline)
         .preferredColorScheme(.dark)
+        .onAppear {
+            if socialManager.users[authorId] == nil {
+                let initialFollowers = subtitle.flatMap { s in Int(s.split(separator: " ").first ?? Substring("")) } ?? 0
+                socialManager.ensureUser(id: authorId, username: displayName, initialFollowersCount: initialFollowers)
+            }
+        }
     }
 }

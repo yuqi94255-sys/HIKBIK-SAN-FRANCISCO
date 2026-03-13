@@ -185,28 +185,28 @@ struct ForestDetailView_Previews: PreviewProvider {
         Group {
             ForestDetailView(forest: longTextForest)
                 .previewDevice("iPhone SE (3rd generation)")
-                .previewDisplayName("SE - 小屏测试")
+                .previewDisplayName("SE - Small")
             ForestDetailView(forest: longTextForest)
                 .previewDevice("iPhone 15 Pro")
-                .previewDisplayName("Pro - 标准测试")
+                .previewDisplayName("Pro - Standard")
             ForestDetailView(forest: longTextForest)
                 .previewDevice("iPhone 15 Pro Max")
-                .previewDisplayName("Pro Max - 大屏测试")
+                .previewDisplayName("Pro Max - Large")
         }
     }
 
     private static let longTextForest = NationalForest(
         id: "test",
-        name: "非常长的国家森林名称测试文字可能会被截断的长标题示例",
+        name: "Very Long National Forest Name That May Be Truncated in the UI",
         state: "California",
         states: nil,
-        region: "太平洋西南区域包含额外长文本说明",
-        description: String(repeating: "这是一个非常长的描述文本，用于测试页面布局是否能够正确处理长文本内容而不出现截断或重叠问题。", count: 5),
+        region: "Pacific Southwest Region with extra long text",
+        description: String(repeating: "Long description to test layout and truncation. ", count: 5),
         established: "1908",
         acres: 123456789,
         visitors: "1.2M annually",
         highlights: ["Long highlight example 1", "Long highlight example 2"],
-        activities: ["登山健行", "露营过夜", "钓鱼活动", "观鸟摄影", "山地自行车", "野生动物观察", "星空观测", "植物识别"],
+        activities: ["Hiking", "Camping", "Fishing", "Birding", "Mountain Biking", "Wildlife", "Stargazing", "Botany"],
         bestTime: ["Spring", "Summer"],
         coordinates: nil,
         websiteUrl: "https://www.fs.usda.gov",

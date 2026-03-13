@@ -1,7 +1,37 @@
-// Unified Draft Box – Source tags, map thumbnails, routing by draft type
+// Unified Draft Box – 三種卡片模式（Live / Manual Micro / Macro），統一進 PostEditorView
 import SwiftUI
 import MapKit
 import CoreLocation
+import UIKit
+
+/// Template A: 社區 / Live Activity 用同一份數據，渲染為豪華卡片（大圖、儀表盤、地點、天氣）。
+typealias CommunityCardModel = DraftItem
+/// Template B: 個人中心用同一份數據，渲染為精簡卡片（縮略圖、標題、里程、日期）。統一路由：routeID → ManualJourneyDetailView。
+typealias ProfilePostModel = DraftItem
+
+private let cardBg = Color(hex: "2A3540")
+private let draftBg = Color(hex: "0B121F")
+private let textMuted = Color(hex: "9CA3AF")
+private let liveRed = Color(hex: "EF4444")
+private let accentGreen = Color(hex: "10B981")
+private let accentOrange = Color(hex: "FF8C42")
+
+// MARK: - Post Category (社區三大板塊：投遞到對應 Tab)
+enum PostCategory: String, Codable, CaseIterable {
+    case grandJourney   // 宏觀路線 (From Custom Route Builder) → Grand Journeys
+    case detailedTrack  // 微觀足跡 (From Normal Track Record) → Detailed Tracks
+    case livelyActivity // 實時活動 (Live Recording / Quick Post) → Live Activity
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.singleValueContainer()
+        let raw = try c.decode(String.self)
+        if let v = PostCategory(rawValue: raw) {
+            self = v
+        } else {
+            self = .detailedTrack
+        }
+    }
+}
 
 // MARK: - Draft Source (visual + routing)
 enum DraftSource: String, Codable, CaseIterable {
@@ -9,6 +39,8 @@ enum DraftSource: String, Codable, CaseIterable {
     case manualPlan = "manualPlan"
     case liveRecorded = "liveRecorded"
     case imported = "imported"
+    /// 創作來源：Custom Route Builder 產出的宏觀/微觀路線（與 .liveRecorded 錄製來源區分）
+    case manualBuilder = "manualBuilder"
 
     init(from decoder: Decoder) throws {
         let container = try decoder.singleValueContainer()
@@ -28,6 +60,7 @@ enum DraftSource: String, Codable, CaseIterable {
         case .manualPlan: return "✍️ Manual Plan"
         case .liveRecorded: return "🔴 Live Recorded"
         case .imported: return "📥 Imported"
+        case .manualBuilder: return "🛤️ Route Builder"
         }
     }
 
@@ -37,6 +70,7 @@ enum DraftSource: String, Codable, CaseIterable {
         case .manualPlan: return Color(hex: "FF8C42")
         case .liveRecorded: return Color(hex: "EF4444")
         case .imported: return Color(hex: "9CA3AF")
+        case .manualBuilder: return Color(hex: "FF8C42")
         }
     }
 
@@ -46,7 +80,53 @@ enum DraftSource: String, Codable, CaseIterable {
         case .manualPlan: return "map.fill"
         case .liveRecorded: return "figure.run"
         case .imported: return "square.and.arrow.down.fill"
+        case .manualBuilder: return "map.fill"
         }
+    }
+}
+
+// MARK: - Two-Tier JSON Templates (Template A = Card/Live Activity, Template B = Detail)
+
+/// Template A: lightweight payload for community list and Live Island.
+struct TrackCardPayload: Codable {
+    var routeName: String
+    var coverImageBase64: String?
+    var distanceMeters: Double
+    var durationSeconds: Double
+    var locationName: String?
+}
+
+/// Template B: full payload for detail/deep link (form + raw path + system context).
+struct TrackDetailPayload: Codable {
+    var card: TrackCardPayload
+    var formDescription: String?
+    var rawWaypoints: [RawWaypointPayload]
+    var currentWeather: String?
+    var nearbyFacilities: [String]?
+}
+
+struct RawWaypointPayload: Codable {
+    var latitude: Double
+    var longitude: Double
+    var elevation: Double
+    var timestamp: Date
+}
+
+/// Call on Publish: prints Template 1 (Card) and Template 2 (Detail) JSON to console.
+func printPublishPayloadsToConsole(_ item: DraftItem) {
+    let card = item.toCardPayload()
+    let encoder = JSONEncoder()
+    encoder.outputFormatting = .prettyPrinted
+    encoder.dateEncodingStrategy = .iso8601
+    if let cardData = try? encoder.encode(card), let cardStr = String(data: cardData, encoding: .utf8) {
+        print("[Publish] Template 1 (Card) — community list / Live Island:\n\(cardStr)")
+    }
+    let detail = item.toDetailPayload(
+        weather: item.currentWeather ?? "Sunny, 72°F (22°C), Wind 5 mph NE",
+        facilities: item.nearbyFacilities ?? ["Restroom", "Parking", "Visitor Center", "Water Refill"]
+    )
+    if let detailData = try? encoder.encode(detail), let detailStr = String(data: detailData, encoding: .utf8) {
+        print("[Publish] Template 2 (Detail) — full GPS + form + weather/facilities:\n\(detailStr)")
     }
 }
 
@@ -54,25 +134,56 @@ enum DraftSource: String, Codable, CaseIterable {
 struct DraftItem: Identifiable, Codable, Hashable {
     let id: UUID
     var source: DraftSource
+    /// 社區板塊歸類：發布後按此投遞到 Grand Journeys / Detailed Tracks / Live Activity。.grandJourney 以 waypoints + polylineCoordinates 承載行程單（Itinerary）；.detailedTrack 以 waypoints + coverImageData 承載精確經緯度與單點圖片。
+    var category: PostCategory
     var title: String
     var createdAt: Date
     var waypoints: [DraftWaypoint]
     var polylineCoordinates: [DraftCoordinate]?
     /// Total elapsed time of the recording in seconds (e.g. 6312 = 01:45:12). Used for Live Recorded; nil for other types.
     var durationSeconds: Double?
+    /// Cover image for Template A (Card/Live Activity). Optional.
+    var coverImageData: Data?
+    /// User-written description; used in Template B (Detail).
+    var formDescription: String?
+    /// Resolved location name (e.g. from geocode); used in Template A.
+    var locationName: String?
+    /// Injected for detail page (from start point); Model B / detail.
+    var currentWeather: String?
+    /// Injected for detail page; Model B / detail.
+    var nearbyFacilities: [String]?
+    /// 宏觀路線發布時寫入的完整 MacroJourneyPost JSON（含每日照片、描述、Airbnb 連結）。Profile / 詳情頁解碼用。
+    var macroJourneyJSON: String?
 
     enum CodingKeys: String, CodingKey {
-        case id, source, title, createdAt, waypoints, polylineCoordinates, durationSeconds
+        case id, source, category, title, createdAt, waypoints, polylineCoordinates, durationSeconds, coverImageData, formDescription, locationName, currentWeather, nearbyFacilities
+        case macroJourneyJSON
     }
 
-    init(id: UUID, source: DraftSource, title: String, createdAt: Date, waypoints: [DraftWaypoint], polylineCoordinates: [DraftCoordinate]?, durationSeconds: Double?) {
+    /// 從 source 推斷默認 category：Builder→Grand Journeys，Live Recording→Lively Activity，Micro/Detailed→Detailed Tracks。
+    static func category(from source: DraftSource) -> PostCategory {
+        switch source {
+        case .manualBuilder: return .grandJourney
+        case .liveRecorded: return .livelyActivity
+        case .manualPlan, .photoSync, .imported: return .detailedTrack
+        }
+    }
+
+    init(id: UUID, source: DraftSource, category: PostCategory? = nil, title: String, createdAt: Date, waypoints: [DraftWaypoint], polylineCoordinates: [DraftCoordinate]?, durationSeconds: Double?, coverImageData: Data? = nil, formDescription: String? = nil, locationName: String? = nil, currentWeather: String? = nil, nearbyFacilities: [String]? = nil, macroJourneyJSON: String? = nil) {
         self.id = id
         self.source = source
+        self.category = category ?? Self.category(from: source)
         self.title = title
         self.createdAt = createdAt
         self.waypoints = waypoints
         self.polylineCoordinates = polylineCoordinates
         self.durationSeconds = durationSeconds
+        self.coverImageData = coverImageData
+        self.formDescription = formDescription
+        self.locationName = locationName
+        self.currentWeather = currentWeather
+        self.nearbyFacilities = nearbyFacilities
+        self.macroJourneyJSON = macroJourneyJSON
     }
 
     struct DraftWaypoint: Codable, Hashable {
@@ -94,18 +205,46 @@ struct DraftItem: Identifiable, Codable, Hashable {
     func hash(into hasher: inout Hasher) { hasher.combine(id) }
     static func == (l: DraftItem, r: DraftItem) -> Bool { l.id == r.id }
 
-    static func fromLiveTrack(waypoints: [(latitude: Double, longitude: Double, elevation: Double, timestamp: Date)], polyline: [CLLocationCoordinate2D]?, durationSeconds: Double? = nil) -> DraftItem {
+    static func fromLiveTrack(waypoints: [(latitude: Double, longitude: Double, elevation: Double, timestamp: Date)], polyline: [CLLocationCoordinate2D]?, durationSeconds: Double? = nil, title: String? = nil, coverImageData: Data? = nil, formDescription: String? = nil, locationName: String? = nil, currentWeather: String? = nil, nearbyFacilities: [String]? = nil) -> DraftItem {
         let wps = waypoints.map { DraftWaypoint(latitude: $0.latitude, longitude: $0.longitude, elevation: $0.elevation, timestamp: $0.timestamp) }
         let coords = polyline?.map { DraftCoordinate(latitude: $0.latitude, longitude: $0.longitude) }
+        let resolvedTitle = title?.trimmingCharacters(in: .whitespaces).isEmpty == false
+            ? title!
+            : "Live Record \(dateFormatter.string(from: Date()))"
         return DraftItem(
             id: UUID(),
             source: .liveRecorded,
-            title: "Live Record \(dateFormatter.string(from: Date()))",
+            title: resolvedTitle,
             createdAt: Date(),
             waypoints: wps,
             polylineCoordinates: coords,
-            durationSeconds: durationSeconds
+            durationSeconds: durationSeconds,
+            coverImageData: coverImageData,
+            formDescription: formDescription,
+            locationName: locationName,
+            currentWeather: currentWeather,
+            nearbyFacilities: nearbyFacilities
         )
+    }
+
+    /// Same routeID for Community card and Profile post; both open same ManualJourneyDetailView.
+    var routeID: String { id.uuidString }
+
+    /// Mock weather + facilities from start coordinate (for context injection on publish).
+    static func injectContextForStart(latitude: Double, longitude: Double) -> (weather: String, facilities: [String]) {
+        let weather = "Sunny, 72°F (22°C), Wind 5 mph NE"
+        let facilities = ["Restroom", "Parking", "Visitor Center", "Water Refill", "Trailhead"]
+        return (weather, facilities)
+    }
+
+    /// Start location name by reverse geocode (for contextual auto-fill on publish).
+    static func geocodeStartLocation(latitude: Double, longitude: Double) async -> String? {
+        let loc = CLLocation(latitude: latitude, longitude: longitude)
+        let geocoder = CLGeocoder()
+        do {
+            let placemarks = try await geocoder.reverseGeocodeLocation(loc)
+            return placemarks.first?.locality ?? placemarks.first?.administrativeArea ?? placemarks.first?.name
+        } catch { return nil }
     }
 
     /// Formatted elapsed time (e.g. "01:45:12" or "45:12") for display in Draft Box; nil if not a timed recording.
@@ -161,26 +300,136 @@ struct DraftItem: Identifiable, Codable, Hashable {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         id = try c.decode(UUID.self, forKey: .id)
         source = try c.decode(DraftSource.self, forKey: .source)
+        if let cat = try c.decodeIfPresent(PostCategory.self, forKey: .category) {
+            category = cat
+        } else {
+            category = Self.category(from: source)
+        }
         title = try c.decode(String.self, forKey: .title)
         createdAt = try c.decode(Date.self, forKey: .createdAt)
         waypoints = try c.decode([DraftWaypoint].self, forKey: .waypoints)
         polylineCoordinates = try c.decodeIfPresent([DraftCoordinate].self, forKey: .polylineCoordinates)
         durationSeconds = try c.decodeIfPresent(Double.self, forKey: .durationSeconds)
+        coverImageData = try c.decodeIfPresent(Data.self, forKey: .coverImageData)
+        formDescription = try c.decodeIfPresent(String.self, forKey: .formDescription)
+        locationName = try c.decodeIfPresent(String.self, forKey: .locationName)
+        currentWeather = try c.decodeIfPresent(String.self, forKey: .currentWeather)
+        nearbyFacilities = try c.decodeIfPresent([String].self, forKey: .nearbyFacilities)
+        macroJourneyJSON = try c.decodeIfPresent(String.self, forKey: .macroJourneyJSON)
     }
 
     func encode(to encoder: Encoder) throws {
         var c = encoder.container(keyedBy: CodingKeys.self)
         try c.encode(id, forKey: .id)
         try c.encode(source, forKey: .source)
+        try c.encode(category, forKey: .category)
         try c.encode(title, forKey: .title)
         try c.encode(createdAt, forKey: .createdAt)
         try c.encode(waypoints, forKey: .waypoints)
         try c.encodeIfPresent(polylineCoordinates, forKey: .polylineCoordinates)
         try c.encodeIfPresent(durationSeconds, forKey: .durationSeconds)
+        try c.encodeIfPresent(coverImageData, forKey: .coverImageData)
+        try c.encodeIfPresent(formDescription, forKey: .formDescription)
+        try c.encodeIfPresent(locationName, forKey: .locationName)
+        try c.encodeIfPresent(currentWeather, forKey: .currentWeather)
+        try c.encodeIfPresent(nearbyFacilities, forKey: .nearbyFacilities)
+        try c.encodeIfPresent(macroJourneyJSON, forKey: .macroJourneyJSON)
+    }
+
+    /// 宏觀詳情：優先解碼 macroJourneyJSON（完整每日數據），否則由 waypoints 組最小 CommunityJourney。
+    func communityJourneyForMacroDetail(author: CommunityAuthor? = nil) -> CommunityJourney {
+        if let json = macroJourneyJSON, let data = json.data(using: .utf8),
+           let post = try? JSONDecoder().decode(MacroJourneyPost.self, from: data) {
+            return CommunityJourney.from(post, author: author ?? CommunityAuthor(id: "me", displayName: "Me", avatarURL: nil), likeCount: 0, commentCount: 0, coverImageURL: nil)
+        }
+        let days = waypoints.enumerated().map { index, w in
+            CommunityJourneyDay(
+                dayNumber: index + 1,
+                location: CommunityGeoLocation(latitude: w.latitude, longitude: w.longitude),
+                locationName: nil,
+                dateString: nil,
+                notes: formDescription,
+                photoURL: nil,
+                recommendedStay: nil,
+                dayPhotos: nil,
+                description: formDescription,
+                recommendations: nil
+            )
+        }
+        return CommunityJourney(
+            journeyName: title.isEmpty ? "Journey" : title,
+            days: days.isEmpty ? [CommunityJourneyDay(dayNumber: 1, location: nil, locationName: nil, notes: "No stops.")] : days,
+            selectedStates: [],
+            duration: nil,
+            vehicle: nil,
+            pace: nil,
+            difficulty: nil,
+            tags: ["Macro Journey"],
+            state: "",
+            author: author ?? CommunityAuthor(id: "me", displayName: "Me", avatarURL: nil),
+            likeCount: 0,
+            commentCount: 0,
+            coverImageURL: nil,
+            aspectRatio: 16.0 / 10.0
+        )
+    }
+
+    // MARK: - Two-Tier JSON (Template A = Card/Live Activity, Template B = Detail/Deep Link)
+
+    /// Template A: lightweight JSON for community list and Live Island (靈動島).
+    func toCardPayload() -> TrackCardPayload {
+        TrackCardPayload(
+            routeName: title,
+            coverImageBase64: coverImageData?.base64EncodedString(),
+            distanceMeters: totalDistanceMeters,
+            durationSeconds: durationSeconds ?? 0,
+            locationName: locationName
+        )
+    }
+
+    /// Template B: full JSON for detail/deep link (form content, raw path, weather/facilities).
+    func toDetailPayload(weather: String? = nil, facilities: [String]? = nil) -> TrackDetailPayload {
+        TrackDetailPayload(
+            card: toCardPayload(),
+            formDescription: formDescription,
+            rawWaypoints: waypoints.map { RawWaypointPayload(latitude: $0.latitude, longitude: $0.longitude, elevation: $0.elevation, timestamp: $0.timestamp) },
+            currentWeather: weather ?? currentWeather,
+            nearbyFacilities: facilities ?? nearbyFacilities
+        )
+    }
+
+    /// Convert to ManualJourney for ManualJourneyDetailView (route detail sheet). Same routeID for Community + Profile.
+    func toManualJourney() -> ManualJourney {
+        let nodes = waypoints.enumerated().map { i, w in
+            ViewPointNode(
+                title: "Point \(i + 1)",
+                activityType: .hiking,
+                latitude: w.latitude,
+                longitude: w.longitude,
+                photoCount: 1,
+                elevation: String(format: "%.0f m", w.elevation),
+                hasWater: false,
+                hasFuel: false,
+                signalStrength: 0
+            )
+        }
+        let durationMin = max(1, Int((durationSeconds ?? 0) / 60))
+        let elevFt = Int(elevationGainMeters * 3.28084)
+        return DetailedTrackPost(
+            routeName: title.isEmpty ? "Recorded Route" : title,
+            totalDurationMinutes: durationMin,
+            viewPointNodes: nodes,
+            elevationGain: "\(elevFt) ft",
+            routeID: routeID
+        )
     }
 }
 
 // MARK: - Unified Draft Store
+extension Notification.Name {
+    static let unifiedDraftsDidChange = Notification.Name("UnifiedDraftStore.draftsDidChange")
+}
+
 enum UnifiedDraftStore {
     private static let key = "UnifiedDraftBox"
 
@@ -195,10 +444,14 @@ enum UnifiedDraftStore {
         UserDefaults.standard.set(data, forKey: key)
     }
 
+    /// Append new post at index 0 (newest first). Posts notification so Home/Profile can refresh immediately.
     static func append(_ item: DraftItem) {
         var list = loadAll()
         list.insert(item, at: 0)
         saveAll(list)
+        DispatchQueue.main.async {
+            NotificationCenter.default.post(name: .unifiedDraftsDidChange, object: nil)
+        }
     }
 
     static func remove(id: UUID) {
@@ -208,105 +461,315 @@ enum UnifiedDraftStore {
     }
 }
 
-// MARK: - Unified Drafts View (Draft Box)
+// MARK: - Unified Drafts View (Draft Box) — reads only TrackDataManager.draftTracks; tap row → PostEditorView
 struct UnifiedDraftBoxView: View {
-    @State private var drafts: [DraftItem] = UnifiedDraftStore.loadAll()
+    @EnvironmentObject private var trackDataManager: TrackDataManager
     @Environment(\.dismiss) private var dismiss
+    @State private var selectedDraft: DraftItem?
+    @State private var showEditor = false
+
+    private var drafts: [DraftItem] { trackDataManager.draftTracks }
 
     var body: some View {
-        List {
-            ForEach(drafts) { draft in
-                DraftCardRow(draft: draft)
-                    .listRowBackground(Color(hex: "2A3540"))
-                    .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
-            }
-            .onDelete(perform: deleteDrafts)
-        }
-        .listStyle(.plain)
-        .scrollContentBackground(.hidden)
-        .background(Color(hex: "0B121F"))
-        .navigationTitle("Draft Box")
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .cancellationAction) {
-                Button {
-                    dismiss()
-                } label: {
-                    HStack(spacing: 4) {
-                        Image(systemName: "chevron.left")
-                            .font(.system(size: 17, weight: .semibold))
-                        Text("Back")
-                            .font(.system(size: 17))
+        NavigationStack {
+            ZStack {
+                Color.black.ignoresSafeArea()
+
+                if drafts.isEmpty {
+                    Text("No Drafts Found").foregroundColor(.gray)
+                } else {
+                    List {
+                        ForEach(drafts) { draft in
+                            Button {
+                                selectedDraft = draft
+                                showEditor = true
+                            } label: {
+                                DraftCardRow(draft: draft)
+                            }
+                            .listRowBackground(Color.clear)
+                        }
+                        .onDelete(perform: deleteDrafts)
                     }
-                    .foregroundStyle(Color(hex: "9CA3AF"))
+                    .listStyle(.plain)
+                    .scrollContentBackground(.hidden)
                 }
             }
-        }
-        .toolbarBackground(Color(hex: "0B121F"), for: .navigationBar)
-        .toolbarColorScheme(.dark, for: .navigationBar)
-        .navigationDestination(for: DraftItem.self) { draft in
-            if draft.isEditable {
-                CustomRouteBuilderView(liveTrackDraft: LiveTrackDraft.from(draftItem: draft))
-            } else {
-                LiveTrackDetailView(draft: draft)
+            .navigationTitle("My Drafts")
+            .navigationDestination(isPresented: $showEditor) {
+                if let draft = selectedDraft {
+                    DraftEditorEntryView(draft: draft) {
+                        trackDataManager.reloadFromStore()
+                    }
+                }
             }
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Back") { dismiss() }
+                        .foregroundColor(Color(hex: "9CA3AF"))
+                }
+            }
+            .toolbarBackground(Color(hex: "0B121F"), for: .navigationBar)
+            .toolbarColorScheme(.dark, for: .navigationBar)
         }
-        .onAppear { drafts = UnifiedDraftStore.loadAll() }
+        .onAppear { trackDataManager.reloadFromStore() }
         .preferredColorScheme(.dark)
     }
 
     private func deleteDrafts(at offsets: IndexSet) {
-        for i in offsets {
-            UnifiedDraftStore.remove(id: drafts[i].id)
+        let idsToRemove = offsets.map { drafts[$0].id }
+        for id in idsToRemove {
+            trackDataManager.removeDraft(id: id)
         }
-        drafts = UnifiedDraftStore.loadAll()
     }
 }
 
-// MARK: - Draft Card Row (source tag + smart thumbnail + tap routing)
-struct DraftCardRow: View {
+// MARK: - Draft Card Row (label for NavigationLink; must match navigationDestination(for: DraftItem.self))
+private struct DraftCardRow: View {
     let draft: DraftItem
 
     var body: some View {
-        NavigationLink(value: draft) {
-            VStack(alignment: .leading, spacing: 10) {
-                HStack(spacing: 8) {
-                    Image(systemName: draft.source.listIcon)
-                        .font(.system(size: 16))
-                        .foregroundStyle(draft.source.tagColor)
-                    Text(draft.source.tagLabel)
-                        .font(.system(size: 12, weight: .semibold))
-                        .foregroundStyle(draft.source.tagColor)
-                    Spacer()
-                    if let elapsed = draft.elapsedTimeFormatted {
-                        Text(elapsed)
-                            .font(.system(size: 11, weight: .medium))
-                            .foregroundStyle(Color(hex: "9CA3AF"))
-                    } else {
-                        Text(draft.createdAt, style: .relative)
-                            .font(.system(size: 11))
-                            .foregroundStyle(Color(hex: "9CA3AF"))
-                    }
-                }
-                Text(draft.title)
-                    .font(.system(size: 17, weight: .semibold))
-                    .foregroundStyle(.white)
-                    .lineLimit(1)
-                DraftMapThumbnail(draft: draft)
-                    .frame(height: 100)
-                    .clipShape(RoundedRectangle(cornerRadius: 10))
+        Group {
+            switch draft.source {
+            case .liveRecorded:
+                LiveRecordedCardView(draft: draft)
+            case .photoSync, .manualPlan, .manualBuilder:
+                ManualMicroCardView(draft: draft)
+            case .imported:
+                MacroExplorationCardView(draft: draft)
             }
-            .padding(12)
-            .background(Color(hex: "2A3540"))
-            .clipShape(RoundedRectangle(cornerRadius: 14))
         }
-        .buttonStyle(.plain)
+    }
+}
+
+// MARK: - 1. 實時紀錄卡片：紅點 + Live、地圖縮略圖、里程/耗時/海拔
+private struct LiveRecordedCardView: View {
+    let draft: DraftItem
+    @State private var blink = false
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(spacing: 8) {
+                HStack(spacing: 6) {
+                    Circle()
+                        .fill(liveRed)
+                        .frame(width: 8, height: 8)
+                        .opacity(blink ? 1 : 0.4)
+                    Text("Live")
+                        .font(.system(size: 11, weight: .bold, design: .rounded))
+                        .foregroundStyle(liveRed)
+                }
+                Spacer()
+                if let elapsed = draft.elapsedTimeFormatted {
+                    Text(elapsed)
+                        .font(.system(size: 12, weight: .medium, design: .monospaced))
+                        .foregroundStyle(textMuted)
+                }
+            }
+            DraftMapThumbnail(draft: draft)
+                .frame(height: 100)
+                .clipShape(RoundedRectangle(cornerRadius: 10))
+            HStack(spacing: 16) {
+                dataPill(value: distanceFormatted, label: "Distance")
+                dataPill(value: draft.elapsedTimeFormatted ?? "—", label: "Time")
+                dataPill(value: elevationFormatted, label: "Elev.")
+            }
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(cardBg)
+        .clipShape(RoundedRectangle(cornerRadius: 14))
+        .onAppear {
+            withAnimation(.easeInOut(duration: 0.8).repeatForever(autoreverses: true)) { blink = true }
+        }
+    }
+
+    private var distanceFormatted: String {
+        let km = draft.totalDistanceMeters / 1000
+        return km < 0.01 ? "0 km" : String(format: "%.2f km", km)
+    }
+    private var elevationFormatted: String {
+        let m = draft.elevationGainMeters
+        return m < 1 ? "0 m" : String(format: "%.0f m", m)
+    }
+    private func dataPill(value: String, label: String) -> some View {
+        VStack(spacing: 2) {
+            Text(value)
+                .font(.system(size: 13, weight: .semibold, design: .monospaced))
+                .foregroundStyle(.white)
+            Text(label)
+                .font(.system(size: 10, weight: .medium))
+                .foregroundStyle(textMuted)
+        }
+        .frame(maxWidth: .infinity)
+    }
+}
+
+// MARK: - 2. 手動/微觀紀錄卡片：照片拼貼風格、路線名、日期、點數
+private struct ManualMicroCardView: View {
+    let draft: DraftItem
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(spacing: 8) {
+                photoCollagePlaceholder
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(draft.title)
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundStyle(.white)
+                        .lineLimit(2)
+                    Text(draft.createdAt, style: .date)
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundStyle(textMuted)
+                    Text("\(draft.waypoints.count) points")
+                        .font(.system(size: 11, weight: .medium, design: .monospaced))
+                        .foregroundStyle(accentGreen)
+                }
+                Spacer()
+            }
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(cardBg)
+        .clipShape(RoundedRectangle(cornerRadius: 14))
+    }
+
+    private var photoCollagePlaceholder: some View {
+        ZStack(alignment: .topLeading) {
+            RoundedRectangle(cornerRadius: 10)
+                .fill(cardBg.opacity(0.8))
+                .frame(width: 72, height: 72)
+                .overlay(RoundedRectangle(cornerRadius: 10).stroke(textMuted.opacity(0.3), lineWidth: 1))
+            RoundedRectangle(cornerRadius: 10)
+                .fill(cardBg.opacity(0.9))
+                .frame(width: 72, height: 72)
+                .overlay(RoundedRectangle(cornerRadius: 10).stroke(textMuted.opacity(0.3), lineWidth: 1))
+                .offset(x: 6, y: 6)
+            RoundedRectangle(cornerRadius: 10)
+                .fill(Color(hex: "1A2332"))
+                .frame(width: 72, height: 72)
+                .overlay(
+                    Image(systemName: "photo.stack.fill")
+                        .font(.system(size: 24))
+                        .foregroundStyle(accentGreen.opacity(0.8))
+                )
+                .overlay(RoundedRectangle(cornerRadius: 10).stroke(textMuted.opacity(0.3), lineWidth: 1))
+                .offset(x: 12, y: 12)
+        }
+        .frame(width: 96, height: 96)
+    }
+}
+
+// MARK: - 3. 宏觀探索卡片：較廣地圖、大跨度里程、地理感
+private struct MacroExplorationCardView: View {
+    let draft: DraftItem
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(spacing: 8) {
+                Image(systemName: "map.fill")
+                    .font(.system(size: 14))
+                    .foregroundStyle(textMuted)
+                Text("Macro")
+                    .font(.system(size: 11, weight: .bold))
+                    .foregroundStyle(textMuted)
+                Spacer()
+                Text(draft.createdAt, style: .date)
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundStyle(textMuted)
+            }
+            DraftMapThumbnail(draft: draft, spanScale: 2.2)
+                .frame(height: 88)
+                .clipShape(RoundedRectangle(cornerRadius: 10))
+            Text(draft.title)
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundStyle(.white)
+                .lineLimit(1)
+            HStack(spacing: 12) {
+                Text(distanceFormatted)
+                    .font(.system(size: 14, weight: .bold, design: .monospaced))
+                    .foregroundStyle(accentOrange)
+                Text("•")
+                    .foregroundStyle(textMuted)
+                Text("\(draft.waypoints.count) waypoints")
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundStyle(textMuted)
+            }
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(cardBg)
+        .clipShape(RoundedRectangle(cornerRadius: 14))
+    }
+
+    private var distanceFormatted: String {
+        let km = draft.totalDistanceMeters / 1000
+        return km < 0.01 ? "0 km" : String(format: "%.1f km", km)
+    }
+}
+
+// MARK: - 進入編輯預覽（統一先進 PostEditorView；發布時必須 removeDraft 並 addPublished，單向不可退回草稿）
+struct DraftEditorEntryView: View {
+    let draft: DraftItem
+    var onDismiss: () -> Void = {}
+
+    @Environment(\.dismiss) private var envDismiss
+    @EnvironmentObject private var trackDataManager: TrackDataManager
+
+    var body: some View {
+        PostEditorView(
+            draft: LiveTrackDraft.from(draftItem: draft),
+            distanceMeters: draft.totalDistanceMeters,
+            elevationMeters: draft.elevationGainMeters,
+            durationSeconds: draft.durationSeconds ?? 0,
+            sportType: .hiking,
+            initialTitle: draft.title.isEmpty ? nil : draft.title,
+            sourceDraftId: draft.id,
+            sourceDraftItem: draft,
+            onSaveToDrafts: { title in
+                let updated = DraftItem(
+                    id: draft.id,
+                    source: draft.source,
+                    category: draft.category,
+                    title: title.isEmpty ? draft.title : title,
+                    createdAt: draft.createdAt,
+                    waypoints: draft.waypoints,
+                    polylineCoordinates: draft.polylineCoordinates,
+                    durationSeconds: draft.durationSeconds,
+                    coverImageData: draft.coverImageData,
+                    formDescription: draft.formDescription,
+                    locationName: draft.locationName,
+                    currentWeather: draft.currentWeather,
+                    nearbyFacilities: draft.nearbyFacilities
+                )
+                trackDataManager.removeDraft(id: draft.id)
+                trackDataManager.addDraft(updated)
+                envDismiss()
+                onDismiss()
+            },
+            onPublish: { _ in
+                // 數據已由 PostEditorView 硬連線寫入單例，此處只負責 Live Activity
+                TrackRecordingLiveActivityManager.startPublishedActivity(
+                    distanceMeters: draft.totalDistanceMeters,
+                    durationSeconds: draft.durationSeconds ?? 0,
+                    elevationMeters: draft.elevationGainMeters
+                )
+            },
+            onPublishComplete: {
+                envDismiss()
+                onDismiss()
+                DispatchQueue.main.async {
+                    TabSelectionManager.shared.switchToCommunity()
+                }
+            }
+        )
     }
 }
 
 // MARK: - Smart Map Thumbnail (Points vs Polyline by source)
 struct DraftMapThumbnail: View {
     let draft: DraftItem
+    /// 宏觀卡片可傳 2.0+ 讓地圖範圍更廣
+    var spanScale: CGFloat = 1.8
 
     var body: some View {
         Map(initialPosition: .region(region), interactionModes: []) {
@@ -342,11 +805,17 @@ struct DraftMapThumbnail: View {
         let maxLon = lons.max() ?? 0
         let center = CLLocationCoordinate2D(latitude: (minLat + maxLat) / 2, longitude: (minLon + maxLon) / 2)
         let span = MKCoordinateSpan(
-            latitudeDelta: max(0.01, (maxLat - minLat) * 1.8 + 0.005),
-            longitudeDelta: max(0.01, (maxLon - minLon) * 1.8 + 0.005)
+            latitudeDelta: max(0.01, (maxLat - minLat) * spanScale + 0.005),
+            longitudeDelta: max(0.01, (maxLon - minLon) * spanScale + 0.005)
         )
         return MKCoordinateRegion(center: center, span: span)
     }
+}
+
+// MARK: - Activity Detail（紀錄 Lively）— 與微觀 ManualJourneyDetailView 分離
+struct ActivityDetailView: View {
+    let draft: DraftItem
+    var body: some View { LiveTrackDetailView(draft: draft) }
 }
 
 // MARK: - Track Detail View (read-only for Live Recorded; no editor)

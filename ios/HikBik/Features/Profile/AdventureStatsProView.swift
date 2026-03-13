@@ -192,7 +192,7 @@ struct AdventureStatsProView: View {
     }
 
     private func statValuesRow() -> some View {
-        let drafts = UnifiedDraftStore.loadAll()
+        let drafts = TrackDataManager.shared.allTracks
         let recorded = drafts.filter { $0.source == .liveRecorded || $0.source == .imported }
         let miles = AchievementStore.cumulativeMiles
         let elevation = recorded.reduce(0.0) { $0 + $1.elevationGainMeters }

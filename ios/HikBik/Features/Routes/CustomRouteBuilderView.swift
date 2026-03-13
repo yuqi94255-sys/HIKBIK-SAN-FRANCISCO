@@ -197,7 +197,11 @@ private struct JourneyStop: Identifiable {
     var photo: UIImage?
     var microTracks: [Waypoint]
     var selectedLocation: RouteLocation?
-    init(cityOrPark: String = "", date: Date = Date(), dateWasPicked: Bool = false, vehicleType: String = "SUV", briefNote: String = "", recommendedStay: String = "", photo: UIImage? = nil, microTracks: [Waypoint] = [Waypoint()], selectedLocation: RouteLocation? = nil) {
+    /// 推薦標題（如 "Book on Airbnb"），與 recommendationLink 一併寫入 JSON。
+    var recommendationTitle: String
+    /// 推薦連結（如 Airbnb URL），詳情頁渲染為可點擊卡片。
+    var recommendationLink: String
+    init(cityOrPark: String = "", date: Date = Date(), dateWasPicked: Bool = false, vehicleType: String = "SUV", briefNote: String = "", recommendedStay: String = "", photo: UIImage? = nil, microTracks: [Waypoint] = [Waypoint()], selectedLocation: RouteLocation? = nil, recommendationTitle: String = "", recommendationLink: String = "") {
         self.cityOrPark = cityOrPark
         self.date = date
         self.dateWasPicked = dateWasPicked
@@ -207,6 +211,8 @@ private struct JourneyStop: Identifiable {
         self.photo = photo
         self.microTracks = microTracks
         self.selectedLocation = selectedLocation
+        self.recommendationTitle = recommendationTitle
+        self.recommendationLink = recommendationLink
     }
 }
 
@@ -301,13 +307,28 @@ struct CustomRouteBuilderView: View {
     @State private var hasPrintedDetailedTrackSample = false
     /// Macro Journey only: selected state names (multi-select). Synced to MacroJourneyPost.selectedStates when saving.
     @State private var selectedMacroStates: Set<String> = []
+    /// 範本 Tag 規格：逗號分隔自訂標籤（城市/主題等），寫入 macro JSON.tags
+    @State private var macroTripTags: String = ""
     /// 發布成功後顯示 overlay；2 秒後自動 dismiss。
     @State private var showingSuccessOverlay = false
     /// 點擊 Publish 後顯示旋轉圖標，持續 1.5 秒模擬上傳。
     @State private var isPublishing = false
     /// 成功 overlay 綠勾動畫：從 0.5 放大到 1。
     @State private var successCheckmarkScale: CGFloat = 0.5
+    /// Cancel 時若有路徑數據則彈確認：保存草稿 / 放棄 / 繼續編輯
+    @State private var showCancelConfirm = false
     @EnvironmentObject private var communityViewModel: CommunityViewModel
+
+    /// 當前是否已有繪製點或路徑數據（用於 Cancel 攔截）
+    private var hasPathData: Bool {
+        if planningStyle == .macroJourney {
+            return stops.count > 1
+                || stops.contains { $0.selectedLocation != nil }
+                || !journeyName.trimmingCharacters(in: .whitespaces).isEmpty
+        }
+        return detailedTrack.viewPointNodes.count > 2
+            || detailedTrack.viewPointNodes.contains { ($0.latitude ?? 0) != 0 || ($0.longitude ?? 0) != 0 }
+    }
 
     init(liveTrackDraft: LiveTrackDraft? = nil) {
         _pendingLiveTrackDraft = State(initialValue: liveTrackDraft)
@@ -318,10 +339,32 @@ struct CustomRouteBuilderView: View {
             let total = stops.reduce(0) { $0 + $1.microTracks.count }
             return "\(stops.count) days • \(total) waypoints • Macro Journey"
         }
-        let durationStr = duration.rawValue
-        let vehicleStr = vehicle.rawValue
-        let paceStr = pace.rawValue
-        return "\(detailedTrack.viewPointNodes.count) view points • \(durationStr) • \(vehicleStr) • \(paceStr) • Micro Track"
+        let count = detailedTrack.viewPointNodes.count
+        let activityStr = detailedTrack.viewPointNodes.first?.activityType.rawValue ?? "Hiking"
+        let milesStr = microTrackEstimatedMilesString
+        return "\(count) View Points · \(activityStr) · \(milesStr)"
+    }
+
+    /// Micro Track 底部摘要：依 viewPointNodes 座標估算總里程（英里）
+    private var microTrackEstimatedMilesString: String {
+        let nodes = detailedTrack.viewPointNodes
+        guard nodes.count >= 2 else { return "— mi" }
+        let coords = nodes.compactMap { n -> CLLocationCoordinate2D? in
+            guard let lat = n.latitude, let lon = n.longitude else { return nil }
+            return CLLocationCoordinate2D(latitude: lat, longitude: lon)
+        }
+        guard coords.count >= 2 else { return "— mi" }
+        var meters: Double = 0
+        for i in 0..<(coords.count - 1) {
+            let a = coords[i], b = coords[i + 1]
+            let locA = CLLocation(latitude: a.latitude, longitude: a.longitude)
+            let locB = CLLocation(latitude: b.latitude, longitude: b.longitude)
+            meters += locA.distance(from: locB)
+        }
+        let miles = meters / 1609.34
+        if miles < 0.1 { return "< 0.1 mi" }
+        if miles < 1 { return String(format: "%.1f mi", miles) }
+        return String(format: "%.0f mi", miles)
     }
 
     private var canPublish: Bool {
@@ -353,7 +396,75 @@ struct CustomRouteBuilderView: View {
         print("===============================================")
     }
 
-    /// 從當前 UI 狀態建構 MacroJourneyPost（確保 latitude/longitude 正確）。僅在 macroJourneyIsReadyToPublish 時有效。
+    /// Cancel 攔截：保存草稿並退出。依規劃模式存為宏觀(.imported)或微觀(.manualPlan)，草稿箱打開時會先進 PostEditorView。無路徑數據時僅關閉頁面。
+    private func saveDraftAndExit() {
+        if let item = buildDraftItemFromCurrentState() {
+            UnifiedDraftStore.append(item)
+        }
+        showCancelConfirm = false
+        dismiss()
+    }
+
+    /// 從當前路徑數據組裝 DraftItem：宏微均為 .manualBuilder，含 polylineCoordinates（macro）+ waypoints（micro），供發布與草稿箱。
+    private func buildDraftItemFromCurrentState() -> DraftItem? {
+        let dateFormatter: DateFormatter = {
+            let f = DateFormatter()
+            f.dateStyle = .medium
+            return f
+        }()
+        if planningStyle == .macroJourney {
+            var waypoints: [DraftItem.DraftWaypoint] = stops.compactMap { stop in
+                guard let loc = stop.selectedLocation else { return nil }
+                return DraftItem.DraftWaypoint(latitude: loc.latitude, longitude: loc.longitude, elevation: 0, timestamp: Date())
+            }
+            if waypoints.isEmpty {
+                waypoints = [DraftItem.DraftWaypoint(latitude: 0, longitude: 0, elevation: 0, timestamp: Date())]
+            }
+            let coords = waypoints.map { DraftItem.DraftCoordinate(latitude: $0.latitude, longitude: $0.longitude) }
+            let title = journeyName.trimmingCharacters(in: .whitespaces).isEmpty
+                ? "Macro \(dateFormatter.string(from: Date()))"
+                : journeyName
+            let macroJSON: String? = {
+                guard macroJourneyIsReadyToPublish, let post = buildMacroJourneyPost(),
+                      let data = try? JSONEncoder().encode(post) else { return nil }
+                return String(data: data, encoding: .utf8)
+            }()
+            return DraftItem(
+                id: UUID(),
+                source: .manualBuilder,
+                title: title,
+                createdAt: Date(),
+                waypoints: waypoints,
+                polylineCoordinates: coords,
+                durationSeconds: nil,
+                coverImageData: coverImage?.jpegData(compressionQuality: 0.85),
+                macroJourneyJSON: macroJSON
+            )
+        }
+        let nodes = detailedTrack.viewPointNodes
+        let waypoints: [DraftItem.DraftWaypoint] = nodes.compactMap { node in
+            guard let lat = node.latitude, let lon = node.longitude else { return nil }
+            let elev = Double(node.elevation ?? "0") ?? 0
+            return DraftItem.DraftWaypoint(latitude: lat, longitude: lon, elevation: elev, timestamp: Date())
+        }
+        guard waypoints.count >= 2 else { return nil }
+        let coords = waypoints.map { DraftItem.DraftCoordinate(latitude: $0.latitude, longitude: $0.longitude) }
+        let title = detailedTrack.routeName.trimmingCharacters(in: .whitespaces).isEmpty
+            ? "Micro Track \(dateFormatter.string(from: Date()))"
+            : detailedTrack.routeName
+        return DraftItem(
+            id: UUID(),
+            source: .manualBuilder,
+            title: title,
+            createdAt: Date(),
+            waypoints: waypoints,
+            polylineCoordinates: coords,
+            durationSeconds: nil,
+            coverImageData: coverImage?.jpegData(compressionQuality: 0.85)
+        )
+    }
+
+    /// 從當前 UI 狀態建構 MacroJourneyPost（確保 latitude/longitude、dayPhotos、description、recommendations 正確）。僅在 macroJourneyIsReadyToPublish 時有效。
     private func buildMacroJourneyPost() -> MacroJourneyPost? {
         guard macroJourneyIsReadyToPublish else { return nil }
         let formatter = ISO8601DateFormatter()
@@ -361,14 +472,40 @@ struct CustomRouteBuilderView: View {
         let days: [JourneyDay] = stops.enumerated().map { index, stop in
             let loc = stop.selectedLocation.map { GeoLocation(latitude: $0.latitude, longitude: $0.longitude) }
             let dateStr = stop.dateWasPicked ? formatter.string(from: stop.date) : nil
+            let photoURLs = [stop.photo].compactMap { $0 }.compactMap { Self.saveDayPhotoToTempURL($0) }
+            let imagesArr: [String]? = photoURLs.isEmpty ? nil : photoURLs
+            let descriptionText = stop.briefNote.trimmingCharacters(in: .whitespaces).isEmpty ? nil : stop.briefNote
+            let recTitle = stop.recommendationTitle.trimmingCharacters(in: .whitespaces)
+            let recLink = stop.recommendationLink.trimmingCharacters(in: .whitespaces)
+            let airbnb = recLink.isEmpty ? nil : recLink
+            let recommendations: [JourneyRecommendation]? = (recTitle.isEmpty && recLink.isEmpty) ? nil : [JourneyRecommendation(title: recTitle.isEmpty ? nil : recTitle, link: recLink.isEmpty ? nil : recLink)]
             return JourneyDay(
                 id: stop.id,
                 dayNumber: index + 1,
                 location: loc,
                 locationName: stop.selectedLocation?.name ?? (stop.cityOrPark.isEmpty ? nil : stop.cityOrPark),
                 dateString: dateStr,
-                notes: stop.briefNote.isEmpty ? nil : stop.briefNote
+                notes: descriptionText,
+                images: imagesArr,
+                text: descriptionText,
+                airbnbLink: airbnb,
+                dayPhotos: imagesArr,
+                description: descriptionText,
+                recommendations: recommendations,
+                recommendedStay: stop.recommendedStay.trimmingCharacters(in: .whitespaces).isEmpty ? nil : stop.recommendedStay
             )
+        }
+        /// 州選擇器 → 模型 state（多州 "A · B"，單州即全名）
+        let stateDisplay = selectedMacroStates.sorted().joined(separator: " · ")
+        var tagList: [String] = []
+        if !stateDisplay.isEmpty { tagList.append(stateDisplay) }
+        tagList.append(duration.rawValue)
+        tagList.append(vehicle.rawValue)
+        tagList.append(pace.rawValue)
+        tagList.append("Difficulty · \(pace.rawValue)")
+        for part in macroTripTags.split(separator: ",") {
+            let s = part.trimmingCharacters(in: .whitespaces)
+            if !s.isEmpty, !tagList.contains(s) { tagList.append(s) }
         }
         return MacroJourneyPost(
             journeyName: journeyName,
@@ -376,8 +513,22 @@ struct CustomRouteBuilderView: View {
             selectedStates: Array(selectedMacroStates),
             duration: duration.rawValue,
             vehicle: vehicle.rawValue,
-            pace: pace.rawValue
+            pace: pace.rawValue,
+            difficulty: pace.rawValue,
+            tags: tagList,
+            state: stateDisplay
         )
+    }
+
+    /// 將單張當日照片寫入臨時檔並回傳 file URL 字串，供 JSON dayPhotos 使用。
+    private static func saveDayPhotoToTempURL(_ image: UIImage) -> String? {
+        let maxW: CGFloat = 1200
+        let quality: CGFloat = 0.85
+        guard let resized = image.resized(maxWidth: maxW),
+              let data = resized.jpegData(compressionQuality: quality) else { return nil }
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent("day_photo_\(UUID().uuidString).jpg")
+        try? data.write(to: url)
+        return url.absoluteString
     }
 
     /// 將 MacroJourneyPost 轉成 JSON 並 print（確保 lat/lon 正確）。
@@ -487,6 +638,20 @@ struct CustomRouteBuilderView: View {
     var body: some View {
         crbMainContent
             .navigationBarBackButtonHidden(true)
+            .confirmationDialog("Save your work?", isPresented: $showCancelConfirm, titleVisibility: .visible) {
+                Button("Save to Draft & Exit") {
+                    saveDraftAndExit()
+                }
+                Button("Discard", role: .destructive) {
+                    showCancelConfirm = false
+                    dismiss()
+                }
+                Button("Continue Editing", role: .cancel) {
+                    showCancelConfirm = false
+                }
+            } message: {
+                Text("You have path data. Save to Draft Box to edit and publish later, or discard and exit.")
+            }
             .onAppear {
                 applyLiveTrackDraftIfNeeded()
                 if planningStyle == .microTrack && !hasPrintedDetailedTrackSample {
@@ -574,7 +739,7 @@ struct CustomRouteBuilderView: View {
             )) {
                 if let idx = mapSelectionViewPointIndex, idx >= 0, idx < detailedTrack.viewPointNodes.count {
                     let vp = detailedTrack.viewPointNodes[idx]
-                    MapSelectionView(
+                    LocationPickerView(
                         initialLat: vp.latitude ?? 37.73,
                         initialLon: vp.longitude ?? -119.55,
                         onConfirm: { coord in
@@ -629,6 +794,7 @@ struct CustomRouteBuilderView: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .onAppear {
+                UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
                 withAnimation(.spring(response: 0.45, dampingFraction: 0.7)) { successCheckmarkScale = 1.0 }
             }
         }
@@ -864,7 +1030,9 @@ struct CustomRouteBuilderView: View {
     // MARK: - Header
     private var headerSection: some View {
         HStack {
-            Button { dismiss() } label: {
+            Button {
+                showCancelConfirm = true
+            } label: {
                 HStack(spacing: 6) {
                     Image(systemName: "chevron.left")
                         .font(.system(size: 16, weight: .semibold))
@@ -1070,6 +1238,22 @@ struct CustomRouteBuilderView: View {
         VStack(alignment: .leading, spacing: 16) {
             coverPhotoZone
             journeyNameField
+            if planningStyle == .macroJourney {
+                VStack(alignment: .leading, spacing: 8) {
+                    labelWithIcon("Trip tags (shown on detail hero)", icon: "tag.fill")
+                    TextField("e.g. Utah, Desert, Family — comma separated", text: $macroTripTags)
+                        .textFieldStyle(.plain)
+                        .font(.system(size: 15))
+                        .foregroundStyle(CRBColors.textPrimary)
+                        .padding(14)
+                        .background(CRBColors.searchBg)
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                        .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(CRBColors.borderMuted, lineWidth: 1))
+                    Text("States + Duration + Vehicle + Pace are always saved as tags. Add extra here.")
+                        .font(.system(size: 11))
+                        .foregroundStyle(CRBColors.textMuted)
+                }
+            }
         }
         .padding(.horizontal, 20)
     }
@@ -1320,6 +1504,14 @@ struct CustomRouteBuilderView: View {
                         .background(CRBColors.searchBg)
                         .clipShape(RoundedRectangle(cornerRadius: 8))
                     }
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 10)
+                            .strokeBorder(
+                                (vp.latitude != nil && vp.longitude != nil) ? Color.clear : Color.red.opacity(0.75),
+                                lineWidth: (vp.latitude != nil && vp.longitude != nil) ? 0 : 2
+                            )
+                            .padding(-2)
+                    )
                     Text("If the photo has no coordinates or no photo is uploaded, tap Drop Pin below to set the location.")
                         .font(.system(size: 12))
                         .foregroundStyle(CRBColors.textMuted)
@@ -2112,6 +2304,23 @@ struct CustomRouteBuilderView: View {
                 .background(CRBColors.searchBg)
                 .clipShape(RoundedRectangle(cornerRadius: 10))
                 .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(CRBColors.borderMuted, lineWidth: 1))
+            labelWithIcon("Recommendation link (e.g. Airbnb)", icon: "link")
+            TextField("Button title (e.g. Book on Airbnb)", text: stop.recommendationTitle)
+                .textFieldStyle(.plain)
+                .font(.system(size: 15))
+                .foregroundStyle(CRBColors.textPrimary)
+                .padding(12)
+                .background(CRBColors.searchBg)
+                .clipShape(RoundedRectangle(cornerRadius: 10))
+                .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(CRBColors.borderMuted, lineWidth: 1))
+            TextField("URL (e.g. https://www.airbnb.com/...)", text: stop.recommendationLink)
+                .textFieldStyle(.plain)
+                .font(.system(size: 15))
+                .foregroundStyle(CRBColors.textPrimary)
+                .padding(12)
+                .background(CRBColors.searchBg)
+                .clipShape(RoundedRectangle(cornerRadius: 10))
+                .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(CRBColors.borderMuted, lineWidth: 1))
         }
         .padding(16)
         .background(CRBColors.cardNested)
@@ -2419,23 +2628,20 @@ struct CustomRouteBuilderView: View {
                     .buttonStyle(.plain)
                     .fixedSize(horizontal: true, vertical: false)
                     Button {
+                        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
                         print("🚀 Publish Button Pressed!")
-                        if planningStyle == .macroJourney {
-                            if canPublish, let json = exportMacroJourneyToJSON() {
-                                print("========== Macro Journey JSON (multi-day, days[].location for map) ==========")
-                                print(json)
-                                print("========== end ==========")
-                                publishMacroJourney(json: json)
-                            } else if !canPublish {
-                                printMacroPublishValidation()
-                            }
-                        } else if planningStyle == .microTrack {
-                            if let json = exportDetailedTrackToJSON() {
-                                print("========== Detailed Track JSON (View Points only, no Days) ==========")
-                                print(json)
-                                print("========== end ==========")
-                                publishDetailedTrack(json: json)
-                            }
+                        guard canPublish, let draft = buildDraftItemFromCurrentState() else {
+                            if !canPublish { printMacroPublishValidation() }
+                            return
+                        }
+                        let journey = draft.toManualJourney()
+                        // 雙路徑：完整行程 → Grand Journeys（專業行程模板）；微觀/單點動態 → Detailed Tracks（微觀足跡視圖）
+                        let category: PostCategory = planningStyle == .macroJourney ? .grandJourney : .detailedTrack
+                        isPublishing = true
+                        TrackDataManager.shared.publishDraft(draft, with: journey, category: category)
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+                            isPublishing = false
+                            showingSuccessOverlay = true
                         }
                     } label: {
                         Group {
@@ -2651,75 +2857,86 @@ extension DropPinLocationManager: CLLocationManagerDelegate {
     }
 }
 
-// MARK: - Map Selection View (Set Location for View Point: long press or center pin; no manual coord input)
-struct MapSelectionView: View {
+// MARK: - Location Picker View (Drop Pin 彈窗：用戶位置起點、自由縮放/移動、MapReader + onTapGesture 插旗)
+struct LocationPickerView: View {
     var initialLat: Double
     var initialLon: Double
     var onConfirm: (CLLocationCoordinate2D) -> Void
     var onCancel: () -> Void
+
     @State private var selectedCoordinate: CLLocationCoordinate2D?
-    @State private var mapCenter: CLLocationCoordinate2D
     @State private var cameraPosition: MapCameraPosition
+
+    private let accentOrange = Color(hex: "FF8C42")
+
     init(initialLat: Double, initialLon: Double, onConfirm: @escaping (CLLocationCoordinate2D) -> Void, onCancel: @escaping () -> Void) {
         self.initialLat = initialLat
         self.initialLon = initialLon
         self.onConfirm = onConfirm
         self.onCancel = onCancel
-        let center = CLLocationCoordinate2D(latitude: initialLat, longitude: initialLon)
-        _mapCenter = State(initialValue: center)
-        _cameraPosition = State(initialValue: .region(MKCoordinateRegion(center: center, span: MKCoordinateSpan(latitudeDelta: 0.02, longitudeDelta: 0.02))))
+        _cameraPosition = State(initialValue: .userLocation(followsHeading: false, fallback: .automatic))
     }
-    private var resolvedCoordinate: CLLocationCoordinate2D {
-        selectedCoordinate ?? mapCenter
-    }
+
     var body: some View {
-        NavigationStack {
+        VStack(spacing: 0) {
+            HStack {
+                Text("Drop Pin on Map")
+                    .font(.system(size: 18, weight: .bold))
+                    .foregroundStyle(CRBColors.textPrimary)
+                Spacer()
+            }
+            .padding(.horizontal, 20)
+            .padding(.top, 16)
+            .padding(.bottom, 8)
+            Text("Starts at your location. Pinch to zoom, drag to pan. Tap to place the pin, then Confirm Location.")
+                .font(.system(size: 13))
+                .foregroundStyle(CRBColors.textMuted)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, 20)
+                .padding(.bottom, 4)
             MapReader { proxy in
-                ZStack(alignment: .bottomTrailing) {
-                    Map(position: $cameraPosition, interactionModes: .all) {
-                        Annotation("", coordinate: resolvedCoordinate) {
-                            Image(systemName: "mappin.circle.fill")
-                                .font(.system(size: 40))
-                                .foregroundStyle(Color(hex: "FF8C42"))
+                Map(position: $cameraPosition, interactionModes: .all) {
+                    if let coord = selectedCoordinate {
+                        Marker("View Point", coordinate: coord)
+                            .tint(accentOrange)
+                    }
+                }
+                .mapStyle(.standard)
+                .onTapGesture(count: 1, coordinateSpace: .local) { screenPoint in
+                    if let coord = proxy.convert(screenPoint, from: .local) {
+                        withAnimation(.easeOut(duration: 0.2)) {
+                            selectedCoordinate = coord
                         }
                     }
-                    .mapStyle(.standard)
-                    .onMapCameraChange(frequency: .onEnd) { context in
-                        mapCenter = context.region.center
-                    }
-                    Color.clear
-                        .contentShape(Rectangle())
-                        .onTapGesture {
-                            selectedCoordinate = mapCenter
-                        }
-                        .gesture(
-                            LongPressGesture(minimumDuration: 0.5)
-                                .sequenced(before: DragGesture(minimumDistance: 0, coordinateSpace: .named("mapSelect")))
-                                .onEnded { value in
-                                    switch value {
-                                    case .second(true, let drag):
-                                        if let loc = drag?.startLocation, let coord = proxy.convert(loc, from: .named("mapSelect")) {
-                                            selectedCoordinate = coord
-                                        }
-                                    default: break
-                                    }
-                                }
-                        )
-                    .coordinateSpace(name: "mapSelect")
                 }
             }
-            .ignoresSafeArea(.container)
-            .navigationTitle("Set Location")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { onCancel() }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+
+            HStack(spacing: 16) {
+                Button("Cancel") {
+                    onCancel()
                 }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Confirm") { onConfirm(resolvedCoordinate) }
+                .font(.system(size: 17, weight: .medium))
+                .foregroundStyle(CRBColors.textMuted)
+                .frame(maxWidth: .infinity)
+
+                Button("Confirm Location") {
+                    guard let coord = selectedCoordinate else { return }
+                    onConfirm(coord)
                 }
+                .font(.system(size: 17, weight: .semibold))
+                .foregroundStyle(selectedCoordinate != nil ? .white : CRBColors.textMuted)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 14)
+                .background(selectedCoordinate != nil ? accentOrange : Color(hex: "2A3540"))
+                .clipShape(RoundedRectangle(cornerRadius: 12))
+                .disabled(selectedCoordinate == nil)
             }
+            .padding(.horizontal, 20)
+            .padding(.vertical, 16)
+            .background(CRBColors.background)
         }
+        .background(CRBColors.background)
         .preferredColorScheme(.dark)
     }
 }
@@ -2865,6 +3082,16 @@ private struct DatePickerSheet: View {
     }
 }
 
+// MARK: - 編輯頁彈出用數據（item 有值才彈出，避免黑屏）
+private struct PostEditorSheetItem: Identifiable {
+    let id = UUID()
+    let draft: LiveTrackDraft
+    let distanceMeters: Double
+    let elevationMeters: Double
+    let durationSeconds: TimeInterval
+    let defaultTitle: String
+}
+
 // MARK: - Live Track Recording View (Record Live Track → Save as Draft)
 struct LiveTrackRecordingView: View {
     @Environment(\.dismiss) private var dismiss
@@ -2872,6 +3099,15 @@ struct LiveTrackRecordingView: View {
     @State private var showResumeAlert = false
     @State private var showSavedDraftAlert = false
     @State private var showDraftBox = false
+    @State private var mapPosition: MapCameraPosition = .region(MKCoordinateRegion(
+        center: CLLocationCoordinate2D(latitude: 39.5, longitude: -98.5),
+        span: MKCoordinateSpan(latitudeDelta: 0.1, longitudeDelta: 0.1)
+    ))
+    @State private var hasInitialFocus = false
+    @State private var editorSheetItem: PostEditorSheetItem?
+    @State private var finishedJourney: ManualJourney?
+    @State private var navigateToDetail = false
+    @State private var showCancelConfirm = false
 
     var body: some View {
         ZStack(alignment: .top) {
@@ -2882,22 +3118,56 @@ struct LiveTrackRecordingView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(CRBColors.background)
         .navigationBarBackButtonHidden(true)
+        .onChange(of: tracker.breadcrumbPointCount) { _, newCount in
+            if !hasInitialFocus && newCount >= 1 {
+                hasInitialFocus = true
+                withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
+                    mapPosition = .userLocation(followsHeading: false, fallback: .automatic)
+                }
+            }
+        }
+        .confirmationDialog("Exit recording?", isPresented: $showCancelConfirm, titleVisibility: .visible) {
+            Button("Save to Draft") {
+                saveRecordingToDraftAndExit()
+            }
+            Button("Discard", role: .destructive) {
+                tracker.stopRecording()
+                showCancelConfirm = false
+                dismiss()
+            }
+            Button("Resume", role: .cancel) {
+                showCancelConfirm = false
+            }
+        } message: {
+            Text("Save your current track to Draft Box (Live Recorded) to edit later, or discard and exit.")
+        }
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {
-                Button("Cancel") { dismiss() }
+                Button("Cancel") { showCancelConfirm = true }
                     .foregroundStyle(CRBColors.textMuted)
             }
             if tracker.hasRecordedTrack, !tracker.isRecording {
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Stop & Save Record") {
-                        let draft = tracker.buildDraft()
-                        draft.saveToUserDefaults()
-                        let item = DraftItem.fromLiveTrack(waypoints: draft.waypoints, polyline: tracker.fullBreadcrumbPolyline, durationSeconds: tracker.elapsedSeconds)
-                        UnifiedDraftStore.append(item)
-                        AchievementStore.onRecordStopped(waypoints: draft.waypoints)
-                        let totalMeters = UnifiedDraftStore.loadAll().reduce(0.0) { $0 + $1.totalDistanceMeters }
-                        AchievementStore.updateFromDrafts(totalDistanceMeters: totalMeters)
-                        showSavedDraftAlert = true
+                    Button("Stop & Edit") {
+                        tracker.stopRecording()
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                            let draft = tracker.buildDraft()
+                            let distance = tracker.totalDistanceMeters
+                            let elevation = tracker.currentElevation
+                            let duration = tracker.elapsedSeconds
+                            Task {
+                                let title = await geocodeDefaultTitle(draft: draft)
+                                await MainActor.run {
+                                    editorSheetItem = PostEditorSheetItem(
+                                        draft: draft,
+                                        distanceMeters: distance,
+                                        elevationMeters: elevation,
+                                        durationSeconds: duration,
+                                        defaultTitle: title
+                                    )
+                                }
+                            }
+                        }
                     }
                     .font(.system(size: 15, weight: .semibold))
                     .foregroundStyle(CRBColors.activeOrange)
@@ -2938,16 +3208,76 @@ struct LiveTrackRecordingView: View {
             Text("Your recording has been saved. You can view it later in your Drafts folder.")
         }
         .fullScreenCover(isPresented: $showDraftBox) {
-            NavigationStack {
-                UnifiedDraftBoxView()
-            }
-            .onDisappear { showDraftBox = false }
+            UnifiedDraftBoxView()
+                .environmentObject(TrackDataManager.shared)
+                .onDisappear { showDraftBox = false }
+        }
+        .fullScreenCover(item: $editorSheetItem) { item in
+            PostEditorView(
+                draft: item.draft,
+                distanceMeters: item.distanceMeters,
+                elevationMeters: item.elevationMeters,
+                durationSeconds: item.durationSeconds,
+                sportType: .hiking,
+                initialTitle: item.defaultTitle.isEmpty ? nil : item.defaultTitle,
+                onSaveToDrafts: { title in
+                    item.draft.saveToUserDefaults()
+                    let draftItem = DraftItem.fromLiveTrack(waypoints: item.draft.waypoints, polyline: tracker.fullBreadcrumbPolyline, durationSeconds: item.durationSeconds, title: title.isEmpty ? nil : title)
+                    TrackDataManager.shared.addDraft(draftItem)
+                    AchievementStore.onRecordStopped(waypoints: item.draft.waypoints)
+                    editorSheetItem = nil
+                    showSavedDraftAlert = true
+                },
+                onPublish: { _ in },
+                onPublishComplete: { editorSheetItem = nil }
+            )
         }
         .preferredColorScheme(.dark)
     }
 
+    private func geocodeDefaultTitle(draft: LiveTrackDraft) async -> String {
+        guard let lastPoint = draft.waypoints.last else {
+            return "\(dateString) · Hiking"
+        }
+        let loc = CLLocation(latitude: lastPoint.latitude, longitude: lastPoint.longitude)
+        let geocoder = CLGeocoder()
+        do {
+            let placemarks = try await geocoder.reverseGeocodeLocation(loc)
+            let name = placemarks.first?.locality ?? placemarks.first?.administrativeArea ?? placemarks.first?.name
+            if let n = name, !n.isEmpty {
+                return "\(n) · \(dateString) · Hiking"
+            }
+        } catch {}
+        return "\(dateString) · Hiking"
+    }
+
+    private var dateString: String {
+        let f = DateFormatter()
+        f.dateStyle = .medium
+        return f.string(from: Date())
+    }
+
+    private var defaultManualJourney: ManualJourney {
+        DetailedTrackPost(routeName: "", totalDurationMinutes: 0, viewPointNodes: [])
+    }
+
+    /// Cancel dialog "Save to Draft": add to DataManager.draftTracks, then dismiss (Draft Box reads draftTracks).
+    private func saveRecordingToDraftAndExit() {
+        let draft = tracker.buildDraft()
+        let item = DraftItem.fromLiveTrack(
+            waypoints: draft.waypoints,
+            polyline: tracker.fullBreadcrumbPolyline,
+            durationSeconds: tracker.elapsedSeconds
+        )
+        tracker.stopRecording()
+        TrackDataManager.shared.addDraft(item)
+        showCancelConfirm = false
+        dismiss()
+    }
+
     private var liveTrackMap: some View {
-        Map(initialPosition: .region(tracker.mapRegion), interactionModes: .all) {
+        Map(position: $mapPosition, interactionModes: .all) {
+            UserAnnotation()
             ForEach(Array(tracker.breadcrumbSegmentsForMap.enumerated()), id: \.offset) { _, item in
                 MapPolyline(coordinates: item.coords)
                     .stroke(item.color, lineWidth: 4)
@@ -2961,6 +3291,31 @@ struct LiveTrackRecordingView: View {
             }
         }
         .mapStyle(.standard)
+        .overlay(alignment: .bottomTrailing) {
+            Button(action: {
+                withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                    mapPosition = .userLocation(followsHeading: false, fallback: .automatic)
+                }
+            }) {
+                ZStack {
+                    Circle()
+                        .fill(.white.opacity(0.95))
+                        .frame(width: 52, height: 52)
+                        .shadow(color: .black.opacity(0.25), radius: 8, x: 0, y: 4)
+                    Circle()
+                        .stroke(Color(hex: "10B981").opacity(0.4), lineWidth: 1)
+                        .frame(width: 52, height: 52)
+                    Image(systemName: "location.fill")
+                        .font(.system(size: 22, weight: .medium))
+                        .foregroundStyle(Color(hex: "10B981"))
+                }
+            }
+            .buttonStyle(.plain)
+            .padding(.trailing, 20)
+            .padding(.bottom, 130)
+        }
+        .onAppear { mapPosition = .region(tracker.mapRegion) }
+        .onReceive(tracker.$mapRegion) { mapPosition = .region($0) }
         .ignoresSafeArea(.container)
     }
 
@@ -3084,6 +3439,8 @@ private final class LiveTrackLocationTracker: NSObject, ObservableObject {
         center: CLLocationCoordinate2D(latitude: 39.5, longitude: -98.5),
         span: MKCoordinateSpan(latitudeDelta: 0.1, longitudeDelta: 0.1)
     )
+    /// 軌跡點數量（用於進場自動對焦：收到 ≥1 點即對焦一次）
+    @Published var breadcrumbPointCount: Int = 0
 
     private let locationManager = CLLocationManager()
     private var recordingStartDate: Date?
@@ -3175,17 +3532,18 @@ private final class LiveTrackLocationTracker: NSObject, ObservableObject {
         locationManager.delegate = self
         locationManager.desiredAccuracy = kCLLocationAccuracyBest
         locationManager.distanceFilter = 5
-        locationManager.allowsBackgroundLocationUpdates = false
+        locationManager.allowsBackgroundLocationUpdates = true
     }
 
     func requestAuthorization() {
-        locationManager.requestWhenInUseAuthorization()
+        locationManager.requestAlwaysAuthorization()
     }
 
     func startRecording() {
         guard !isRecording else { return }
         waypoints = []
         breadcrumbTrail = []
+        breadcrumbPointCount = 0
         totalDistanceMeters = 0
         currentElevation = 0
         elapsedSeconds = 0
@@ -3239,6 +3597,7 @@ private final class LiveTrackLocationTracker: NSObject, ObservableObject {
                       let cum = t["cumulativeDistance"] as? Double, let sp = t["speed"] as? Double else { return nil }
                 return (latitude: lat, longitude: lon, elevation: elev, cumulativeDistance: cum, speed: sp)
             }
+            breadcrumbPointCount = breadcrumbTrail.count
         }
         totalDistanceMeters = totalDist
         recordingStartDate = Date(timeIntervalSince1970: startStamp)
@@ -3296,6 +3655,9 @@ private final class LiveTrackLocationTracker: NSObject, ObservableObject {
 
     private func addBreadcrumb(lat: Double, lon: Double, elevation: Double, cumulativeDistance: Double, speed: Double) {
         breadcrumbTrail.append((latitude: lat, longitude: lon, elevation: elevation, cumulativeDistance: cumulativeDistance, speed: speed))
+        DispatchQueue.main.async { [weak self] in
+            self?.breadcrumbPointCount = self?.breadcrumbTrail.count ?? 0
+        }
     }
 
     private func updateMapRegion() {

@@ -101,7 +101,7 @@ struct GrasslandsTab: View {
             || grassland.state.lowercased().contains(query)
         }
     }
-
+    
     var body: some View {
         ScrollView {
             VStack(spacing: 0) {
@@ -242,14 +242,14 @@ struct GrasslandsTab: View {
                                         selectedStateName = state
                                         showStatePicker = false
                                     } label: {
-                                        HStack {
+                    HStack {
                                             Text(state)
                                                 .font(.body)
-                                                .foregroundStyle(Color.hikbikPrimary)
+                                .foregroundStyle(Color.hikbikPrimary)
                                             Spacer()
                                             Text(stateNameToCode[state] ?? "")
                                                 .font(.caption)
-                                                .foregroundStyle(Color.hikbikMutedForeground)
+                                .foregroundStyle(Color.hikbikMutedForeground)
                                             if selectedStateName == state {
                                                 Image(systemName: "checkmark")
                                                     .font(.caption.weight(.semibold))

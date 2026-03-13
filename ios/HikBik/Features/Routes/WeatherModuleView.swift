@@ -103,15 +103,15 @@ struct WeatherModuleView: View {
         )
         .clipShape(RoundedRectangle(cornerRadius: Self.weatherCardCornerRadius))
         .padding(.bottom, HIKBIKTheme.sectionSpacing)
-        .alert("需要定位權限", isPresented: $showLocationDeniedAlert) {
-            Button("打開設定", role: .none) {
+        .alert("Location Access Needed", isPresented: $showLocationDeniedAlert) {
+            Button("Open Settings", role: .none) {
                 if let url = URL(string: UIApplication.openSettingsURLString) {
                     UIApplication.shared.open(url)
                 }
             }
-            Button("取消", role: .cancel) {}
+            Button("Cancel", role: .cancel) {}
         } message: {
-            Text("若要查看「當前位置」天氣，請在設定中允許 HIKBIK 使用定位服務。")
+            Text("To see weather for your current location, allow HIKBIK to use location in Settings.")
         }
         .onChange(of: selectedLocation) { _, newValue in
             if newValue == "Current Location" {

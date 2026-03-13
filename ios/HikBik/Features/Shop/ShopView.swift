@@ -1786,7 +1786,7 @@ struct CheckoutView: View {
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject var cartStore: CartStore
     var mode: CheckoutMode = .buy
-    
+
     @State private var firstName = ""
     @State private var lastName = ""
     @State private var email = ""
@@ -1801,17 +1801,15 @@ struct CheckoutView: View {
     @State private var cardNumber = ""
     @State private var expiryDate = ""
     @State private var cvv = ""
-    
+
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 24) {
-                    // Contact Information
                     VStack(alignment: .leading, spacing: 12) {
                         Text("Contact Information")
                             .font(.system(size: 20, weight: .bold, design: .rounded))
                             .foregroundStyle(Color.hikbikPrimary)
-                        
                         VStack(alignment: .leading, spacing: 6) {
                             Text("First name")
                                 .font(.system(size: 12, weight: .medium, design: .rounded))
@@ -1861,15 +1859,11 @@ struct CheckoutView: View {
                             }
                         }
                     }
-                    
                     Divider()
-                    
-                    // Shipping Address
                     VStack(alignment: .leading, spacing: 12) {
                         Text("Shipping Address")
                             .font(.system(size: 20, weight: .bold, design: .rounded))
                             .foregroundStyle(Color.hikbikPrimary)
-                        
                         VStack(alignment: .leading, spacing: 6) {
                             Text("Street address")
                                 .font(.system(size: 12, weight: .medium, design: .rounded))
@@ -1930,15 +1924,11 @@ struct CheckoutView: View {
                             .clipShape(RoundedRectangle(cornerRadius: 6))
                         }
                     }
-                    
                     Divider()
-                    
-                    // Payment Information
                     VStack(alignment: .leading, spacing: 12) {
                         Text("Payment Information")
                             .font(.system(size: 20, weight: .bold, design: .rounded))
                             .foregroundStyle(Color.hikbikPrimary)
-                        
                         ForEach([PaymentMethod.creditCard, .applePay, .payPal], id: \.self) { method in
                             Button(action: { paymentMethod = method }) {
                                 HStack(spacing: 12) {
@@ -1976,7 +1966,6 @@ struct CheckoutView: View {
                             }
                             .buttonStyle(.plain)
                         }
-                        
                         if paymentMethod == .creditCard {
                             VStack(alignment: .leading, spacing: 10) {
                                 TextField("Card Number", text: $cardNumber)
@@ -1993,15 +1982,11 @@ struct CheckoutView: View {
                             .padding(.top, 8)
                         }
                     }
-                    
                     Divider()
-                    
-                    // Order Summary（依 mode 只顯示 Rent 或 Buy 項目）
                     VStack(alignment: .leading, spacing: 12) {
                         Text("Order Summary")
                             .font(.system(size: 20, weight: .bold, design: .rounded))
                             .foregroundStyle(Color.hikbikPrimary)
-                        
                         VStack(spacing: 8) {
                             if mode == .rent {
                                 ForEach(cartStore.items) { item in
@@ -2047,14 +2032,8 @@ struct CheckoutView: View {
                                 .stroke(Color.hikbikBorder, lineWidth: 1)
                         )
                     }
-                    
-                    // Complete Order button（只清空對應的 Rent 或 Buy 項目）
                     Button(action: {
-                        if mode == .rent {
-                            cartStore.removeAllRentals()
-                        } else {
-                            cartStore.removeAllPurchases()
-                        }
+                        if mode == .rent { cartStore.removeAllRentals() } else { cartStore.removeAllPurchases() }
                         dismiss()
                     }) {
                         Text("Complete Order - $\(mode == .rent ? cartStore.rentalTotalPrice : cartStore.purchaseTotalPrice)")

@@ -528,7 +528,7 @@ private struct ItineraryImageCard: View {
                     Image(systemName: "photo.fill")
                         .font(.system(size: 44))
                         .foregroundStyle(HIKBIKTheme.textMuted.opacity(0.35))
-                    Text("圖片")
+                    Text("Photos")
                         .font(.system(size: 13))
                         .foregroundStyle(HIKBIKTheme.textMuted.opacity(0.35))
                 }

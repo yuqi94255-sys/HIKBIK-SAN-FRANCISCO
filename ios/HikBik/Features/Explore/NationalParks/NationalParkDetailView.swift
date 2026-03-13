@@ -873,7 +873,7 @@ private func ParkInfoRow(_ label: String, _ value: String) -> some View {
     .font(HikBikFont.callout())
 }
 
-#Preview("Denali — NPS 數據填滿效果") {
+#Preview("Denali — NPS data") {
     NavigationStack {
         NationalParkDetailView(park: NPSMockData.denaliNationalPark)
     }

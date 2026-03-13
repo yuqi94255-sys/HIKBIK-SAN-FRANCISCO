@@ -23,7 +23,7 @@ struct StateParksTab: View {
         .listStyle(.plain)
         .scrollContentBackground(.hidden)
         .background(Color.hikbikBackground)
-        .navigationTitle("州公园")
+        .navigationTitle("State Parks")
         .navigationBarTitleDisplayMode(.large)
         .navigationDestination(for: StateListItem.self) { state in
             StateParksListView(state: state)

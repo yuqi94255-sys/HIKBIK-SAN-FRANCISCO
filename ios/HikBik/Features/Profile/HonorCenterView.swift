@@ -252,7 +252,7 @@ struct HonorBadgeFlipModal: View {
     }
 
     private func renderRouteMapSnapshot() -> UIImage? {
-        let drafts = UnifiedDraftStore.loadAll()
+        let drafts = TrackDataManager.shared.allTracks
         let poly: [CLLocationCoordinate2D]? = {
             guard let draft = drafts.first(where: { $0.source == .liveRecorded || $0.source == .imported }) else { return nil }
             let p = draft.polyline2D ?? draft.coordinate2DPoints
