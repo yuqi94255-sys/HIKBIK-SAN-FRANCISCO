@@ -564,9 +564,9 @@ struct ProfileView: View {
             if groups.isEmpty {
                 MyTripEmptyState()
             } else {
-                List {
+            List {
                     ForEach(groups, id: \.id) { group in
-                        Section {
+                Section {
                             ForEach(group.trips, id: \.id) { draft in
                                 NavigationLink(value: draft) {
                                     MyTripCard(draft: draft)

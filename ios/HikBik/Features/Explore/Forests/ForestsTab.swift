@@ -23,7 +23,9 @@ private let stateNameToCode: [String: String] = [
 ]
 
 struct ForestsTab: View {
-    private let forests = DataLoader.loadNationalForests()
+    @StateObject private var ridbViewModel = ExploreRIDBViewModel()
+
+    private var forests: [NationalForest] { ridbViewModel.forests }
 
     @State private var currentHeroIndex: Int = 0
     @State private var selectedStateName: String = ""

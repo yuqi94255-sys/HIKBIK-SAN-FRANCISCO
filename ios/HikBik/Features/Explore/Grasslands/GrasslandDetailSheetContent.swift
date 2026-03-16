@@ -63,9 +63,60 @@ private struct GrasslandStatusDivider: View {
     }
 }
 
+/// 草原詳情頁 ViewModel：與森林一致，onAppear 調用 RIDBService.shared.fetchMedia(for: id)，支援 isLoading
+final class GrasslandDetailSheetViewModel: ObservableObject {
+    @Published var images: [URL] = []
+    @Published var activityNames: [String] = []
+    @Published var isLoading = false
+
+    func loadMedia(recAreaID: String, fallbackPhotos: [String]?, fallbackActivities: [String]? = nil) async {
+        await MainActor.run { self.isLoading = true }
+        do {
+            let urls = try await RIDBService.shared.fetchMedia(for: recAreaID)
+            #if DEBUG
+            if !urls.isEmpty {
+                print("[RIDB Success] 成功使用 API Key 抓取數據！")
+                print("Fetched \(urls.count) images for ID: \(recAreaID)")
+                if let first = urls.first {
+                    print("[RIDB Debug] First image URL: \(first.absoluteString)")
+                }
+            }
+            #endif
+            await MainActor.run {
+                if !urls.isEmpty { self.images = urls }
+                else if let photos = fallbackPhotos { self.images = photos.compactMap { URL(string: $0) } }
+            }
+        } catch {
+            #if DEBUG
+            if case RIDBError.serverError(let code, _) = error, code == 401 {
+                print("[Auth Error] 請檢查 API Key 是否正確傳遞。RIDB 回傳 401 Unauthorized。")
+            }
+            print("[RIDB Debug] No media found for ID: \(recAreaID)")
+            #endif
+            await MainActor.run {
+                if let photos = fallbackPhotos { self.images = photos.compactMap { URL(string: $0) } }
+            }
+        }
+        do {
+            let names = try await RIDBService.shared.fetchActivities(recAreaId: recAreaID)
+            await MainActor.run {
+                if !names.isEmpty { self.activityNames = names }
+                else if let activities = fallbackActivities { self.activityNames = activities }
+            }
+        } catch {
+            await MainActor.run {
+                if let activities = fallbackActivities { self.activityNames = activities }
+            }
+        }
+        await MainActor.run { self.isLoading = false }
+    }
+}
+
 struct GrasslandDetailSheetContent: View {
     let grassland: NationalGrassland
     var themeColor: Color = Color(red: 0.55, green: 0.45, blue: 0.2) // Grassland amber
+
+    @StateObject private var viewModel = GrasslandDetailSheetViewModel()
 
     private var effectiveCoordinate: CLLocationCoordinate2D? {
         grassland.coordinates.map { CLLocationCoordinate2D(latitude: $0.latitude, longitude: $0.longitude) }
@@ -83,6 +134,10 @@ struct GrasslandDetailSheetContent: View {
         grassland.managingForest ?? "U.S. Forest Service"
     }
 
+    private var strippedDescription: String {
+        RIDBAdapter.stripHTML(grassland.description)
+    }
+
     var body: some View {
         VStack(spacing: 0) {
             Capsule()
@@ -90,7 +145,24 @@ struct GrasslandDetailSheetContent: View {
                 .frame(width: 36, height: 5)
                 .padding(.top, 40)
                 .padding(.bottom, 24)
+            Group {
+                if viewModel.isLoading {
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 16)
+                            .fill(Color.primary.opacity(0.08))
+                        ProgressView()
+                    }
+                    .frame(height: 200)
+                } else {
+                    MediaCarouselView(urls: viewModel.images)
+                }
+            }
+            .padding(.horizontal, 20)
+            .padding(.bottom, 12)
             sheetHeader
+            ActivityTagView(activities: viewModel.activityNames, themeColor: themeColor)
+                .padding(.horizontal, 20)
+                .padding(.bottom, 8)
             GrasslandStatusBar(
                 established: grassland.established,
                 region: grassland.region,
@@ -100,15 +172,17 @@ struct GrasslandDetailSheetContent: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 20) {
                     feeAndInfoSection
-                    if let photos = grassland.photos, !photos.isEmpty {
-                        gallerySection(photos: photos)
+                    if effectiveCoordinate != nil {
+                        grasslandMapSection
                     }
-                    if !grassland.description.isEmpty {
-                        Text(grassland.description)
+                    if !strippedDescription.isEmpty {
+                        Text(strippedDescription)
                             .font(.body)
                             .foregroundStyle(.secondary)
                             .lineLimit(nil)
                     }
+                    WeatherInfoView()
+                        .padding(.bottom, 16)
                     GrasslandAccessView(
                         grassland: grassland,
                         grasslandCoordinate: effectiveCoordinate,
@@ -136,6 +210,22 @@ struct GrasslandDetailSheetContent: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(grasslandSheetBackgroundColor)
+        .onAppear {
+            #if DEBUG
+            print("[RIDB Debug] Grassland detail opened with id (RecAreaID): \(grassland.id)")
+            #endif
+            Task {
+                await viewModel.loadMedia(recAreaID: grassland.id, fallbackPhotos: grassland.photos, fallbackActivities: grassland.activities)
+            }
+        }
+    }
+
+    private var grasslandMapSection: some View {
+        Group {
+            if let coord = effectiveCoordinate {
+                DetailMapWithStyleSwitcher(center: coord, markerTitle: grassland.name, height: 180)
+            }
+        }
     }
 
     private var sheetHeader: some View {
@@ -170,25 +260,5 @@ struct GrasslandDetailSheetContent: View {
         .padding(14)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 14))
-    }
-
-    private func gallerySection(photos: [String]) -> some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 12) {
-                ForEach(Array(photos.prefix(10).enumerated()), id: \.offset) { _, urlString in
-                    if let url = URL(string: urlString) {
-                        AsyncImage(url: url) { phase in
-                            switch phase {
-                            case .success(let img): img.resizable().scaledToFill()
-                            default: Color.primary.opacity(0.15)
-                            }
-                        }
-                        .frame(width: 160, height: 120)
-                        .clipShape(RoundedRectangle(cornerRadius: 12))
-                    }
-                }
-            }
-            .padding(.vertical, 8)
-        }
     }
 }

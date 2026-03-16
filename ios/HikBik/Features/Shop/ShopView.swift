@@ -13,6 +13,18 @@ private enum ShopTheme {
     static let titleGlow = Color.white.opacity(0.3)
 }
 
+/// 商品詳情 / 購物車 / 結帳 / 門店 — 全鏈路深色
+private enum ShopFlowDark {
+    static let bg = Color.deepSpaceBackground
+    static let card = Color.deepSpaceCard
+    static let title = Color.white
+    static let body = Color.white.opacity(0.7)
+    static let divider = Color.white.opacity(0.12)
+    static let border = Color.white.opacity(0.16)
+    static let accent = Color.shopNeonGreen
+    static let inputFill = Color.white.opacity(0.1)
+}
+
 struct ShopView: View {
     @EnvironmentObject var cartStore: CartStore
     @State private var selectedPath: ShopPath? = nil
@@ -63,6 +75,7 @@ struct ShopView: View {
                 .padding(.top, 20)
                 .padding(.bottom, 40)
             }
+            .scrollDismissesKeyboard(.interactively)
             .background(
                 ZStack {
                     ShopTheme.background
@@ -526,11 +539,11 @@ struct StoresView: View {
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Our Stores")
                         .font(.system(size: 32, weight: .bold, design: .rounded))
-                        .foregroundStyle(Color.hikbikPrimary)
+                        .foregroundStyle(ShopFlowDark.title)
                     
                     Text("Find a location near you and visit our experts.")
                         .font(.system(size: 16, weight: .regular, design: .rounded))
-                        .foregroundStyle(Color.hikbikMutedForeground)
+                        .foregroundStyle(ShopFlowDark.body)
                 }
                 
                 Divider()
@@ -544,7 +557,8 @@ struct StoresView: View {
             .padding(.top, 20)
             .padding(.bottom, 40)
         }
-        .background(Color.hikbikBackground)
+        .scrollDismissesKeyboard(.interactively)
+        .background(ShopFlowDark.bg)
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden(true)
         .toolbar {
@@ -555,7 +569,7 @@ struct StoresView: View {
                         Text("Back")
                     }
                     .font(.system(size: 16, weight: .regular, design: .rounded))
-                    .foregroundStyle(Color.hikbikPrimary)
+                    .foregroundStyle(ShopFlowDark.title)
                 }
             }
         }
@@ -607,7 +621,7 @@ private struct StoreCard: View {
                     .font(.system(size: 14, weight: .bold, design: .rounded))
                     .foregroundStyle(.white)
                     .frame(width: 28, height: 28)
-                    .background(Color.hikbikPrimary)
+                    .background(ShopFlowDark.accent)
                     .clipShape(Circle())
                     .padding(12)
                 
@@ -618,11 +632,11 @@ private struct StoreCard: View {
                         .foregroundStyle(.yellow)
                     Text(String(format: "%.1f", store.rating))
                         .font(.system(size: 14, weight: .semibold, design: .rounded))
-                        .foregroundStyle(Color.hikbikPrimary)
+                        .foregroundStyle(ShopFlowDark.title)
                 }
                 .padding(.horizontal, 10)
                 .padding(.vertical, 6)
-                .background(Color.hikbikCard)
+                .background(ShopFlowDark.card)
                 .clipShape(RoundedRectangle(cornerRadius: 8))
                 .frame(maxWidth: .infinity, alignment: .trailing)
                 .padding(12)
@@ -632,18 +646,18 @@ private struct StoreCard: View {
             VStack(alignment: .leading, spacing: 8) {
                 Text(store.name)
                     .font(.system(size: 20, weight: .bold, design: .rounded))
-                    .foregroundStyle(Color.hikbikPrimary)
+                    .foregroundStyle(ShopFlowDark.title)
                 
                 Text(store.distance)
                     .font(.system(size: 14, weight: .regular, design: .rounded))
-                    .foregroundStyle(Color.hikbikMutedForeground)
+                    .foregroundStyle(ShopFlowDark.body)
                 
                 HStack(alignment: .top, spacing: 8) {
                     Text("📍")
                         .font(.system(size: 14))
                     Text(store.address)
                         .font(.system(size: 14, weight: .regular, design: .rounded))
-                        .foregroundStyle(Color.hikbikMutedForeground)
+                        .foregroundStyle(ShopFlowDark.body)
                         .fixedSize(horizontal: false, vertical: true)
                 }
                 
@@ -653,14 +667,14 @@ private struct StoreCard: View {
                     Button(action: { openDirections() }) {
                         Text("Directions")
                             .font(.system(size: 14, weight: .semibold, design: .rounded))
-                            .foregroundStyle(Color.hikbikPrimary)
+                            .foregroundStyle(ShopFlowDark.title)
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 12)
                             .background(Color.clear)
                             .clipShape(RoundedRectangle(cornerRadius: 8))
                             .overlay(
                                 RoundedRectangle(cornerRadius: 8)
-                                    .stroke(Color.hikbikBorder, lineWidth: 1)
+                                    .stroke(ShopFlowDark.border, lineWidth: 1)
                             )
                     }
                     .buttonStyle(.plain)
@@ -669,14 +683,14 @@ private struct StoreCard: View {
                     Button(action: { callStore() }) {
                         Text("Call")
                             .font(.system(size: 14, weight: .semibold, design: .rounded))
-                            .foregroundStyle(Color.hikbikPrimary)
+                            .foregroundStyle(ShopFlowDark.title)
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 12)
                             .background(Color.clear)
                             .clipShape(RoundedRectangle(cornerRadius: 8))
                             .overlay(
                                 RoundedRectangle(cornerRadius: 8)
-                                    .stroke(Color.hikbikBorder, lineWidth: 1)
+                                    .stroke(ShopFlowDark.border, lineWidth: 1)
                             )
                     }
                     .buttonStyle(.plain)
@@ -688,7 +702,7 @@ private struct StoreCard: View {
                             .foregroundStyle(.white)
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 12)
-                            .background(Color.hikbikPrimary)
+                            .background(ShopFlowDark.accent)
                             .clipShape(RoundedRectangle(cornerRadius: 8))
                     }
                     .buttonStyle(.plain)
@@ -697,11 +711,11 @@ private struct StoreCard: View {
             }
             .padding(16)
         }
-        .background(Color.hikbikCard)
+        .background(ShopFlowDark.card)
         .clipShape(RoundedRectangle(cornerRadius: 12))
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(Color.hikbikBorder, lineWidth: 1)
+                .stroke(ShopFlowDark.border, lineWidth: 1)
         )
     }
     
@@ -736,7 +750,7 @@ struct StoreDetailView: View {
                 HStack(alignment: .top) {
                     Text(store.name)
                         .font(.system(size: 32, weight: .bold, design: .rounded))
-                        .foregroundStyle(Color.hikbikPrimary)
+                        .foregroundStyle(ShopFlowDark.title)
                     
                     Spacer()
                     
@@ -747,18 +761,18 @@ struct StoreDetailView: View {
                             .foregroundStyle(.yellow)
                         Text(String(format: "%.1f", store.rating))
                             .font(.system(size: 16, weight: .bold, design: .rounded))
-                            .foregroundStyle(Color.hikbikPrimary)
+                            .foregroundStyle(ShopFlowDark.title)
                         Text("(\(store.reviewCount))")
                             .font(.system(size: 14, weight: .regular, design: .rounded))
-                            .foregroundStyle(Color.hikbikMutedForeground)
+                            .foregroundStyle(ShopFlowDark.body)
                     }
                     .padding(.horizontal, 12)
                     .padding(.vertical, 8)
-                    .background(Color.hikbikCard)
+                    .background(ShopFlowDark.card)
                     .clipShape(RoundedRectangle(cornerRadius: 20))
                     .overlay(
                         RoundedRectangle(cornerRadius: 20)
-                            .stroke(Color.hikbikBorder, lineWidth: 1)
+                            .stroke(ShopFlowDark.border, lineWidth: 1)
                     )
                 }
                 
@@ -770,7 +784,7 @@ struct StoreDetailView: View {
                             .font(.system(size: 16))
                         Text(store.address)
                             .font(.system(size: 16, weight: .regular, design: .rounded))
-                            .foregroundStyle(Color.hikbikMutedForeground)
+                            .foregroundStyle(ShopFlowDark.body)
                     }
                     
                     // Hours
@@ -779,7 +793,7 @@ struct StoreDetailView: View {
                             .font(.system(size: 16))
                         Text(store.hours)
                             .font(.system(size: 16, weight: .regular, design: .rounded))
-                            .foregroundStyle(Color.hikbikMutedForeground)
+                            .foregroundStyle(ShopFlowDark.body)
                     }
                     
                     // Phone
@@ -788,7 +802,7 @@ struct StoreDetailView: View {
                             .font(.system(size: 16))
                         Text(store.phone)
                             .font(.system(size: 16, weight: .regular, design: .rounded))
-                            .foregroundStyle(Color.hikbikMutedForeground)
+                            .foregroundStyle(ShopFlowDark.body)
                     }
                 }
                 .padding(.top, 20)
@@ -798,14 +812,14 @@ struct StoreDetailView: View {
                     Button(action: { openDirections() }) {
                         Text("Get directions")
                             .font(.system(size: 16, weight: .semibold, design: .rounded))
-                            .foregroundStyle(Color.hikbikPrimary)
+                            .foregroundStyle(ShopFlowDark.title)
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 14)
                             .background(Color.clear)
                             .clipShape(RoundedRectangle(cornerRadius: 8))
                             .overlay(
                                 RoundedRectangle(cornerRadius: 8)
-                                    .stroke(Color.hikbikBorder, lineWidth: 1)
+                                    .stroke(ShopFlowDark.border, lineWidth: 1)
                             )
                     }
                     .buttonStyle(.plain)
@@ -813,14 +827,14 @@ struct StoreDetailView: View {
                     Button(action: { callStore() }) {
                         Text("Call store")
                             .font(.system(size: 16, weight: .semibold, design: .rounded))
-                            .foregroundStyle(Color.hikbikPrimary)
+                            .foregroundStyle(ShopFlowDark.title)
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 14)
                             .background(Color.clear)
                             .clipShape(RoundedRectangle(cornerRadius: 8))
                             .overlay(
                                 RoundedRectangle(cornerRadius: 8)
-                                    .stroke(Color.hikbikBorder, lineWidth: 1)
+                                    .stroke(ShopFlowDark.border, lineWidth: 1)
                             )
                     }
                     .buttonStyle(.plain)
@@ -834,7 +848,7 @@ struct StoreDetailView: View {
                 VStack(alignment: .leading, spacing: 24) {
                     Text("Available products")
                         .font(.system(size: 24, weight: .bold, design: .rounded))
-                        .foregroundStyle(Color.hikbikPrimary)
+                        .foregroundStyle(ShopFlowDark.title)
                     
                     // Empty state
                     VStack(spacing: 16) {
@@ -843,7 +857,7 @@ struct StoreDetailView: View {
                         
                         Text("No products available at this store")
                             .font(.system(size: 16, weight: .regular, design: .rounded))
-                            .foregroundStyle(Color.hikbikMutedForeground)
+                            .foregroundStyle(ShopFlowDark.body)
                     }
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 40)
@@ -853,7 +867,8 @@ struct StoreDetailView: View {
             .padding(.top, 20)
             .padding(.bottom, 40)
         }
-        .background(Color.hikbikBackground)
+        .scrollDismissesKeyboard(.interactively)
+        .background(ShopFlowDark.bg)
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden(true)
         .toolbar {
@@ -864,7 +879,7 @@ struct StoreDetailView: View {
                         Text("Back to stores")
                     }
                     .font(.system(size: 16, weight: .regular, design: .rounded))
-                    .foregroundStyle(Color.hikbikPrimary)
+                    .foregroundStyle(ShopFlowDark.title)
                 }
             }
         }
@@ -1041,17 +1056,17 @@ struct CategoryProductsView: View {
                 VStack(alignment: .leading, spacing: 8) {
                     Text(category.title)
                         .font(.system(size: 32, weight: .bold, design: .rounded))
-                        .foregroundStyle(Color.hikbikPrimary)
+                        .foregroundStyle(ShopFlowDark.title)
                     
                     HStack(spacing: 8) {
                         Text("\(products.count) items")
                             .font(.system(size: 16, weight: .regular, design: .rounded))
-                            .foregroundStyle(Color.hikbikMutedForeground)
+                            .foregroundStyle(ShopFlowDark.body)
                         Text("•")
-                            .foregroundStyle(Color.hikbikMutedForeground)
+                            .foregroundStyle(ShopFlowDark.body)
                         Text(isRental ? "Available for rental" : "Available for purchase")
                             .font(.system(size: 16, weight: .regular, design: .rounded))
-                            .foregroundStyle(Color.hikbikMutedForeground)
+                            .foregroundStyle(ShopFlowDark.body)
                     }
                 }
                 
@@ -1084,7 +1099,8 @@ struct CategoryProductsView: View {
             .padding(.top, 20)
             .padding(.bottom, 40)
         }
-        .background(Color.hikbikBackground)
+        .scrollDismissesKeyboard(.interactively)
+        .background(ShopFlowDark.bg)
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden(true)
         .toolbar {
@@ -1095,7 +1111,7 @@ struct CategoryProductsView: View {
                         Text("Back to categories")
                     }
                     .font(.system(size: 16, weight: .regular, design: .rounded))
-                    .foregroundStyle(Color.hikbikPrimary)
+                    .foregroundStyle(ShopFlowDark.title)
                 }
             }
         }
@@ -1131,21 +1147,21 @@ private struct ProductCard: View {
             VStack(alignment: .leading, spacing: 6) {
                 Text(product.name)
                     .font(.system(size: 18, weight: .bold, design: .rounded))
-                    .foregroundStyle(Color.hikbikPrimary)
+                    .foregroundStyle(ShopFlowDark.title)
                     .fixedSize(horizontal: false, vertical: true)
                 
                 Text(product.brand)
                     .font(.system(size: 14, weight: .regular, design: .rounded))
-                    .foregroundStyle(Color.hikbikMutedForeground)
+                    .foregroundStyle(ShopFlowDark.body)
                 
                 Text(product.description)
                     .font(.system(size: 14, weight: .regular, design: .rounded))
-                    .foregroundStyle(Color.hikbikMutedForeground)
+                    .foregroundStyle(ShopFlowDark.body)
                     .lineLimit(2)
                 
                 Text(isRental ? "$\(product.rentalPricePerDay)/day" : "$\(product.price)")
                     .font(.system(size: 24, weight: .bold, design: .rounded))
-                    .foregroundStyle(Color.hikbikPrimary)
+                    .foregroundStyle(ShopFlowDark.title)
                     .padding(.top, 4)
             }
             
@@ -1196,15 +1212,15 @@ struct RentalProductDetailView: View {
                 VStack(alignment: .leading, spacing: 8) {
                     Text(product.brand)
                         .font(.system(size: 14, weight: .regular, design: .rounded))
-                        .foregroundStyle(Color.hikbikMutedForeground)
+                        .foregroundStyle(ShopFlowDark.body)
                     
                     Text(product.name)
                         .font(.system(size: 24, weight: .bold, design: .rounded))
-                        .foregroundStyle(Color.hikbikPrimary)
+                        .foregroundStyle(ShopFlowDark.title)
                     
                     Text(product.description)
                         .font(.system(size: 16, weight: .regular, design: .rounded))
-                        .foregroundStyle(Color.hikbikMutedForeground)
+                        .foregroundStyle(ShopFlowDark.body)
                 }
                 
                 // Rental options card
@@ -1213,7 +1229,7 @@ struct RentalProductDetailView: View {
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Start Date")
                             .font(.system(size: 14, weight: .medium, design: .rounded))
-                            .foregroundStyle(Color.hikbikPrimary)
+                            .foregroundStyle(ShopFlowDark.title)
                         DatePicker("", selection: $startDate, displayedComponents: .date)
                             .datePickerStyle(.compact)
                             .labelsHidden()
@@ -1225,29 +1241,29 @@ struct RentalProductDetailView: View {
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Rental Duration")
                             .font(.system(size: 14, weight: .medium, design: .rounded))
-                            .foregroundStyle(Color.hikbikPrimary)
+                            .foregroundStyle(ShopFlowDark.title)
                         HStack(spacing: 16) {
                             Button(action: { if rentalDays > 1 { rentalDays -= 1 } }) {
                                 Image(systemName: "minus.circle.fill")
                                     .font(.system(size: 28))
-                                    .foregroundStyle(Color.hikbikMutedForeground)
+                                    .foregroundStyle(ShopFlowDark.body)
                             }
                             .buttonStyle(.plain)
                             
                             VStack(spacing: 2) {
                                 Text("\(rentalDays)")
                                     .font(.system(size: 20, weight: .bold, design: .rounded))
-                                    .foregroundStyle(Color.hikbikPrimary)
+                                    .foregroundStyle(ShopFlowDark.title)
                                 Text("days")
                                     .font(.system(size: 14, weight: .regular, design: .rounded))
-                                    .foregroundStyle(Color.hikbikMutedForeground)
+                                    .foregroundStyle(ShopFlowDark.body)
                             }
                             .frame(minWidth: 60)
                             
                             Button(action: { rentalDays += 1 }) {
                                 Image(systemName: "plus.circle.fill")
                                     .font(.system(size: 28))
-                                    .foregroundStyle(Color.hikbikMutedForeground)
+                                    .foregroundStyle(ShopFlowDark.body)
                             }
                             .buttonStyle(.plain)
                         }
@@ -1259,52 +1275,52 @@ struct RentalProductDetailView: View {
                     HStack {
                         Text("Daily Rate")
                             .font(.system(size: 14, weight: .regular, design: .rounded))
-                            .foregroundStyle(Color.hikbikMutedForeground)
+                            .foregroundStyle(ShopFlowDark.body)
                         Spacer()
                         Text("$\(product.rentalPricePerDay)/day")
                             .font(.system(size: 14, weight: .semibold, design: .rounded))
-                            .foregroundStyle(Color.hikbikPrimary)
+                            .foregroundStyle(ShopFlowDark.title)
                     }
                     HStack {
                         Text("Duration")
                             .font(.system(size: 14, weight: .regular, design: .rounded))
-                            .foregroundStyle(Color.hikbikMutedForeground)
+                            .foregroundStyle(ShopFlowDark.body)
                         Spacer()
                         Text("\(rentalDays) days")
                             .font(.system(size: 14, weight: .regular, design: .rounded))
-                            .foregroundStyle(Color.hikbikPrimary)
+                            .foregroundStyle(ShopFlowDark.title)
                     }
                 }
                 .padding(20)
-                .background(Color.hikbikCard)
+                .background(ShopFlowDark.card)
                 .clipShape(RoundedRectangle(cornerRadius: 12))
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
-                        .stroke(Color.hikbikBorder, lineWidth: 1)
+                        .stroke(ShopFlowDark.border, lineWidth: 1)
                 )
                 
                 // Quantity
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Quantity")
                         .font(.system(size: 14, weight: .medium, design: .rounded))
-                        .foregroundStyle(Color.hikbikPrimary)
+                        .foregroundStyle(ShopFlowDark.title)
                     HStack(spacing: 16) {
                         Button(action: { if quantity > 1 { quantity -= 1 } }) {
                             Image(systemName: "minus.circle.fill")
                                 .font(.system(size: 28))
-                                .foregroundStyle(Color.hikbikMutedForeground)
+                                .foregroundStyle(ShopFlowDark.body)
                         }
                         .buttonStyle(.plain)
                         
                         Text("\(quantity)")
                             .font(.system(size: 20, weight: .bold, design: .rounded))
-                            .foregroundStyle(Color.hikbikPrimary)
+                            .foregroundStyle(ShopFlowDark.title)
                             .frame(minWidth: 40)
                         
                         Button(action: { quantity += 1 }) {
                             Image(systemName: "plus.circle.fill")
                                 .font(.system(size: 28))
-                                .foregroundStyle(Color.hikbikMutedForeground)
+                                .foregroundStyle(ShopFlowDark.body)
                         }
                         .buttonStyle(.plain)
                     }
@@ -1315,22 +1331,22 @@ struct RentalProductDetailView: View {
                     HStack {
                         Text("Total")
                             .font(.system(size: 16, weight: .medium, design: .rounded))
-                            .foregroundStyle(Color.hikbikPrimary)
+                            .foregroundStyle(ShopFlowDark.title)
                         Spacer()
                         Text("$\(totalPrice)")
                             .font(.system(size: 24, weight: .bold, design: .rounded))
-                            .foregroundStyle(Color.hikbikPrimary)
+                            .foregroundStyle(ShopFlowDark.title)
                     }
                     Text("$\(product.rentalPricePerDay)/day × \(rentalDays) days × \(quantity) item")
                         .font(.system(size: 14, weight: .regular, design: .rounded))
-                        .foregroundStyle(Color.hikbikMutedForeground)
+                        .foregroundStyle(ShopFlowDark.body)
                 }
                 .padding(20)
-                .background(Color.hikbikCard)
+                .background(ShopFlowDark.card)
                 .clipShape(RoundedRectangle(cornerRadius: 12))
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
-                        .stroke(Color.hikbikBorder, lineWidth: 1)
+                        .stroke(ShopFlowDark.border, lineWidth: 1)
                 )
                 
                 // Action buttons
@@ -1341,7 +1357,7 @@ struct RentalProductDetailView: View {
                             .foregroundStyle(.white)
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 16)
-                            .background(Color.hikbikPrimary)
+                            .background(ShopFlowDark.accent)
                             .clipShape(RoundedRectangle(cornerRadius: 12))
                     }
                     .buttonStyle(.plain)
@@ -1352,14 +1368,14 @@ struct RentalProductDetailView: View {
                     }) {
                         Text("Add to Cart")
                             .font(.system(size: 18, weight: .semibold, design: .rounded))
-                            .foregroundStyle(Color.hikbikPrimary)
+                            .foregroundStyle(ShopFlowDark.title)
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 16)
-                            .background(Color.hikbikCard)
+                            .background(ShopFlowDark.card)
                             .clipShape(RoundedRectangle(cornerRadius: 12))
                             .overlay(
                                 RoundedRectangle(cornerRadius: 12)
-                                    .stroke(Color.hikbikBorder, lineWidth: 1)
+                                    .stroke(ShopFlowDark.border, lineWidth: 1)
                             )
                     }
                     .buttonStyle(.plain)
@@ -1370,7 +1386,8 @@ struct RentalProductDetailView: View {
             .padding(.top, 20)
             .padding(.bottom, 40)
         }
-        .background(Color.hikbikBackground)
+        .scrollDismissesKeyboard(.interactively)
+        .background(ShopFlowDark.bg)
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden(true)
         .toolbar {
@@ -1381,7 +1398,7 @@ struct RentalProductDetailView: View {
                         Text("Back")
                     }
                     .font(.system(size: 16, weight: .regular, design: .rounded))
-                    .foregroundStyle(Color.hikbikPrimary)
+                    .foregroundStyle(ShopFlowDark.title)
                 }
             }
         }
@@ -1428,39 +1445,39 @@ struct BuyProductDetailView: View {
                 VStack(alignment: .leading, spacing: 8) {
                     Text(product.brand)
                         .font(.system(size: 14, weight: .regular, design: .rounded))
-                        .foregroundStyle(Color.hikbikMutedForeground)
+                        .foregroundStyle(ShopFlowDark.body)
                     
                     Text(product.name)
                         .font(.system(size: 24, weight: .bold, design: .rounded))
-                        .foregroundStyle(Color.hikbikPrimary)
+                        .foregroundStyle(ShopFlowDark.title)
                     
                     Text(product.description)
                         .font(.system(size: 16, weight: .regular, design: .rounded))
-                        .foregroundStyle(Color.hikbikMutedForeground)
+                        .foregroundStyle(ShopFlowDark.body)
                 }
                 
                 // Quantity
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Quantity")
                         .font(.system(size: 14, weight: .medium, design: .rounded))
-                        .foregroundStyle(Color.hikbikPrimary)
+                        .foregroundStyle(ShopFlowDark.title)
                     HStack(spacing: 16) {
                         Button(action: { if quantity > 1 { quantity -= 1 } }) {
                             Image(systemName: "minus.circle.fill")
                                 .font(.system(size: 28))
-                                .foregroundStyle(Color.hikbikMutedForeground)
+                                .foregroundStyle(ShopFlowDark.body)
                         }
                         .buttonStyle(.plain)
                         
                         Text("\(quantity)")
                             .font(.system(size: 20, weight: .bold, design: .rounded))
-                            .foregroundStyle(Color.hikbikPrimary)
+                            .foregroundStyle(ShopFlowDark.title)
                             .frame(minWidth: 40)
                         
                         Button(action: { quantity += 1 }) {
                             Image(systemName: "plus.circle.fill")
                                 .font(.system(size: 28))
-                                .foregroundStyle(Color.hikbikMutedForeground)
+                                .foregroundStyle(ShopFlowDark.body)
                         }
                         .buttonStyle(.plain)
                     }
@@ -1470,18 +1487,18 @@ struct BuyProductDetailView: View {
                 HStack {
                     Text("Total")
                         .font(.system(size: 16, weight: .medium, design: .rounded))
-                        .foregroundStyle(Color.hikbikPrimary)
+                        .foregroundStyle(ShopFlowDark.title)
                     Spacer()
                     Text("$\(totalPrice)")
                         .font(.system(size: 24, weight: .bold, design: .rounded))
-                        .foregroundStyle(Color.hikbikPrimary)
+                        .foregroundStyle(ShopFlowDark.title)
                 }
                 .padding(20)
-                .background(Color.hikbikCard)
+                .background(ShopFlowDark.card)
                 .clipShape(RoundedRectangle(cornerRadius: 12))
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
-                        .stroke(Color.hikbikBorder, lineWidth: 1)
+                        .stroke(ShopFlowDark.border, lineWidth: 1)
                 )
                 
                 // Add to Cart
@@ -1494,7 +1511,7 @@ struct BuyProductDetailView: View {
                         .foregroundStyle(.white)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 16)
-                        .background(Color.hikbikPrimary)
+                        .background(ShopFlowDark.accent)
                         .clipShape(RoundedRectangle(cornerRadius: 12))
                 }
                 .buttonStyle(.plain)
@@ -1503,7 +1520,8 @@ struct BuyProductDetailView: View {
             .padding(.top, 20)
             .padding(.bottom, 40)
         }
-        .background(Color.hikbikBackground)
+        .scrollDismissesKeyboard(.interactively)
+        .background(ShopFlowDark.bg)
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden(true)
         .toolbar {
@@ -1514,7 +1532,7 @@ struct BuyProductDetailView: View {
                         Text("Back")
                     }
                     .font(.system(size: 16, weight: .regular, design: .rounded))
-                    .foregroundStyle(Color.hikbikPrimary)
+                    .foregroundStyle(ShopFlowDark.title)
                 }
             }
         }
@@ -1558,29 +1576,29 @@ struct CartPlaceholderView: View {
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Shopping Cart")
                         .font(.system(size: 32, weight: .bold, design: .rounded))
-                        .foregroundStyle(Color.hikbikPrimary)
+                        .foregroundStyle(ShopFlowDark.title)
                     Text("\(totalItemCount) item\(totalItemCount == 1 ? "" : "s")")
                         .font(.system(size: 16, weight: .regular, design: .rounded))
-                        .foregroundStyle(Color.hikbikMutedForeground)
+                        .foregroundStyle(ShopFlowDark.body)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.horizontal, 20)
                 .padding(.top, 20)
                 .padding(.bottom, 20)
                 
-                // Rent | Buy tabs
+                // Rent | Buy tabs（深色下選中態：霓虹底 + 白字）
                 HStack(spacing: 12) {
                     Button(action: { selectedTab = .rent }) {
                         Text("Rent (\(rentCount))")
                             .font(.system(size: 16, weight: .semibold, design: .rounded))
-                            .foregroundStyle(selectedTab == .rent ? .white : Color.hikbikPrimary)
+                            .foregroundStyle(selectedTab == .rent ? Color.black : ShopFlowDark.title)
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 14)
-                            .background(selectedTab == .rent ? Color.hikbikPrimary : Color.clear)
+                            .background(selectedTab == .rent ? ShopFlowDark.accent : ShopFlowDark.card)
                             .clipShape(RoundedRectangle(cornerRadius: 10))
                             .overlay(
                                 RoundedRectangle(cornerRadius: 10)
-                                    .stroke(Color.hikbikBorder, lineWidth: selectedTab == .rent ? 0 : 1)
+                                    .stroke(selectedTab == .rent ? ShopFlowDark.accent : ShopFlowDark.border, lineWidth: 1)
                             )
                     }
                     .buttonStyle(.plain)
@@ -1588,14 +1606,14 @@ struct CartPlaceholderView: View {
                     Button(action: { selectedTab = .buy }) {
                         Text("Buy (\(buyCount))")
                             .font(.system(size: 16, weight: .semibold, design: .rounded))
-                            .foregroundStyle(selectedTab == .buy ? .white : Color.hikbikPrimary)
+                            .foregroundStyle(selectedTab == .buy ? Color.black : ShopFlowDark.title)
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 14)
-                            .background(selectedTab == .buy ? Color.hikbikPrimary : Color.clear)
+                            .background(selectedTab == .buy ? ShopFlowDark.accent : ShopFlowDark.card)
                             .clipShape(RoundedRectangle(cornerRadius: 10))
                             .overlay(
                                 RoundedRectangle(cornerRadius: 10)
-                                    .stroke(Color.hikbikBorder, lineWidth: selectedTab == .buy ? 0 : 1)
+                                    .stroke(selectedTab == .buy ? ShopFlowDark.accent : ShopFlowDark.border, lineWidth: 1)
                             )
                     }
                     .buttonStyle(.plain)
@@ -1618,14 +1636,14 @@ struct CartPlaceholderView: View {
                     Button(action: { showCheckoutRent = true }) {
                         Text("Checkout - $\(cartStore.rentalTotalPrice)")
                             .font(.system(size: 18, weight: .semibold, design: .rounded))
-                            .foregroundStyle(Color.hikbikPrimary)
+                            .foregroundStyle(ShopFlowDark.title)
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 16)
-                            .background(Color.hikbikCard)
+                            .background(ShopFlowDark.card)
                             .clipShape(RoundedRectangle(cornerRadius: 12))
                             .overlay(
                                 RoundedRectangle(cornerRadius: 12)
-                                    .stroke(Color.hikbikBorder, lineWidth: 1)
+                                    .stroke(ShopFlowDark.border, lineWidth: 1)
                             )
                     }
                     .buttonStyle(.plain)
@@ -1636,14 +1654,14 @@ struct CartPlaceholderView: View {
                     Button(action: { showCheckoutBuy = true }) {
                         Text("Checkout - $\(cartStore.purchaseTotalPrice)")
                             .font(.system(size: 18, weight: .semibold, design: .rounded))
-                            .foregroundStyle(Color.hikbikPrimary)
+                            .foregroundStyle(ShopFlowDark.title)
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 16)
-                            .background(Color.hikbikCard)
+                            .background(ShopFlowDark.card)
                             .clipShape(RoundedRectangle(cornerRadius: 12))
                             .overlay(
                                 RoundedRectangle(cornerRadius: 12)
-                                    .stroke(Color.hikbikBorder, lineWidth: 1)
+                                    .stroke(ShopFlowDark.border, lineWidth: 1)
                             )
                     }
                     .buttonStyle(.plain)
@@ -1652,15 +1670,19 @@ struct CartPlaceholderView: View {
                     .padding(.bottom, 24)
                 }
             }
-            .background(Color.hikbikBackground)
+            .background(ShopFlowDark.bg)
             .navigationBarTitleDisplayMode(.inline)
+            .toolbarBackground(ShopFlowDark.bg, for: .navigationBar)
+            .toolbarColorScheme(.dark, for: .navigationBar)
+            .preferredColorScheme(.dark)
+            .tint(ShopFlowDark.accent)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Done") {
                         dismiss()
                     }
                     .font(.system(size: 16, weight: .medium, design: .rounded))
-                    .foregroundStyle(Color.hikbikPrimary)
+                    .foregroundStyle(ShopFlowDark.title)
                 }
             }
             .sheet(isPresented: $showCheckoutRent) {
@@ -1680,20 +1702,25 @@ struct CartPlaceholderView: View {
                 VStack(spacing: 20) {
                     Image(systemName: "shippingbox.fill")
                         .font(.system(size: 56))
-                        .foregroundStyle(Color.hikbikMutedForeground)
+                        .foregroundStyle(ShopFlowDark.body)
                     Text("No rental items in cart")
                         .font(.system(size: 16, weight: .regular, design: .rounded))
-                        .foregroundStyle(Color.hikbikMutedForeground)
+                        .foregroundStyle(ShopFlowDark.body)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
                 List {
                     ForEach(cartStore.items) { item in
                         CartRentalRow(item: item)
+                            .listRowBackground(ShopFlowDark.card)
+                            .listRowSeparatorTint(ShopFlowDark.divider)
                     }
                     .onDelete(perform: cartStore.removeItem)
                 }
                 .listStyle(.plain)
+                .scrollContentBackground(.hidden)
+                .scrollDismissesKeyboard(.interactively)
+                .background(ShopFlowDark.bg)
             }
         }
     }
@@ -1704,20 +1731,25 @@ struct CartPlaceholderView: View {
                 VStack(spacing: 20) {
                     Image(systemName: "shippingbox.fill")
                         .font(.system(size: 56))
-                        .foregroundStyle(Color.hikbikMutedForeground)
+                        .foregroundStyle(ShopFlowDark.body)
                     Text("No purchase items in cart")
                         .font(.system(size: 16, weight: .regular, design: .rounded))
-                        .foregroundStyle(Color.hikbikMutedForeground)
+                        .foregroundStyle(ShopFlowDark.body)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
                 List {
                     ForEach(cartStore.purchaseItems) { item in
                         CartPurchaseRow(item: item)
+                            .listRowBackground(ShopFlowDark.card)
+                            .listRowSeparatorTint(ShopFlowDark.divider)
                     }
                     .onDelete(perform: cartStore.removePurchaseItem)
                 }
                 .listStyle(.plain)
+                .scrollContentBackground(.hidden)
+                .scrollDismissesKeyboard(.interactively)
+                .background(ShopFlowDark.bg)
             }
         }
     }
@@ -1782,25 +1814,122 @@ private let usStates: [(abbr: String, name: String)] = [
     ("WI", "Wisconsin"), ("WY", "Wyoming"), ("DC", "District of Columbia")
 ]
 
+// MARK: - 租賃詳情模組（僅 Rent 結帳顯示）
+private struct RentInfoSection: View {
+    @ObservedObject var vm: CheckoutViewModel
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack(spacing: 8) {
+                Text("Rental details")
+                    .font(.system(size: 20, weight: .bold, design: .rounded))
+                    .foregroundStyle(ShopFlowDark.title)
+                Text("Rental")
+                    .font(.system(size: 11, weight: .semibold, design: .rounded))
+                    .foregroundStyle(Color.black)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(ShopTheme.rentOrange)
+                    .clipShape(Capsule())
+            }
+
+            VStack(alignment: .leading, spacing: 10) {
+                Text("Rental period")
+                    .font(.system(size: 12, weight: .medium, design: .rounded))
+                    .foregroundStyle(ShopFlowDark.body)
+                HStack(spacing: 12) {
+                    DatePicker("", selection: $vm.rentalStartDate, displayedComponents: .date)
+                        .labelsHidden()
+                        .tint(ShopFlowDark.accent)
+                    Text("–")
+                        .foregroundStyle(ShopFlowDark.body)
+                    DatePicker("", selection: $vm.rentalEndDate, displayedComponents: .date)
+                        .labelsHidden()
+                        .tint(ShopFlowDark.accent)
+                }
+                .padding(10)
+                .background(ShopFlowDark.inputFill)
+                .clipShape(RoundedRectangle(cornerRadius: 8))
+            }
+
+            VStack(alignment: .leading, spacing: 4) {
+                HStack(spacing: 6) {
+                    Text("Security Deposit")
+                        .font(.system(size: 14, weight: .semibold, design: .rounded))
+                        .foregroundStyle(ShopFlowDark.title)
+                    Text("$\(CheckoutViewModel.securityDeposit)")
+                        .font(.system(size: 14, weight: .bold, design: .rounded))
+                        .foregroundStyle(ShopFlowDark.accent)
+                    Image(systemName: "info.circle")
+                        .font(.system(size: 12))
+                        .foregroundStyle(ShopFlowDark.body)
+                        .accessibilityHint("Refundable after the item is returned in good condition.")
+                }
+                Text("Refundable after the item is returned in good condition.")
+                    .font(.system(size: 11, weight: .regular, design: .rounded))
+                    .foregroundStyle(ShopFlowDark.body)
+            }
+
+            Toggle(isOn: $vm.schedulePickupService) {
+                Text("Schedule Pick-up Service")
+                    .font(.system(size: 15, weight: .semibold, design: .rounded))
+                    .foregroundStyle(ShopFlowDark.title)
+            }
+            .tint(ShopFlowDark.accent)
+
+            if vm.schedulePickupService {
+                VStack(alignment: .leading, spacing: 6) {
+                    HStack {
+                        Text("Pick-up Service Fee")
+                            .font(.system(size: 14, weight: .regular, design: .rounded))
+                            .foregroundStyle(ShopFlowDark.body)
+                        Spacer()
+                        Text("$\(CheckoutViewModel.pickupServiceFee)")
+                            .font(.system(size: 14, weight: .semibold, design: .rounded))
+                            .foregroundStyle(ShopFlowDark.accent)
+                    }
+                    Text("Pick-up address: same as shipping address")
+                        .font(.system(size: 12, weight: .regular, design: .rounded))
+                        .foregroundStyle(ShopFlowDark.body)
+                }
+                .padding(12)
+                .background(ShopFlowDark.card)
+                .clipShape(RoundedRectangle(cornerRadius: 10))
+                .overlay(RoundedRectangle(cornerRadius: 10).stroke(ShopFlowDark.border, lineWidth: 1))
+            }
+        }
+        .padding(16)
+        .background(ShopFlowDark.card)
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(ShopTheme.rentOrange.opacity(0.5), lineWidth: 1)
+        )
+    }
+}
+
 struct CheckoutView: View {
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject var cartStore: CartStore
     var mode: CheckoutMode = .buy
 
-    @State private var firstName = ""
-    @State private var lastName = ""
-    @State private var email = ""
-    @State private var selectedPhoneCodeIndex = 0
-    @State private var phoneNumber = ""
-    @State private var streetAddress = ""
-    @State private var city = ""
-    @State private var selectedStateIndex = 0
-    @State private var zipCode = ""
-    @State private var country: CheckoutCountry = .unitedStates
-    @State private var paymentMethod: PaymentMethod = .creditCard
-    @State private var cardNumber = ""
-    @State private var expiryDate = ""
-    @State private var cvv = ""
+    @StateObject private var vm = CheckoutViewModel()
+
+    private var checkoutSubtotal: Int {
+        if mode == .rent {
+            let rental = cartStore.rentalTotalPrice
+            let pickup = vm.schedulePickupService ? CheckoutViewModel.pickupServiceFee : 0
+            return rental + pickup
+        }
+        return cartStore.purchaseTotalPrice
+    }
+    private var checkoutTax: Int { 0 }
+    private var checkoutSecurityDeposit: Int {
+        mode == .rent ? CheckoutViewModel.securityDeposit : 0
+    }
+    private var checkoutTotal: Int {
+        max(0, checkoutSubtotal - vm.appliedPromoDiscount + checkoutTax + checkoutSecurityDeposit)
+    }
 
     var body: some View {
         NavigationStack {
@@ -1809,195 +1938,152 @@ struct CheckoutView: View {
                     VStack(alignment: .leading, spacing: 12) {
                         Text("Contact Information")
                             .font(.system(size: 20, weight: .bold, design: .rounded))
-                            .foregroundStyle(Color.hikbikPrimary)
+                            .foregroundStyle(ShopFlowDark.title)
                         VStack(alignment: .leading, spacing: 6) {
                             Text("First name")
                                 .font(.system(size: 12, weight: .medium, design: .rounded))
-                                .foregroundStyle(Color.hikbikMutedForeground)
-                            TextField("First name", text: $firstName)
-                                .textFieldStyle(.roundedBorder)
+                                .foregroundStyle(ShopFlowDark.body)
+                            TextField("First name", text: $vm.firstName)
+                                .padding(12)
+                                .background(ShopFlowDark.inputFill)
+                                .clipShape(RoundedRectangle(cornerRadius: 8))
+                                .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShopFlowDark.border))
+                                .foregroundStyle(ShopFlowDark.title)
+                                .tint(ShopFlowDark.accent)
                                 .autocapitalization(.words)
                         }
                         VStack(alignment: .leading, spacing: 6) {
                             Text("Last name")
                                 .font(.system(size: 12, weight: .medium, design: .rounded))
-                                .foregroundStyle(Color.hikbikMutedForeground)
-                            TextField("Last name", text: $lastName)
-                                .textFieldStyle(.roundedBorder)
+                                .foregroundStyle(ShopFlowDark.body)
+                            TextField("Last name", text: $vm.lastName)
+                                .padding(12)
+                                .background(ShopFlowDark.inputFill)
+                                .clipShape(RoundedRectangle(cornerRadius: 8))
+                                .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShopFlowDark.border))
+                                .foregroundStyle(ShopFlowDark.title)
+                                .tint(ShopFlowDark.accent)
                                 .autocapitalization(.words)
                         }
                         VStack(alignment: .leading, spacing: 6) {
                             Text("Email")
                                 .font(.system(size: 12, weight: .medium, design: .rounded))
-                                .foregroundStyle(Color.hikbikMutedForeground)
-                            TextField("Email", text: $email)
-                                .textFieldStyle(.roundedBorder)
+                                .foregroundStyle(ShopFlowDark.body)
+                            TextField("Email", text: $vm.email)
+                                .padding(12)
+                                .background(ShopFlowDark.inputFill)
+                                .clipShape(RoundedRectangle(cornerRadius: 8))
+                                .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShopFlowDark.border))
+                                .foregroundStyle(ShopFlowDark.title)
+                                .tint(ShopFlowDark.accent)
                                 .keyboardType(.emailAddress)
                                 .textInputAutocapitalization(.never)
                         }
                         VStack(alignment: .leading, spacing: 6) {
                             Text("Phone")
                                 .font(.system(size: 12, weight: .medium, design: .rounded))
-                                .foregroundStyle(Color.hikbikMutedForeground)
+                                .foregroundStyle(ShopFlowDark.body)
                             HStack(spacing: 12) {
-                                Picker("Country code", selection: $selectedPhoneCodeIndex) {
+                                Picker("Country code", selection: $vm.selectedPhoneCodeIndex) {
                                     ForEach(Array(phoneCountryCodes.enumerated()), id: \.offset) { index, item in
                                         Text("\(item.code) (\(item.label))").tag(index)
                                     }
                                 }
                                 .pickerStyle(.menu)
-                                .tint(Color.primary)
+                                .tint(ShopFlowDark.accent)
                                 .labelsHidden()
                                 .frame(width: 130)
                                 .padding(.horizontal, 12)
                                 .padding(.vertical, 8)
-                                .background(Color(.systemGray6))
+                                .background(ShopFlowDark.inputFill)
                                 .clipShape(RoundedRectangle(cornerRadius: 6))
-                                TextField("Phone number", text: $phoneNumber)
-                                    .textFieldStyle(.roundedBorder)
+                                TextField("Phone number", text: $vm.phoneNumber)
+                                    .padding(12)
+                                    .background(ShopFlowDark.inputFill)
+                                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                                    .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShopFlowDark.border))
+                                    .foregroundStyle(ShopFlowDark.title)
+                                    .tint(ShopFlowDark.accent)
                                     .keyboardType(.phonePad)
                             }
                         }
                     }
-                    Divider()
-                    VStack(alignment: .leading, spacing: 12) {
-                        Text("Shipping Address")
-                            .font(.system(size: 20, weight: .bold, design: .rounded))
-                            .foregroundStyle(Color.hikbikPrimary)
-                        VStack(alignment: .leading, spacing: 6) {
-                            Text("Street address")
-                                .font(.system(size: 12, weight: .medium, design: .rounded))
-                                .foregroundStyle(Color.hikbikMutedForeground)
-                            TextField("Street address", text: $streetAddress)
-                                .textFieldStyle(.roundedBorder)
+                    Rectangle().fill(ShopFlowDark.divider).frame(height: 1)
+                    ShippingAddressForm(vm: vm)
+                    Rectangle().fill(ShopFlowDark.divider).frame(height: 1)
+                    if mode == .rent {
+                        RentInfoSection(vm: vm)
+                        Rectangle().fill(ShopFlowDark.divider).frame(height: 1)
+                    }
+                    PaymentMethodSection(vm: vm)
+                    Rectangle().fill(ShopFlowDark.divider).frame(height: 1)
+                    // MARK: Promo / Voucher（預留摺疊）
+                    VStack(alignment: .leading, spacing: 8) {
+                        Button {
+                            withAnimation(.easeInOut(duration: 0.2)) {
+                                vm.promoSectionExpanded.toggle()
+                            }
+                        } label: {
+                            HStack {
+                                Image(systemName: "tag.fill")
+                                    .font(.system(size: 14))
+                                    .foregroundStyle(ShopFlowDark.body)
+                                Text("Promo code or voucher")
+                                    .font(.system(size: 15, weight: .semibold, design: .rounded))
+                                    .foregroundStyle(ShopFlowDark.title)
+                                Spacer()
+                                Image(systemName: vm.promoSectionExpanded ? "chevron.up" : "chevron.down")
+                                    .font(.system(size: 12, weight: .semibold))
+                                    .foregroundStyle(ShopFlowDark.body)
+                            }
+                            .padding(14)
+                            .background(ShopFlowDark.card)
+                            .clipShape(RoundedRectangle(cornerRadius: 12))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .stroke(ShopFlowDark.border, lineWidth: 1)
+                            )
                         }
-                        VStack(alignment: .leading, spacing: 6) {
-                            Text("City")
-                                .font(.system(size: 12, weight: .medium, design: .rounded))
-                                .foregroundStyle(Color.hikbikMutedForeground)
-                            TextField("City", text: $city)
-                                .textFieldStyle(.roundedBorder)
-                        }
-                        HStack(spacing: 12) {
-                            VStack(alignment: .leading, spacing: 6) {
-                                Text("State")
-                                    .font(.system(size: 12, weight: .medium, design: .rounded))
-                                    .foregroundStyle(Color.hikbikMutedForeground)
-                                Picker("State", selection: $selectedStateIndex) {
-                                    ForEach(Array(usStates.enumerated()), id: \.offset) { index, state in
-                                        Text(state.name).tag(index)
-                                    }
+                        .buttonStyle(.plain)
+                        if vm.promoSectionExpanded {
+                            HStack(spacing: 10) {
+                                TextField("Enter code", text: $vm.promoCodeInput)
+                                    .padding(12)
+                                    .background(ShopFlowDark.inputFill)
+                                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                                    .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShopFlowDark.border))
+                                    .foregroundStyle(ShopFlowDark.title)
+                                    .tint(ShopFlowDark.accent)
+                                    .textInputAutocapitalization(.characters)
+                                Button("Apply") {
+                                    vm.applyPromo(subtotal: checkoutSubtotal)
                                 }
-                                .pickerStyle(.menu)
-                                .tint(Color.primary)
-                                .labelsHidden()
-                                .frame(maxWidth: .infinity)
-                                .padding(8)
-                                .background(Color(.systemGray6))
-                                .clipShape(RoundedRectangle(cornerRadius: 6))
+                                .font(.system(size: 15, weight: .semibold, design: .rounded))
+                                .foregroundStyle(ShopFlowDark.title)
                             }
-                            VStack(alignment: .leading, spacing: 6) {
-                                Text("ZIP / Postal code")
+                            .padding(.horizontal, 4)
+                            if vm.appliedPromoDiscount > 0 {
+                                Text("Promo applied · −$\(vm.appliedPromoDiscount)")
                                     .font(.system(size: 12, weight: .medium, design: .rounded))
-                                    .foregroundStyle(Color.hikbikMutedForeground)
-                                TextField("ZIP code", text: $zipCode)
-                                    .textFieldStyle(.roundedBorder)
-                                    .keyboardType(.numberPad)
+                                    .foregroundStyle(.green)
                             }
-                            .frame(width: 120)
-                        }
-                        VStack(alignment: .leading, spacing: 6) {
-                            Text("Country")
-                                .font(.system(size: 12, weight: .medium, design: .rounded))
-                                .foregroundStyle(Color.hikbikMutedForeground)
-                            Picker("Country", selection: $country) {
-                                ForEach(CheckoutCountry.allCases, id: \.self) { c in
-                                    Text(c.rawValue).tag(c)
-                                }
-                            }
-                            .pickerStyle(.menu)
-                            .tint(Color.primary)
-                            .labelsHidden()
-                            .frame(maxWidth: .infinity)
-                            .padding(8)
-                            .background(Color(.systemGray6))
-                            .clipShape(RoundedRectangle(cornerRadius: 6))
                         }
                     }
-                    Divider()
-                    VStack(alignment: .leading, spacing: 12) {
-                        Text("Payment Information")
-                            .font(.system(size: 20, weight: .bold, design: .rounded))
-                            .foregroundStyle(Color.hikbikPrimary)
-                        ForEach([PaymentMethod.creditCard, .applePay, .payPal], id: \.self) { method in
-                            Button(action: { paymentMethod = method }) {
-                                HStack(spacing: 12) {
-                                    Image(systemName: paymentMethod == method ? "circle.inset.filled" : "circle")
-                                        .font(.system(size: 22))
-                                        .foregroundStyle(paymentMethod == method ? Color.hikbikPrimary : Color.hikbikMutedForeground)
-                                    switch method {
-                                    case .creditCard:
-                                        Text("Credit Card")
-                                            .font(.system(size: 16, weight: .medium, design: .rounded))
-                                            .foregroundStyle(Color.hikbikPrimary)
-                                    case .applePay:
-                                        HStack(spacing: 8) {
-                                            Image(systemName: "apple.logo")
-                                                .font(.system(size: 20))
-                                                .foregroundStyle(Color.hikbikPrimary)
-                                            Text("Apple Pay")
-                                                .font(.system(size: 16, weight: .semibold, design: .rounded))
-                                                .foregroundStyle(Color.hikbikPrimary)
-                                        }
-                                    case .payPal:
-                                        Text("PayPal")
-                                            .font(.system(size: 16, weight: .semibold, design: .rounded))
-                                            .foregroundStyle(Color.hikbikPrimary)
-                                    }
-                                    Spacer()
-                                }
-                                .padding(16)
-                                .background(Color.hikbikCard)
-                                .clipShape(RoundedRectangle(cornerRadius: 12))
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 12)
-                                        .stroke(paymentMethod == method ? Color.hikbikPrimary : Color.hikbikBorder, lineWidth: paymentMethod == method ? 2 : 1)
-                                )
-                            }
-                            .buttonStyle(.plain)
-                        }
-                        if paymentMethod == .creditCard {
-                            VStack(alignment: .leading, spacing: 10) {
-                                TextField("Card Number", text: $cardNumber)
-                                    .textFieldStyle(.roundedBorder)
-                                    .keyboardType(.numberPad)
-                                TextField("Expiry Date (MM/YY)", text: $expiryDate)
-                                    .textFieldStyle(.roundedBorder)
-                                    .keyboardType(.numberPad)
-                                TextField("CVV", text: $cvv)
-                                    .textFieldStyle(.roundedBorder)
-                                    .keyboardType(.numberPad)
-                                    .frame(width: 100)
-                            }
-                            .padding(.top, 8)
-                        }
-                    }
-                    Divider()
                     VStack(alignment: .leading, spacing: 12) {
                         Text("Order Summary")
                             .font(.system(size: 20, weight: .bold, design: .rounded))
-                            .foregroundStyle(Color.hikbikPrimary)
+                            .foregroundStyle(ShopFlowDark.title)
                         VStack(spacing: 8) {
                             if mode == .rent {
                                 ForEach(cartStore.items) { item in
                                     HStack {
                                         Text(item.product.name)
                                             .font(.system(size: 14, weight: .regular, design: .rounded))
-                                            .foregroundStyle(Color.hikbikPrimary)
+                                            .foregroundStyle(ShopFlowDark.title)
                                         Spacer()
                                         Text("$\(item.total)")
                                             .font(.system(size: 14, weight: .semibold, design: .rounded))
-                                            .foregroundStyle(Color.hikbikPrimary)
+                                            .foregroundStyle(ShopFlowDark.title)
                                     }
                                 }
                             } else {
@@ -2005,66 +2091,191 @@ struct CheckoutView: View {
                                     HStack {
                                         Text(item.product.name)
                                             .font(.system(size: 14, weight: .regular, design: .rounded))
-                                            .foregroundStyle(Color.hikbikPrimary)
+                                            .foregroundStyle(ShopFlowDark.title)
                                         Spacer()
                                         Text("$\(item.total)")
                                             .font(.system(size: 14, weight: .semibold, design: .rounded))
-                                            .foregroundStyle(Color.hikbikPrimary)
+                                            .foregroundStyle(ShopFlowDark.title)
                                     }
                                 }
                             }
-                            Divider()
+                            if mode == .rent && vm.schedulePickupService {
+                                HStack {
+                                    Text("Rental subtotal")
+                                        .font(.system(size: 14, weight: .regular, design: .rounded))
+                                        .foregroundStyle(ShopFlowDark.body)
+                                    Spacer()
+                                    Text("$\(cartStore.rentalTotalPrice)")
+                                        .font(.system(size: 14, weight: .semibold, design: .rounded))
+                                        .foregroundStyle(ShopFlowDark.title)
+                                }
+                                HStack {
+                                    Text("Pick-up Service Fee")
+                                        .font(.system(size: 14, weight: .regular, design: .rounded))
+                                        .foregroundStyle(ShopFlowDark.body)
+                                    Spacer()
+                                    Text("$\(CheckoutViewModel.pickupServiceFee)")
+                                        .font(.system(size: 14, weight: .semibold, design: .rounded))
+                                        .foregroundStyle(ShopFlowDark.accent)
+                                }
+                            }
+                            Rectangle().fill(ShopFlowDark.divider).frame(height: 1)
+                            HStack {
+                                Text("Subtotal")
+                                    .font(.system(size: 14, weight: .regular, design: .rounded))
+                                    .foregroundStyle(ShopFlowDark.body)
+                                Spacer()
+                                Text("$\(checkoutSubtotal)")
+                                    .font(.system(size: 14, weight: .semibold, design: .rounded))
+                                    .foregroundStyle(ShopFlowDark.title)
+                            }
+                            if vm.appliedPromoDiscount > 0 {
+                                HStack {
+                                    Text("Promo")
+                                        .font(.system(size: 14, weight: .regular, design: .rounded))
+                                        .foregroundStyle(ShopFlowDark.body)
+                                    Spacer()
+                                    Text("−$\(vm.appliedPromoDiscount)")
+                                        .font(.system(size: 14, weight: .semibold, design: .rounded))
+                                        .foregroundStyle(.green)
+                                }
+                            }
+                            HStack {
+                                Text("Tax (if applicable)")
+                                    .font(.system(size: 14, weight: .regular, design: .rounded))
+                                    .foregroundStyle(ShopFlowDark.body)
+                                Spacer()
+                                Text("$\(checkoutTax)")
+                                    .font(.system(size: 14, weight: .semibold, design: .rounded))
+                                    .foregroundStyle(ShopFlowDark.title)
+                            }
+                            if mode == .rent {
+                                HStack(spacing: 6) {
+                                    Image(systemName: "arrow.uturn.backward.circle")
+                                        .font(.system(size: 12))
+                                        .foregroundStyle(ShopFlowDark.accent)
+                                    Text("Refundable Deposit")
+                                        .font(.system(size: 14, weight: .medium, design: .rounded))
+                                        .foregroundStyle(ShopFlowDark.body)
+                                    Spacer()
+                                    Text("$\(checkoutSecurityDeposit)")
+                                        .font(.system(size: 14, weight: .semibold, design: .rounded))
+                                        .foregroundStyle(ShopFlowDark.accent)
+                                }
+                            }
+                            Rectangle().fill(ShopFlowDark.divider).frame(height: 1)
                             HStack {
                                 Text("Total")
                                     .font(.system(size: 16, weight: .bold, design: .rounded))
-                                    .foregroundStyle(Color.hikbikPrimary)
+                                    .foregroundStyle(ShopFlowDark.title)
                                 Spacer()
-                                Text("$\(mode == .rent ? cartStore.rentalTotalPrice : cartStore.purchaseTotalPrice)")
-                                    .font(.system(size: 18, weight: .bold, design: .rounded))
-                                    .foregroundStyle(Color.hikbikPrimary)
+                                Text("$\(checkoutTotal)")
+                                    .font(.system(size: 22, weight: .heavy, design: .rounded))
+                                    .foregroundStyle(ShopFlowDark.accent)
                             }
                         }
                         .padding(16)
-                        .background(Color.hikbikCard)
+                        .background(ShopFlowDark.card)
                         .clipShape(RoundedRectangle(cornerRadius: 12))
                         .overlay(
                             RoundedRectangle(cornerRadius: 12)
-                                .stroke(Color.hikbikBorder, lineWidth: 1)
+                                .stroke(ShopFlowDark.border, lineWidth: 1)
                         )
                     }
+                    // 權益確認（Buy 斷買斷 / Rent 租期）
+                    Group {
+                        if mode == .buy, let name = cartStore.purchaseItems.first?.product.name {
+                            Text("You will have permanent access to ‘\(name)’ including all future updates.")
+                                .font(.system(size: 11, weight: .regular, design: .rounded))
+                                .foregroundStyle(ShopFlowDark.body)
+                                .fixedSize(horizontal: false, vertical: true)
+                        } else if mode == .buy {
+                            Text("Unlock full access to this journey forever.")
+                                .font(.system(size: 11, weight: .medium, design: .rounded))
+                                .foregroundStyle(ShopFlowDark.body)
+                        } else {
+                            Text("Rental access is for the selected dates only; buy to keep forever.")
+                                .font(.system(size: 11, weight: .regular, design: .rounded))
+                                .foregroundStyle(ShopFlowDark.body)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                    }
+                    .padding(.horizontal, 4)
+                    .padding(.top, 4)
                     Button(action: {
-                        if mode == .rent { cartStore.removeAllRentals() } else { cartStore.removeAllPurchases() }
-                        dismiss()
+                        Task {
+                            await vm.completeOrder(mode: mode, cartStore: cartStore)
+                        }
                     }) {
-                        Text("Complete Order - $\(mode == .rent ? cartStore.rentalTotalPrice : cartStore.purchaseTotalPrice)")
-                            .font(.system(size: 18, weight: .semibold, design: .rounded))
-                            .foregroundStyle(Color.hikbikPrimary)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 16)
-                            .background(Color.hikbikCard)
-                            .clipShape(RoundedRectangle(cornerRadius: 12))
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 12)
-                                    .stroke(Color.hikbikBorder, lineWidth: 1)
-                            )
+                        HStack(spacing: 10) {
+                            if vm.isSubmitting {
+                                ProgressView().tint(ShopFlowDark.accent)
+                            }
+                            Text(vm.isSubmitting ? "Processing…" : "Complete Order - $\(checkoutTotal)")
+                                .font(.system(size: 18, weight: .semibold, design: .rounded))
+                        }
+                        .foregroundStyle(vm.validateForm() ? ShopFlowDark.title : ShopFlowDark.body)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 16)
+                        .background(ShopFlowDark.card)
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 12)
+                                .stroke(vm.validateForm() ? ShopFlowDark.accent : ShopFlowDark.border, lineWidth: vm.validateForm() ? 2 : 1)
+                        )
                     }
                     .buttonStyle(.plain)
+                    .disabled(!vm.validateForm() || vm.isSubmitting)
+                    .opacity((vm.validateForm() && !vm.isSubmitting) ? 1 : (vm.isSubmitting ? 1 : 0.55))
                     .padding(.top, 8)
+                    if mode == .rent {
+                        Text("Total includes a refundable deposit of $\(CheckoutViewModel.securityDeposit).")
+                            .font(.system(size: 11, weight: .regular, design: .rounded))
+                            .foregroundStyle(ShopFlowDark.body)
+                            .frame(maxWidth: .infinity)
+                            .padding(.top, 6)
+                    }
+                    Link(destination: URL(string: "mailto:support@hikbik.app?subject=Purchase%20help")!) {
+                        Text("Need help with your purchase? Contact Support")
+                            .font(.system(size: 11, weight: .regular, design: .rounded))
+                            .foregroundStyle(ShopFlowDark.body.opacity(0.75))
+                            .underline()
+                    }
+                    .padding(.top, 16)
+                    .frame(maxWidth: .infinity)
                 }
                 .padding(.horizontal, 20)
                 .padding(.top, 20)
                 .padding(.bottom, 40)
             }
-            .background(Color.hikbikBackground)
-            .navigationTitle("Checkout")
+            .scrollDismissesKeyboard(.interactively)
+            .background(ShopFlowDark.bg)
+            .navigationTitle(mode == .rent ? "Checkout (Rental)" : "Checkout")
             .navigationBarTitleDisplayMode(.inline)
+            .toolbarBackground(ShopFlowDark.bg, for: .navigationBar)
+            .toolbarColorScheme(.dark, for: .navigationBar)
+            .preferredColorScheme(.dark)
+            .tint(ShopFlowDark.accent)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button(action: { dismiss() }) {
                         Text("Back to Cart")
                             .font(.system(size: 16, weight: .regular, design: .rounded))
-                            .foregroundStyle(Color.hikbikPrimary)
+                            .foregroundStyle(ShopFlowDark.title)
                     }
+                }
+            }
+            .onAppear {
+                vm.loadSavedProfileIfNeeded()
+                if mode == .rent {
+                    vm.bindRentalPeriodFromCart(cartStore)
+                }
+            }
+            .fullScreenCover(isPresented: $vm.showSuccess) {
+                OrderSuccessView(context: vm.successContext) {
+                    vm.showSuccess = false
+                    vm.successContext = nil
+                    dismiss()
                 }
             }
         }
@@ -2089,13 +2300,13 @@ private struct CartRentalRow: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text(item.product.name)
                     .font(.system(size: 16, weight: .semibold, design: .rounded))
-                    .foregroundStyle(Color.hikbikPrimary)
+                    .foregroundStyle(ShopFlowDark.title)
                 Text("$\(item.product.rentalPricePerDay)/day × \(item.rentalDays) days × \(item.quantity)")
                     .font(.system(size: 12, weight: .regular, design: .rounded))
-                    .foregroundStyle(Color.hikbikMutedForeground)
+                    .foregroundStyle(ShopFlowDark.body)
                 Text("$\(item.total)")
                     .font(.system(size: 14, weight: .bold, design: .rounded))
-                    .foregroundStyle(Color.hikbikPrimary)
+                    .foregroundStyle(ShopFlowDark.title)
             }
             Spacer()
         }
@@ -2121,13 +2332,13 @@ private struct CartPurchaseRow: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text(item.product.name)
                     .font(.system(size: 16, weight: .semibold, design: .rounded))
-                    .foregroundStyle(Color.hikbikPrimary)
+                    .foregroundStyle(ShopFlowDark.title)
                 Text("$\(item.product.price) × \(item.quantity)")
                     .font(.system(size: 12, weight: .regular, design: .rounded))
-                    .foregroundStyle(Color.hikbikMutedForeground)
+                    .foregroundStyle(ShopFlowDark.body)
                 Text("$\(item.total)")
                     .font(.system(size: 14, weight: .bold, design: .rounded))
-                    .foregroundStyle(Color.hikbikPrimary)
+                    .foregroundStyle(ShopFlowDark.title)
             }
             Spacer()
         }

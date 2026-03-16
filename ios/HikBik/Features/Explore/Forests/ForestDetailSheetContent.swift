@@ -64,9 +64,69 @@ private struct ForestStatusDivider: View {
     }
 }
 
+/// 森林詳情頁 ViewModel：媒體、活動、設施數據
+final class ForestDetailSheetViewModel: ObservableObject {
+    @Published var images: [URL] = []
+    @Published var activityNames: [String] = []
+    @Published var isLoading = false
+    /// 本地設施數據（DataLoader.loadForestFacilities），6 份森林/草原對應
+    @Published var facilitiesData: ForestFacilitiesData?
+
+    /// 同步加載設施：從 DataLoader 拿當前森林 id 對應的設施
+    func loadFacilities(forestId: String) {
+        facilitiesData = DataLoader.loadForestFacilities()[forestId]
+    }
+
+    /// onAppear 時調用：先請求 RIDBService.shared.fetchMedia(for: id)，失敗或空則用 fallback；載入中顯示 ProgressView
+    func loadMedia(recAreaID: String, fallbackPhotos: [String]?, fallbackActivities: [String]? = nil) async {
+        await MainActor.run { self.isLoading = true }
+        do {
+            let urls = try await RIDBService.shared.fetchMedia(for: recAreaID)
+            #if DEBUG
+            if !urls.isEmpty {
+                print("[RIDB Success] 成功使用 API Key 抓取數據！")
+                print("Fetched \(urls.count) images for ID: \(recAreaID)")
+                if let first = urls.first {
+                    print("[RIDB Debug] First image URL: \(first.absoluteString)")
+                }
+            }
+            #endif
+            await MainActor.run {
+                if !urls.isEmpty { self.images = urls }
+                else if let photos = fallbackPhotos { self.images = photos.compactMap { URL(string: $0) } }
+            }
+        } catch {
+            #if DEBUG
+            if case RIDBError.serverError(let code, _) = error, code == 401 {
+                print("[Auth Error] 請檢查 API Key 是否正確傳遞。RIDB 回傳 401 Unauthorized。")
+            }
+            print("[RIDB Debug] No media found for ID: \(recAreaID)")
+            #endif
+            await MainActor.run {
+                if let photos = fallbackPhotos { self.images = photos.compactMap { URL(string: $0) } }
+            }
+        }
+        do {
+            let names = try await RIDBService.shared.fetchActivities(recAreaId: recAreaID)
+            await MainActor.run {
+                if !names.isEmpty { self.activityNames = names }
+                else if let activities = fallbackActivities { self.activityNames = activities }
+            }
+        } catch {
+            await MainActor.run {
+                if let activities = fallbackActivities { self.activityNames = activities }
+            }
+        }
+        await MainActor.run { self.isLoading = false }
+    }
+}
+
 struct ForestDetailSheetContent: View {
     let forest: NationalForest
     var themeColor: Color = Color(red: 0.2, green: 0.6, blue: 0.3) // Forest green
+
+    @StateObject private var viewModel = ForestDetailSheetViewModel()
+    @State private var selectedFacility: ForestFacility?
 
     private var effectiveCoordinate: CLLocationCoordinate2D? {
         forest.coordinates.map { CLLocationCoordinate2D(latitude: $0.latitude, longitude: $0.longitude) }
@@ -80,6 +140,10 @@ struct ForestDetailSheetContent: View {
         }
     }
 
+    private var strippedDescription: String {
+        RIDBAdapter.stripHTML(forest.description)
+    }
+
     var body: some View {
         VStack(spacing: 0) {
             Capsule()
@@ -87,7 +151,24 @@ struct ForestDetailSheetContent: View {
                 .frame(width: 36, height: 5)
                 .padding(.top, 40)
                 .padding(.bottom, 24)
+            Group {
+                if viewModel.isLoading {
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 16)
+                            .fill(Color.primary.opacity(0.08))
+                        ProgressView()
+                    }
+                    .frame(height: 200)
+                } else {
+                    MediaCarouselView(urls: viewModel.images)
+                }
+            }
+            .padding(.horizontal, 20)
+            .padding(.bottom, 12)
             sheetHeader
+            ActivityTagView(activities: viewModel.activityNames, themeColor: themeColor)
+                .padding(.horizontal, 20)
+                .padding(.bottom, 8)
             ForestStatusBar(
                 established: forest.established,
                 region: forest.region,
@@ -97,24 +178,24 @@ struct ForestDetailSheetContent: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 20) {
                     feeAndInfoSection
-                    if let photos = forest.photos, !photos.isEmpty {
-                        gallerySection(photos: photos)
+                    if effectiveCoordinate != nil {
+                        forestMapSection
                     }
-                    if !forest.description.isEmpty {
-                        Text(forest.description)
+                    if !strippedDescription.isEmpty {
+                        Text(strippedDescription)
                             .font(.body)
                             .foregroundStyle(.secondary)
                             .lineLimit(nil)
                     }
+                    WeatherInfoView()
+                        .padding(.bottom, 16)
+                    facilityListView(selectedFacility: $selectedFacility)
                     ForestAccessView(
                         forest: forest,
                         forestCoordinate: effectiveCoordinate,
                         themeColor: themeColor
                     )
                     StartNavigationButton(coordinate: effectiveCoordinate, themeColor: themeColor)
-                    if let facilities = DataLoader.loadForestFacilities()[forest.id] {
-                        ForestFacilitiesSummaryView(facilities: facilities, themeColor: themeColor)
-                    }
                     if let urlString = forest.websiteUrl, let url = URL(string: urlString) {
                         Link(destination: url) {
                             HStack {
@@ -136,6 +217,32 @@ struct ForestDetailSheetContent: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(forestSheetBackgroundColor)
+        .sheet(item: $selectedFacility) { facility in
+            FacilityDetailSheet(
+                facility: facility,
+                bookingURL: forest.websiteUrl.flatMap { URL(string: $0) } ?? URL(string: "https://www.recreation.gov/"),
+                themeColor: themeColor,
+                onBookTap: { openBooking(for: facility.name, url: forest.websiteUrl.flatMap { URL(string: $0) } ?? URL(string: "https://www.recreation.gov/")) }
+            )
+            .presentationDetents([.medium, .large])
+        }
+        .onAppear {
+            #if DEBUG
+            print("[RIDB Debug] Forest detail opened with id (RecAreaID): \(forest.id)")
+            #endif
+            viewModel.loadFacilities(forestId: forest.id)
+            Task {
+                await viewModel.loadMedia(recAreaID: forest.id, fallbackPhotos: forest.photos, fallbackActivities: forest.activities)
+            }
+        }
+    }
+
+    private var forestMapSection: some View {
+        Group {
+            if let coord = effectiveCoordinate {
+                DetailMapWithStyleSwitcher(center: coord, markerTitle: forest.name, height: 180)
+            }
+        }
     }
 
     private var sheetHeader: some View {
@@ -172,24 +279,452 @@ struct ForestDetailSheetContent: View {
         .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 14))
     }
 
-    private func gallerySection(photos: [String]) -> some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 12) {
-                ForEach(Array(photos.prefix(10).enumerated()), id: \.offset) { _, urlString in
-                    if let url = URL(string: urlString) {
-                        AsyncImage(url: url) { phase in
-                            switch phase {
-                            case .success(let img): img.resizable().scaledToFill()
-                            default: Color.primary.opacity(0.15)
+    /// 設施清單區塊：點擊行 present 彈窗 FacilityDetailSheet；超過 8 個用 DisclosureGroup 收合
+    private func facilityListView(selectedFacility: Binding<ForestFacility?>) -> some View {
+        Group {
+            if let data = viewModel.facilitiesData, !data.facilities.isEmpty {
+                let facilities = data.facilities
+                let primary = Array(facilities.prefix(8))
+                let secondary = facilities.count > 8 ? Array(facilities.dropFirst(8)) : []
+                VStack(alignment: .leading, spacing: 0) {
+                    HStack(spacing: 8) {
+                        Image(systemName: "tent.2.fill")
+                            .font(.body)
+                            .foregroundStyle(themeColor)
+                        Text("Available Facilities")
+                            .font(.headline.weight(.semibold))
+                            .foregroundStyle(.primary)
+                    }
+                    .padding(.bottom, 8)
+                    VStack(spacing: 0) {
+                        ForEach(primary) { facility in
+                            Button {
+                                selectedFacility.wrappedValue = facility
+                            } label: {
+                                CompactFacilityRow(facility: facility, themeColor: themeColor)
+                            }
+                            .buttonStyle(.plain)
+                            if facility.id != primary.last?.id || !secondary.isEmpty {
+                                Divider()
+                                    .padding(.leading, 48)
                             }
                         }
-                        .frame(width: 160, height: 120)
-                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                        if !secondary.isEmpty {
+                            DisclosureGroup {
+                                ForEach(secondary) { facility in
+                                    Button {
+                                        selectedFacility.wrappedValue = facility
+                                    } label: {
+                                        CompactFacilityRow(facility: facility, themeColor: themeColor)
+                                    }
+                                    .buttonStyle(.plain)
+                                    if facility.id != secondary.last?.id {
+                                        Divider()
+                                            .padding(.leading, 48)
+                                    }
+                                }
+                            } label: {
+                                Text("More facilities (\(secondary.count))")
+                                    .font(.subheadline.weight(.medium))
+                                    .foregroundStyle(themeColor)
+                            }
+                            .padding(.vertical, 6)
+                        }
                     }
                 }
+            } else {
+                EmptyView()
             }
-            .padding(.vertical, 8)
         }
+    }
+
+    private func openBooking(for name: String, url: URL?) {
+        #if DEBUG
+        print("[Interaction] 準備跳轉至設施：\(name)")
+        #endif
+        guard let url = url else { return }
+        UIApplication.shared.open(url)
+    }
+}
+
+// MARK: - 森林/草原通用天氣模塊（待命狀態：無具體數字，骨架佔位 + 淡閃爍）
+struct WeatherInfoView: View {
+    @State private var shimmerOpacity: Double = 0.28
+
+    var body: some View {
+        HStack(spacing: 20) {
+            HStack(spacing: 12) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("--°C")
+                        .font(.system(size: 36, weight: .semibold))
+                        .foregroundStyle(.secondary)
+                    Text("--°F")
+                        .font(.subheadline)
+                        .foregroundStyle(.tertiary)
+                }
+                .padding(.horizontal, 10)
+                .padding(.vertical, 8)
+                .background(
+                    RoundedRectangle(cornerRadius: 10)
+                        .fill(Color.gray.opacity(shimmerOpacity))
+                )
+                Image(systemName: "sun.max.fill")
+                    .font(.system(size: 32))
+                    .foregroundStyle(.secondary)
+                    .opacity(0.6)
+            }
+            Spacer(minLength: 12)
+            VStack(alignment: .trailing, spacing: 4) {
+                Text("Waiting for data...")
+                    .font(.subheadline.weight(.medium))
+                    .foregroundStyle(.secondary)
+                Text("H: --°  L: --°")
+                    .font(.caption)
+                    .foregroundStyle(.tertiary)
+            }
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color(uiColor: .secondarySystemBackground), in: RoundedRectangle(cornerRadius: 12))
+        .onAppear {
+            withAnimation(.easeInOut(duration: 1.2).repeatForever(autoreverses: true)) {
+                shimmerOpacity = 0.5
+            }
+        }
+    }
+}
+
+// MARK: - 標題清洗：過濾 Campsite / Campground 以節省空間
+private func cleanFacilityTitle(_ name: String) -> String {
+    var s = name
+        .replacingOccurrences(of: "Campsite", with: "", options: .caseInsensitive)
+        .replacingOccurrences(of: "Campground", with: "", options: .caseInsensitive)
+    while s.contains("  ") { s = s.replacingOccurrences(of: "  ", with: " ") }
+    return s.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines).trimmingCharacters(in: CharacterSet(charactersIn: " ,"))
+}
+
+// MARK: - 設施詳情共用：預定 CTA、屬性 Icon Bar、去卡片化區塊
+
+/// 預定狀態：有 URL 顯示「Reserve on Recreation.gov」按鈕，否則營地類顯示 First-come 提示
+struct FacilityReservationCTA: View {
+    let reservationURL: String?
+    let isCampground: Bool
+    var themeColor: Color
+
+    var body: some View {
+        Group {
+            if let urlString = reservationURL, !urlString.isEmpty, let url = URL(string: urlString) {
+                Link(destination: url) {
+                    HStack(spacing: 8) {
+                        Image(systemName: "link.circle.fill")
+                        Text("Reserve on Recreation.gov")
+                            .font(.subheadline.weight(.semibold))
+                    }
+                    .foregroundStyle(.white)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 14)
+                }
+                .background(themeColor, in: RoundedRectangle(cornerRadius: 12))
+            } else if isCampground {
+                HStack(spacing: 8) {
+                    Image(systemName: "person.2.fill")
+                        .foregroundStyle(themeColor)
+                    Text("First-come, First-served / Walk-in Only")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.vertical, 10)
+            }
+        }
+    }
+}
+
+/// 橫向滾動的設施屬性 Icon Bar：Check-in/out、Pets、Max Vehicle Length 等
+struct FacilityAttributesBar: View {
+    var items: [(icon: String, label: String)]
+    var themeColor: Color
+
+    var body: some View {
+        if items.isEmpty { return AnyView(EmptyView()) }
+        return AnyView(
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 16) {
+                    ForEach(Array(items.enumerated()), id: \.offset) { _, item in
+                        VStack(spacing: 6) {
+                            Image(systemName: item.icon)
+                                .font(.title3)
+                                .foregroundStyle(themeColor)
+                            Text(item.label)
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                                .lineLimit(1)
+                                .multilineTextAlignment(.center)
+                        }
+                        .frame(minWidth: 72)
+                    }
+                }
+                .padding(.vertical, 12)
+                .padding(.horizontal, 4)
+            }
+        )
+    }
+}
+
+/// 緊湊型設施行：僅名稱（清洗）、類型圖標、縮略地址；點擊整行進入 FacilityDetailView
+struct CompactFacilityRow: View {
+    let facility: ForestFacility
+    var themeColor: Color
+
+    private var displayTitle: String { cleanFacilityTitle(facility.name) }
+    private var facilityIcon: String {
+        switch facility.category.lowercased() {
+        case "campgrounds": return "tent.fill"
+        case "ranger-station": return "building.2.fill"
+        default: return "mappin.circle.fill"
+        }
+    }
+
+    var body: some View {
+        HStack(spacing: 12) {
+            ZStack {
+                Circle()
+                    .fill(themeColor.opacity(0.18))
+                    .frame(width: 36, height: 36)
+                Image(systemName: facilityIcon)
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundStyle(themeColor)
+            }
+            .frame(width: 36, height: 36)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(displayTitle)
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(.primary)
+                    .lineLimit(1)
+                if !facility.abbreviatedAddress.isEmpty {
+                    Text(facility.abbreviatedAddress)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                }
+            }
+            Spacer(minLength: 8)
+            Image(systemName: "chevron.right")
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.tertiary)
+        }
+        .padding(.vertical, 8)
+        .frame(minHeight: 52)
+    }
+}
+
+// MARK: - 彈窗式設施詳情：Hero + Quick Actions + Location / Description
+struct FacilityDetailSheet: View {
+    let facility: ForestFacility
+    var bookingURL: URL?
+    var themeColor: Color
+    var onBookTap: (() -> Void)?
+
+    private var descriptionText: String {
+        let full = facility.facilityDescription ?? facility.details ?? ""
+        return full.isEmpty ? "" : (full.contains("<") ? RIDBAdapter.stripHTML(full) : full)
+    }
+    private var fullAddressString: String {
+        guard let addrs = facility.facilityAddresses, let first = addrs.first else {
+            return facility.locations?.joined(separator: ", ") ?? ""
+        }
+        return [first.streetAddress1, first.streetAddress2, first.city, first.stateCode, first.postalCode]
+            .compactMap { $0 }
+            .joined(separator: ", ")
+    }
+    private var firstPhoneURL: URL? {
+        guard let num = facility.facilityPhones?.first?.phoneNumber else { return nil }
+        return URL(string: "tel:\(num.replacingOccurrences(of: " ", with: ""))")
+    }
+    private var directionsCoordinate: CLLocationCoordinate2D? {
+        guard let addr = facility.facilityAddresses?.first,
+              let lat = addr.latitude, let lon = addr.longitude else { return nil }
+        return CLLocationCoordinate2D(latitude: lat, longitude: lon)
+    }
+    private var directionsQueryURL: URL? {
+        let line = fullAddressString
+        guard !line.isEmpty, let q = line.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) else { return nil }
+        return URL(string: "https://maps.apple.com/?q=\(q)")
+    }
+
+    private var reservationURLToShow: String? { facility.reservationURL ?? bookingURL?.absoluteString }
+    private var attributeBarItems: [(icon: String, label: String)] {
+        var list: [(icon: String, label: String)] = []
+        if let info = facility.seasonalInfo, !info.isEmpty {
+            list.append(("clock.fill", info.count > 20 ? String(info.prefix(20)) + "…" : info))
+        }
+        if facility.wheelchairAccessible == true {
+            list.append(("figure.roll", "Accessible"))
+        }
+        return list
+    }
+
+    var body: some View {
+        VStack(spacing: 0) {
+            heroSection
+            FacilityReservationCTA(
+                reservationURL: reservationURLToShow,
+                isCampground: facility.isCampgroundCategory,
+                themeColor: themeColor
+            )
+            .padding(.horizontal, 20)
+            .padding(.top, 12)
+            .padding(.bottom, 4)
+            quickActionsSection
+            ScrollView {
+                VStack(alignment: .leading, spacing: 16) {
+                    if !fullAddressString.isEmpty {
+                        facilitySectionBlock(title: "Location") {
+                            Text(fullAddressString)
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                    if !descriptionText.isEmpty {
+                        facilitySectionBlock(title: "Description") {
+                            Text(descriptionText)
+                                .font(.body)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                    FacilityAttributesBar(items: attributeBarItems, themeColor: themeColor)
+                        .padding(.horizontal, 20)
+                    WeatherInfoView()
+                        .padding(.horizontal, 20)
+                    if firstPhoneURL != nil || (facility.facilityEmails?.isEmpty == false) {
+                        facilitySectionBlock(title: "Contact") {
+                            if let url = firstPhoneURL {
+                                Link(destination: url) {
+                                    HStack(spacing: 8) {
+                                        Image(systemName: "phone.fill")
+                                        Text(facility.facilityPhones?.first?.phoneNumber ?? "Call")
+                                    }
+                                    .foregroundStyle(themeColor)
+                                }
+                            }
+                            ForEach(facility.facilityEmails ?? [], id: \.email) { e in
+                                if let mailto = URL(string: "mailto:\(e.email)") {
+                                    Link(destination: mailto) {
+                                        HStack(spacing: 8) {
+                                            Image(systemName: "envelope.fill")
+                                            Text(e.email)
+                                        }
+                                        .foregroundStyle(themeColor)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                .padding(.horizontal, 20)
+                .padding(.bottom, 24)
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(forestSheetBackgroundColor)
+    }
+
+    private var heroSection: some View {
+        ZStack(alignment: .bottomLeading) {
+            LinearGradient(
+                colors: [themeColor.opacity(0.35), themeColor.opacity(0.12)],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+            Image(systemName: "tent.2.fill")
+                .font(.system(size: 80))
+                .foregroundStyle(themeColor.opacity(0.2))
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
+                .padding(.top, 24)
+                .padding(.trailing, 24)
+            VStack(alignment: .leading, spacing: 4) {
+                Text(facility.name)
+                    .font(.title2.weight(.bold))
+                    .foregroundStyle(.primary)
+                Text(facility.category.replacingOccurrences(of: "-", with: " ").uppercased())
+                    .font(.caption.weight(.medium))
+                    .foregroundStyle(themeColor)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(20)
+        }
+        .frame(height: 140)
+    }
+
+    private var quickActionsSection: some View {
+        HStack(spacing: 30) {
+            if firstPhoneURL != nil {
+                ActionButton(icon: "phone.fill", label: "Call") {
+                    if let url = firstPhoneURL { UIApplication.shared.open(url) }
+                }
+            }
+            ActionButton(icon: "map.fill", label: "Directions") {
+                if let coord = directionsCoordinate {
+                    let item = MKMapItem(placemark: MKPlacemark(coordinate: coord))
+                    item.openInMaps(launchOptions: [MKLaunchOptionsDirectionsModeKey: MKLaunchOptionsDirectionsModeDriving])
+                } else if let url = directionsQueryURL {
+                    UIApplication.shared.open(url)
+                }
+            }
+            if facility.available, (bookingURL != nil || facility.reservationURL != nil) {
+                ActionButton(icon: "link", label: "Book") {
+                    if let url = facility.reservationURL.flatMap(URL.init) ?? bookingURL {
+                        UIApplication.shared.open(url)
+                    }
+                    onBookTap?()
+                }
+            }
+        }
+        .padding(.vertical, 16)
+        .frame(maxWidth: .infinity)
+    }
+
+    private func facilitySectionBlock<Content: View>(title: String, @ViewBuilder content: () -> Content) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(title)
+                .font(.headline.weight(.semibold))
+                .foregroundStyle(.primary)
+            content()
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.vertical, 12)
+    }
+
+    private func sectionBlock<Content: View>(title: String, @ViewBuilder content: () -> Content) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(title)
+                .font(.headline.weight(.semibold))
+                .foregroundStyle(.primary)
+            content()
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(14)
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
+    }
+}
+
+private struct ActionButton: View {
+    let icon: String
+    let label: String
+    var action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            VStack(spacing: 6) {
+                Image(systemName: icon)
+                    .font(.title2)
+                Text(label)
+                    .font(.caption.weight(.medium))
+            }
+            .frame(maxWidth: .infinity)
+            .foregroundStyle(.primary)
+        }
+        .buttonStyle(.plain)
     }
 }
 

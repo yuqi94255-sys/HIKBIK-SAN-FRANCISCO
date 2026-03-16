@@ -69,13 +69,17 @@
 		B00100000000000000003C /* CustomRouteBuilderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00100000000000000003C /* CustomRouteBuilderView.swift */; };
 		B00100000000000000003D /* arizona-trip-itinerary.json in Resources */ = {isa = PBXBuildFile; fileRef = F00100000000000000003D /* arizona-trip-itinerary.json */; };
 		B00100000000000000003E /* UnifiedDraftBox.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00100000000000000003E /* UnifiedDraftBox.swift */; };
+		B00100000000000000003F /* UserProfileManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00100000000000000003F /* UserProfileManager.swift */; };
+		B001000000000000000040 /* CheckoutViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F001000000000000000040 /* CheckoutViewModel.swift */; };
+		B001000000000000000041 /* ShippingAddressForm.swift in Sources */ = {isa = PBXBuildFile; fileRef = F001000000000000000041 /* ShippingAddressForm.swift */; };
+		B001000000000000000042 /* PaymentMethodSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = F001000000000000000042 /* PaymentMethodSection.swift */; };
+		B001000000000000000043 /* OrderSuccessView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F001000000000000000043 /* OrderSuccessView.swift */; };
 		B001000000000000000044 /* ProfileCollectionsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = F001000000000000000044 /* ProfileCollectionsStore.swift */; };
 		B001000000000000000045 /* ProfileAchievementsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = F001000000000000000045 /* ProfileAchievementsStore.swift */; };
 		B001000000000000000046 /* Achievement.swift in Sources */ = {isa = PBXBuildFile; fileRef = F001000000000000000046 /* Achievement.swift */; };
 		B001000000000000000047 /* AchievementStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = F001000000000000000047 /* AchievementStore.swift */; };
 		B001000000000000000048 /* HonorCenterView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F001000000000000000048 /* HonorCenterView.swift */; };
 		B001000000000000000049 /* AdventureStatsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F001000000000000000049 /* AdventureStatsService.swift */; };
-		B0010000000000000000FE /* TrackDataManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0010000000000000000FE /* TrackDataManager.swift */; };
 		B00100000000000000004A /* RadarChartView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00100000000000000004A /* RadarChartView.swift */; };
 		B00100000000000000004B /* AdventureStatsProView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00100000000000000004B /* AdventureStatsProView.swift */; };
 		B00100000000000000004C /* ParkLandmarkIcons.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00100000000000000004C /* ParkLandmarkIcons.swift */; };
@@ -122,7 +126,38 @@
 		B001000000000000000075 /* TabSelectionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F001000000000000000075 /* TabSelectionManager.swift */; };
 		B001000000000000000076 /* TrackRecordingLiveActivityAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = F001000000000000000076 /* TrackRecordingLiveActivityAttributes.swift */; };
 		B001000000000000000077 /* TrackRecordingLiveActivityManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F001000000000000000077 /* TrackRecordingLiveActivityManager.swift */; };
+		B001000000000000000078 /* ShippingService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F001000000000000000078 /* ShippingService.swift */; };
+		B00100000000000000007A /* APIClientBase.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00100000000000000007A /* APIClientBase.swift */; };
+		B00100000000000000007B /* ReturnService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00100000000000000007B /* ReturnService.swift */; };
+		B00100000000000000007C /* UserAddressService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00100000000000000007C /* UserAddressService.swift */; };
+		B00100000000000000008A /* RIDBConfig.plist in Resources */ = {isa = PBXBuildFile; fileRef = F00100000000000000008A /* RIDBConfig.plist */; platformFilter = ios; };
+		B00100000000000000008B /* RIDBAPIConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00100000000000000008B /* RIDBAPIConfig.swift */; platformFilter = ios; };
+		B00100000000000000008C /* RIDBModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00100000000000000008C /* RIDBModels.swift */; };
+		B00100000000000000008D /* OutdoorDestination.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00100000000000000008D /* OutdoorDestination.swift */; };
+		B00100000000000000008E /* RIDBAdapter.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00100000000000000008E /* RIDBAdapter.swift */; };
+		B00100000000000000008F /* RIDBService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00100000000000000008F /* RIDBService.swift */; platformFilter = ios; };
+		B001000000000000000090 /* ExploreRIDBViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F001000000000000000090 /* ExploreRIDBViewModel.swift */; };
+		B0010000000000000000A0 /* ReturnCenterView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0010000000000000000A0 /* ReturnCenterView.swift */; };
+		B0010000000000000000A1 /* OrderService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0010000000000000000A1 /* OrderService.swift */; };
+		B0010000000000000000A2 /* MockAPIService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0010000000000000000A2 /* MockAPIService.swift */; };
+		B0010000000000000000A3 /* RentalLogicTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0010000000000000000A3 /* RentalLogicTests.swift */; };
+		B0010000000000000000A4 /* ReturnDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0010000000000000000A4 /* ReturnDetailView.swift */; };
+		B0010000000000000000A5 /* OrderDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0010000000000000000A5 /* OrderDetailView.swift */; };
+		B0010000000000000000F0 /* MediaCarouselView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0010000000000000000F0 /* MediaCarouselView.swift */; };
+		B0010000000000000000F1 /* ActivityTagView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0010000000000000000F1 /* ActivityTagView.swift */; };
+		B0010000000000000000F2 /* forest-grassland-facilities.json in Resources */ = {isa = PBXBuildFile; fileRef = F0010000000000000000F2 /* forest-grassland-facilities.json */; platformFilter = ios; };
+		B0010000000000000000FE /* TrackDataManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0010000000000000000FE /* TrackDataManager.swift */; };
 /* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		R001000000000000000002 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = R001000000000000000001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = N001000000000000000001;
+			remoteInfo = HikBik;
+		};
+/* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
 		C5C26F922F617F50004109D1 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
@@ -170,11 +205,6 @@
 		F00100000000000000002A /* ParkCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ParkCardView.swift; sourceTree = "<group>"; };
 		F00100000000000000002B /* RoutesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoutesView.swift; sourceTree = "<group>"; };
 		F00100000000000000002C /* ShopView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShopView.swift; sourceTree = "<group>"; };
-		F00100000000000000003F /* UserProfileManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserProfileManager.swift; sourceTree = "<group>"; };
-		F001000000000000000040 /* CheckoutViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CheckoutViewModel.swift; sourceTree = "<group>"; };
-		F001000000000000000041 /* ShippingAddressForm.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShippingAddressForm.swift; sourceTree = "<group>"; };
-		F001000000000000000042 /* PaymentMethodSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaymentMethodSection.swift; sourceTree = "<group>"; };
-		F001000000000000000043 /* OrderSuccessView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OrderSuccessView.swift; sourceTree = "<group>"; };
 		F00100000000000000002D /* OrdersView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OrdersView.swift; sourceTree = "<group>"; };
 		F00100000000000000002E /* CommunityDiscoveryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommunityDiscoveryView.swift; sourceTree = "<group>"; };
 		F00100000000000000002F /* ParkDetailFlightyComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ParkDetailFlightyComponents.swift; sourceTree = "<group>"; };
@@ -193,15 +223,17 @@
 		F00100000000000000003C /* CustomRouteBuilderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomRouteBuilderView.swift; sourceTree = "<group>"; };
 		F00100000000000000003D /* arizona-trip-itinerary.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "arizona-trip-itinerary.json"; sourceTree = "<group>"; };
 		F00100000000000000003E /* UnifiedDraftBox.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnifiedDraftBox.swift; sourceTree = "<group>"; };
+		F00100000000000000003F /* UserProfileManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserProfileManager.swift; sourceTree = "<group>"; };
+		F001000000000000000040 /* CheckoutViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CheckoutViewModel.swift; sourceTree = "<group>"; };
+		F001000000000000000041 /* ShippingAddressForm.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShippingAddressForm.swift; sourceTree = "<group>"; };
+		F001000000000000000042 /* PaymentMethodSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaymentMethodSection.swift; sourceTree = "<group>"; };
+		F001000000000000000043 /* OrderSuccessView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OrderSuccessView.swift; sourceTree = "<group>"; };
 		F001000000000000000044 /* ProfileCollectionsStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileCollectionsStore.swift; sourceTree = "<group>"; };
 		F001000000000000000045 /* ProfileAchievementsStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileAchievementsStore.swift; sourceTree = "<group>"; };
 		F001000000000000000046 /* Achievement.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Achievement.swift; sourceTree = "<group>"; };
 		F001000000000000000047 /* AchievementStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AchievementStore.swift; sourceTree = "<group>"; };
 		F001000000000000000048 /* HonorCenterView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HonorCenterView.swift; sourceTree = "<group>"; };
 		F001000000000000000049 /* AdventureStatsService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdventureStatsService.swift; sourceTree = "<group>"; };
-		F0010000000000000000FE /* TrackDataManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrackDataManager.swift; sourceTree = "<group>"; };
-		F001000000000000000076 /* TrackRecordingLiveActivityAttributes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrackRecordingLiveActivityAttributes.swift; sourceTree = "<group>"; };
-		F001000000000000000077 /* TrackRecordingLiveActivityManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrackRecordingLiveActivityManager.swift; sourceTree = "<group>"; };
 		F00100000000000000004A /* RadarChartView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RadarChartView.swift; sourceTree = "<group>"; };
 		F00100000000000000004B /* AdventureStatsProView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdventureStatsProView.swift; sourceTree = "<group>"; };
 		F00100000000000000004C /* ParkLandmarkIcons.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ParkLandmarkIcons.swift; sourceTree = "<group>"; };
@@ -235,22 +267,53 @@
 		F001000000000000000068 /* UserProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserProfileView.swift; sourceTree = "<group>"; };
 		F001000000000000000069 /* ImageUploadService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageUploadService.swift; sourceTree = "<group>"; };
 		F00100000000000000006A /* SocialManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SocialManager.swift; sourceTree = "<group>"; };
-		F001000000000000000075 /* TabSelectionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TabSelectionManager.swift; sourceTree = "<group>"; };
 		F00100000000000000006B /* ManualJourneyDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ManualJourneyDetailView.swift; sourceTree = "<group>"; };
 		F00100000000000000006C /* WeatherManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeatherManager.swift; sourceTree = "<group>"; };
 		F00100000000000000006D /* WeatherOverviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeatherOverviewView.swift; sourceTree = "<group>"; };
 		F00100000000000000006E /* RouteDetailViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RouteDetailViewModel.swift; sourceTree = "<group>"; };
-		F001000000000000000074 /* RouteFollowingNavigationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RouteFollowingNavigationView.swift; sourceTree = "<group>"; };
 		F00100000000000000006F /* SocialDataManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SocialDataManager.swift; sourceTree = "<group>"; };
 		F001000000000000000070 /* AuthService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthService.swift; sourceTree = "<group>"; };
 		F001000000000000000071 /* AuthManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthManager.swift; sourceTree = "<group>"; };
 		F001000000000000000072 /* TrackRecorderEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrackRecorderEngine.swift; sourceTree = "<group>"; };
 		F001000000000000000073 /* PostEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostEditorView.swift; sourceTree = "<group>"; };
+		F001000000000000000074 /* RouteFollowingNavigationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RouteFollowingNavigationView.swift; sourceTree = "<group>"; };
+		F001000000000000000075 /* TabSelectionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TabSelectionManager.swift; sourceTree = "<group>"; };
+		F001000000000000000076 /* TrackRecordingLiveActivityAttributes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrackRecordingLiveActivityAttributes.swift; sourceTree = "<group>"; };
+		F001000000000000000077 /* TrackRecordingLiveActivityManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrackRecordingLiveActivityManager.swift; sourceTree = "<group>"; };
+		F001000000000000000078 /* ShippingService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShippingService.swift; sourceTree = "<group>"; };
+		F00100000000000000007A /* APIClientBase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIClientBase.swift; sourceTree = "<group>"; };
+		F00100000000000000007B /* ReturnService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReturnService.swift; sourceTree = "<group>"; };
+		F00100000000000000007C /* UserAddressService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserAddressService.swift; sourceTree = "<group>"; };
+		F00100000000000000008A /* RIDBConfig.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = RIDBConfig.plist; sourceTree = "<group>"; };
+		F00100000000000000008B /* RIDBAPIConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RIDBAPIConfig.swift; sourceTree = "<group>"; };
+		F00100000000000000008C /* RIDBModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RIDBModels.swift; sourceTree = "<group>"; };
+		F00100000000000000008D /* OutdoorDestination.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OutdoorDestination.swift; sourceTree = "<group>"; };
+		F00100000000000000008E /* RIDBAdapter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RIDBAdapter.swift; sourceTree = "<group>"; };
+		F00100000000000000008F /* RIDBService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RIDBService.swift; sourceTree = "<group>"; };
+		F001000000000000000090 /* ExploreRIDBViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExploreRIDBViewModel.swift; sourceTree = "<group>"; };
+		F0010000000000000000A0 /* ReturnCenterView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReturnCenterView.swift; sourceTree = "<group>"; };
+		F0010000000000000000A1 /* OrderService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OrderService.swift; sourceTree = "<group>"; };
+		F0010000000000000000A2 /* MockAPIService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockAPIService.swift; sourceTree = "<group>"; };
+		F0010000000000000000A3 /* RentalLogicTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RentalLogicTests.swift; sourceTree = "<group>"; };
+		F0010000000000000000A4 /* ReturnDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReturnDetailView.swift; sourceTree = "<group>"; };
+		F0010000000000000000A5 /* OrderDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OrderDetailView.swift; sourceTree = "<group>"; };
+		F0010000000000000000F0 /* MediaCarouselView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MediaCarouselView.swift; sourceTree = "<group>"; };
+		F0010000000000000000F1 /* ActivityTagView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivityTagView.swift; sourceTree = "<group>"; };
+		F0010000000000000000F2 /* forest-grassland-facilities.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "forest-grassland-facilities.json"; sourceTree = "<group>"; };
+		F0010000000000000000FE /* TrackDataManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrackDataManager.swift; sourceTree = "<group>"; };
 		T001000000000000000001 /* HikBik.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = HikBik.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		T001000000000000000002 /* HikBikTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = HikBikTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
 		P001000000000000000001 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		P001000000000000000005 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -264,6 +327,7 @@
 			isa = PBXGroup;
 			children = (
 				G001000000000000000002 /* HikBik */,
+				G0010000000000000000B0 /* HikBikTests */,
 				G001000000000000000003 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -286,6 +350,7 @@
 			isa = PBXGroup;
 			children = (
 				T001000000000000000001 /* HikBik.app */,
+				T001000000000000000002 /* HikBikTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -300,6 +365,8 @@
 				F001000000000000000031 /* NPSMockData.swift */,
 				F001000000000000000034 /* ParkDetailModels.swift */,
 				F001000000000000000010 /* ForestGrasslandModels.swift */,
+				F00100000000000000008C /* RIDBModels.swift */,
+				F00100000000000000008D /* OutdoorDestination.swift */,
 				F00100000000000000001A /* TripModels.swift */,
 				F001000000000000000046 /* Achievement.swift */,
 				F00100000000000000005A /* OfficialMacroModels.swift */,
@@ -315,6 +382,10 @@
 			isa = PBXGroup;
 			children = (
 				F00100000000000000006C /* WeatherManager.swift */,
+				F001000000000000000078 /* ShippingService.swift */,
+				F00100000000000000007A /* APIClientBase.swift */,
+				F00100000000000000007B /* ReturnService.swift */,
+				F00100000000000000007C /* UserAddressService.swift */,
 				F001000000000000000070 /* AuthService.swift */,
 				F00100000000000000006F /* SocialDataManager.swift */,
 				F001000000000000000069 /* ImageUploadService.swift */,
@@ -329,6 +400,10 @@
 				F00100000000000000004D /* ProfileLikedStore.swift */,
 				F001000000000000000032 /* NPSAPIConfig.swift */,
 				F001000000000000000033 /* NPSAPIService.swift */,
+				F00100000000000000008A /* RIDBConfig.plist */,
+				F00100000000000000008B /* RIDBAPIConfig.swift */,
+				F00100000000000000008E /* RIDBAdapter.swift */,
+				F00100000000000000008F /* RIDBService.swift */,
 				F00100000000000000001B /* TripStore.swift */,
 				F00100000000000000001C /* FavoritesStore.swift */,
 			);
@@ -348,6 +423,7 @@
 				F001000000000000000028 /* national-parks-stats.json */,
 				F001000000000000000029 /* national-parks-lodging.json */,
 				F001000000000000000036 /* ParkBackupData.json */,
+				F0010000000000000000F2 /* forest-grassland-facilities.json */,
 				F001000000000000000016 /* national-forests.json */,
 				F001000000000000000017 /* national-grasslands.json */,
 				F001000000000000000018 /* national-recreation.json */,
@@ -428,6 +504,8 @@
 			isa = PBXGroup;
 			children = (
 				F00100000000000000001E /* ExploreView.swift */,
+				F001000000000000000090 /* ExploreRIDBViewModel.swift */,
+				G0010000000000000000F0 /* Views */,
 				G001000000000000000011 /* StateParks */,
 				G001000000000000000012 /* NationalParks */,
 				G001000000000000000013 /* Forests */,
@@ -542,6 +620,11 @@
 			isa = PBXGroup;
 			children = (
 				F00100000000000000002C /* ShopView.swift */,
+				F00100000000000000003F /* UserProfileManager.swift */,
+				F001000000000000000040 /* CheckoutViewModel.swift */,
+				F001000000000000000041 /* ShippingAddressForm.swift */,
+				F001000000000000000042 /* PaymentMethodSection.swift */,
+				F001000000000000000043 /* OrderSuccessView.swift */,
 			);
 			path = Shop;
 			sourceTree = "<group>";
@@ -550,6 +633,11 @@
 			isa = PBXGroup;
 			children = (
 				F00100000000000000002D /* OrdersView.swift */,
+				F0010000000000000000A0 /* ReturnCenterView.swift */,
+				F0010000000000000000A4 /* ReturnDetailView.swift */,
+				F0010000000000000000A5 /* OrderDetailView.swift */,
+				F0010000000000000000A1 /* OrderService.swift */,
+				F0010000000000000000A2 /* MockAPIService.swift */,
 			);
 			path = Orders;
 			sourceTree = "<group>";
@@ -583,6 +671,23 @@
 			path = Legal;
 			sourceTree = "<group>";
 		};
+		G0010000000000000000B0 /* HikBikTests */ = {
+			isa = PBXGroup;
+			children = (
+				F0010000000000000000A3 /* RentalLogicTests.swift */,
+			);
+			path = HikBikTests;
+			sourceTree = "<group>";
+		};
+		G0010000000000000000F0 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				F0010000000000000000F0 /* MediaCarouselView.swift */,
+				F0010000000000000000F1 /* ActivityTagView.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -603,6 +708,23 @@
 			productReference = T001000000000000000001 /* HikBik.app */;
 			productType = "com.apple.product-type.application";
 		};
+		N001000000000000000002 /* HikBikTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = C001000000000000000009 /* Build configuration list for PBXNativeTarget "HikBikTests" */;
+			buildPhases = (
+				P001000000000000000004 /* Sources */,
+				P001000000000000000005 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				D001000000000000000001 /* PBXTargetDependency */,
+			);
+			name = HikBikTests;
+			productName = HikBikTests;
+			productReference = T001000000000000000002 /* HikBikTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -614,6 +736,9 @@
 				LastUpgradeCheck = 1500;
 				TargetAttributes = {
 					N001000000000000000001 = {
+						CreatedOnToolsVersion = 15.0;
+					};
+					N001000000000000000002 = {
 						CreatedOnToolsVersion = 15.0;
 					};
 				};
@@ -633,6 +758,7 @@
 			projectRoot = "";
 			targets = (
 				N001000000000000000001 /* HikBik */,
+				N001000000000000000002 /* HikBikTests */,
 			);
 		};
 /* End PBXProject section */
@@ -646,6 +772,7 @@
 				B00100000000000000000C /* national-parks.json in Resources */,
 				B00100000000000000000D /* states-parks.json in Resources */,
 				B00100000000000000000E /* Assets.xcassets in Resources */,
+				B0010000000000000000F2 /* forest-grassland-facilities.json in Resources */,
 				B001000000000000000016 /* national-forests.json in Resources */,
 				B001000000000000000017 /* national-grasslands.json in Resources */,
 				B001000000000000000018 /* national-recreation.json in Resources */,
@@ -659,6 +786,7 @@
 				B001000000000000000036 /* ParkBackupData.json in Resources */,
 				B00100000000000000003D /* arizona-trip-itinerary.json in Resources */,
 				B001000000000000000060 /* MistTrail.gpx in Resources */,
+				B00100000000000000008A /* RIDBConfig.plist in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -707,14 +835,32 @@
 				B00100000000000000002A /* ParkCardView.swift in Sources */,
 				B00100000000000000002B /* RoutesView.swift in Sources */,
 				B00100000000000000002C /* ShopView.swift in Sources */,
+				B00100000000000000003F /* UserProfileManager.swift in Sources */,
+				B001000000000000000040 /* CheckoutViewModel.swift in Sources */,
+				B001000000000000000041 /* ShippingAddressForm.swift in Sources */,
+				B001000000000000000042 /* PaymentMethodSection.swift in Sources */,
+				B001000000000000000043 /* OrderSuccessView.swift in Sources */,
 				B00100000000000000002D /* OrdersView.swift in Sources */,
+				B0010000000000000000A0 /* ReturnCenterView.swift in Sources */,
+				B0010000000000000000A4 /* ReturnDetailView.swift in Sources */,
+				B0010000000000000000A5 /* OrderDetailView.swift in Sources */,
+				B0010000000000000000A1 /* OrderService.swift in Sources */,
+				B0010000000000000000A2 /* MockAPIService.swift in Sources */,
 				B00100000000000000002E /* CommunityDiscoveryView.swift in Sources */,
 				B001000000000000000030 /* NPSAPIModels.swift in Sources */,
 				B001000000000000000031 /* NPSMockData.swift in Sources */,
 				B001000000000000000032 /* NPSAPIConfig.swift in Sources */,
 				B001000000000000000033 /* NPSAPIService.swift in Sources */,
+				B00100000000000000008B /* RIDBAPIConfig.swift in Sources */,
+				B00100000000000000008C /* RIDBModels.swift in Sources */,
+				B00100000000000000008D /* OutdoorDestination.swift in Sources */,
+				B00100000000000000008E /* RIDBAdapter.swift in Sources */,
+				B00100000000000000008F /* RIDBService.swift in Sources */,
+				B001000000000000000090 /* ExploreRIDBViewModel.swift in Sources */,
 				B001000000000000000034 /* ParkDetailModels.swift in Sources */,
 				B001000000000000000035 /* AccessLogisticsView.swift in Sources */,
+				B0010000000000000000F0 /* MediaCarouselView.swift in Sources */,
+				B0010000000000000000F1 /* ActivityTagView.swift in Sources */,
 				B001000000000000000037 /* ForestDetailSheetContent.swift in Sources */,
 				B001000000000000000038 /* ForestAccessView.swift in Sources */,
 				B001000000000000000039 /* GrasslandDetailSheetContent.swift in Sources */,
@@ -767,10 +913,30 @@
 				B001000000000000000075 /* TabSelectionManager.swift in Sources */,
 				B001000000000000000076 /* TrackRecordingLiveActivityAttributes.swift in Sources */,
 				B001000000000000000077 /* TrackRecordingLiveActivityManager.swift in Sources */,
+				B001000000000000000078 /* ShippingService.swift in Sources */,
+				B00100000000000000007A /* APIClientBase.swift in Sources */,
+				B00100000000000000007B /* ReturnService.swift in Sources */,
+				B00100000000000000007C /* UserAddressService.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		P001000000000000000004 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B0010000000000000000A3 /* RentalLogicTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		D001000000000000000001 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = N001000000000000000001 /* HikBik */;
+			targetProxy = R001000000000000000002 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		C001000000000000000003 /* Debug */ = {
@@ -906,6 +1072,42 @@
 			};
 			name = Release;
 		};
+		C001000000000000000007 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.hikbik.app.HikBikTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/HikBik.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/HikBik";
+			};
+			name = Debug;
+		};
+		C001000000000000000008 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.hikbik.app.HikBikTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/HikBik.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/HikBik";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -923,6 +1125,15 @@
 			buildConfigurations = (
 				C001000000000000000005 /* Debug */,
 				C001000000000000000006 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		C001000000000000000009 /* Build configuration list for PBXNativeTarget "HikBikTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C001000000000000000007 /* Debug */,
+				C001000000000000000008 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

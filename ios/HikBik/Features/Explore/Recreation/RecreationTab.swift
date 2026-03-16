@@ -636,12 +636,47 @@ private struct RecreationStatusDivider: View {
     }
 }
 
+/// NRA 詳情 Sheet 的 ViewModel：RIDB RecArea 全量 + 動態設施
+final class RecreationDetailSheetViewModel: ObservableObject {
+    @Published var ridbRecArea: RIDBRecArea?
+    @Published var ridbFacilities: [RIDBFacility] = []
+    @Published var isLoadingRecArea = false
+    @Published var isLoadingFacilities = false
+
+    /// 先依名稱解析 RIDB RecAreaID（本地 id 與 RIDB 可能不一致），再拉詳情與設施
+    func load(areaName: String, fallbackRecAreaId: String) {
+        guard !areaName.isEmpty || !fallbackRecAreaId.isEmpty else { return }
+        Task {
+            var recAreaId = fallbackRecAreaId
+            if let resolved = await RIDBService.shared.resolveRecAreaIDByName(areaName: areaName) {
+                recAreaId = resolved
+            }
+            await MainActor.run { isLoadingRecArea = true }
+            do {
+                let rec = try await RIDBService.shared.fetchRecArea(recAreaID: recAreaId)
+                await MainActor.run { ridbRecArea = rec; isLoadingRecArea = false }
+            } catch {
+                await MainActor.run { ridbRecArea = nil; isLoadingRecArea = false }
+            }
+            await MainActor.run { isLoadingFacilities = true }
+            do {
+                let list = try await RIDBService.shared.fetchFacilities(recAreaId: recAreaId)
+                await MainActor.run { ridbFacilities = list; isLoadingFacilities = false }
+            } catch {
+                await MainActor.run { ridbFacilities = []; isLoadingFacilities = false }
+            }
+        }
+    }
+}
+
 struct RecreationDetailSheetContent: View {
     let area: NationalRecreationArea
     var themeColor: Color = recreationThemeColor
 
+    @StateObject private var recViewModel = RecreationDetailSheetViewModel()
     @State private var activeTab: RecreationDetailTab = .overview
     @State private var isFavorite: Bool = false
+    @State private var selectedRIDBFacility: RIDBFacility?
     
     private var coordinate: CLLocationCoordinate2D {
         CLLocationCoordinate2D(
@@ -667,6 +702,61 @@ struct RecreationDetailSheetContent: View {
         if a >= 1_000 { return "\(a / 1_000)K" }
         return "\(a)"
     }
+
+    /// 介紹文字：優先 RIDB 描述（HTML 清洗），否則本地 area.description
+    private var recDescriptionText: String {
+        if let desc = recViewModel.ridbRecArea?.recAreaDescription, !desc.isEmpty {
+            return RIDBAdapter.stripHTMLViaAttributedString(desc)
+        }
+        return area.description
+    }
+
+    /// 方向指南：RIDB RecAreaDirection
+    private var recDirectionsText: String? {
+        let s = recViewModel.ridbRecArea?.recAreaDirection?.trimmingCharacters(in: .whitespacesAndNewlines)
+        return (s != nil && !s!.isEmpty) ? s : nil
+    }
+
+    /// RIDB 解析出的地址字串（首筆 RECAREAADDRESS：StreetAddress1, City, StateCode, PostalCode）
+    private var recAddressLine: String? {
+        guard let addr = recViewModel.ridbRecArea?.recAreaAddresses?.first else { return nil }
+        let parts = [addr.streetAddress1, addr.streetAddress2, addr.city, addr.stateCode, addr.postalCode].compactMap { $0 }.filter { !$0.isEmpty }
+        return parts.isEmpty ? nil : parts.joined(separator: ", ")
+    }
+
+    /// 始終有可顯示的地址/位置：RIDB 有則用，否則用州名 + 座標說明，方便用戶打開地圖
+    private var recAddressOrLocationLine: String {
+        if let line = recAddressLine, !line.isEmpty { return line }
+        let states = area.location.states.joined(separator: ", ")
+        return "\(area.name) · \(states) (\(String(format: "%.4f", coordinate.latitude)), \(String(format: "%.4f", coordinate.longitude)))"
+    }
+
+    private var recQuickInfoGrid: some View {
+        LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Management")
+                    .font(.caption.weight(.medium))
+                    .foregroundStyle(.secondary)
+                Text(agencyDisplayName)
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(.primary)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(12)
+            .background(Color(uiColor: .secondarySystemBackground), in: RoundedRectangle(cornerRadius: 10))
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Last Updated")
+                    .font(.caption.weight(.medium))
+                    .foregroundStyle(.secondary)
+                Text(recViewModel.ridbRecArea?.lastUpdatedDate ?? "—")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(.primary)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(12)
+            .background(Color(uiColor: .secondarySystemBackground), in: RoundedRectangle(cornerRadius: 10))
+        }
+    }
     
     var body: some View {
         VStack(spacing: 0) {
@@ -674,24 +764,19 @@ struct RecreationDetailSheetContent: View {
                 .fill(Color.primary.opacity(0.25))
                 .frame(width: 36, height: 5)
                 .padding(.top, 40)
-                .padding(.bottom, 24)
-            sheetHeader
-            RecreationStatusBar(
-                established: area.dateEstablished,
-                category: area.categoryName,
-                acres: acresDisplay,
-                agency: agencyDisplayName
-            )
+                .padding(.bottom, 16)
+            recHeroHeader
+            recInfoStrip
+            recDivider
             quickTagsRow
-        ScrollView {
-                VStack(alignment: .leading, spacing: 20) {
-                    RecreationAccessView(area: area, coordinate: coordinate, themeColor: themeColor)
-                    StartNavigationButton(coordinate: coordinate, themeColor: themeColor)
+            ScrollView {
+                VStack(alignment: .leading, spacing: 0) {
                     recTabBar
                     recContentSection
+                    recMetadataSection
                 }
                 .padding(.horizontal, 20)
-                .padding(.top, 16)
+                .padding(.top, 12)
                 .padding(.bottom, 40)
             }
             .scrollContentBackground(.hidden)
@@ -700,19 +785,32 @@ struct RecreationDetailSheetContent: View {
         .background(recreationSheetBackgroundColor)
         .onAppear {
             isFavorite = FavoritesStore.contains(.nationalrecreation, id: String(area.id))
+            recViewModel.load(areaName: area.name, fallbackRecAreaId: String(area.id))
+        }
+        .sheet(item: $selectedRIDBFacility) { facility in
+            NRAFacilityDetailSheet(facility: facility, themeColor: themeColor)
         }
     }
 
-    private var sheetHeader: some View {
-        HStack(alignment: .center, spacing: 8) {
-            VStack(alignment: .leading, spacing: 2) {
+    /// Hero：大標題 + Agency 與 RecAreaID，去框化
+    private var recHeroHeader: some View {
+        HStack(alignment: .top, spacing: 12) {
+            VStack(alignment: .leading, spacing: 6) {
                 Text(area.name)
                     .font(.title2.weight(.bold))
                     .foregroundStyle(.primary)
-                    .lineLimit(1)
-                Text("National Recreation Area")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .lineLimit(2)
+                HStack(spacing: 6) {
+                    Image(systemName: "building.2.fill")
+                        .font(.caption)
+                        .foregroundStyle(themeColor)
+                    Text(agencyDisplayName)
+                        .font(.subheadline.weight(.medium))
+                        .foregroundStyle(.secondary)
+                }
+                Text("RecArea ID: \(recViewModel.ridbRecArea.map { String($0.recAreaID) } ?? String(area.id))")
+                    .font(.caption2)
+                    .foregroundStyle(.tertiary)
             }
             Spacer(minLength: 8)
             Button {
@@ -731,7 +829,51 @@ struct RecreationDetailSheetContent: View {
             }
         }
         .padding(.horizontal, 20)
-        .padding(.bottom, 16)
+        .padding(.bottom, 12)
+    }
+
+    /// 橫向資訊長廊：圖標 + 標題 + 數值，極細豎線分隔
+    private var recInfoStrip: some View {
+        HStack(spacing: 0) {
+            recInfoStripItem(icon: "calendar", title: "Est.", value: area.dateEstablished)
+            recInfoStripDivider
+            recInfoStripItem(icon: "mappin.and.ellipse", title: "Area", value: acresDisplay + " ac")
+            recInfoStripDivider
+            recInfoStripItem(icon: "star.fill", title: "Region", value: area.location.states.first ?? area.categoryName)
+        }
+        .padding(.vertical, 12)
+        .padding(.horizontal, 16)
+    }
+
+    private func recInfoStripItem(icon: String, title: String, value: String) -> some View {
+        HStack(spacing: 8) {
+            Image(systemName: icon)
+                .font(.caption)
+                .foregroundStyle(themeColor)
+            VStack(alignment: .leading, spacing: 0) {
+                Text(title)
+                    .font(.caption2)
+                    .foregroundStyle(.tertiary)
+                Text(value)
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.primary)
+                    .lineLimit(1)
+            }
+        }
+        .frame(maxWidth: .infinity)
+    }
+
+    private var recInfoStripDivider: some View {
+        Rectangle()
+            .fill(Color.primary.opacity(0.15))
+            .frame(width: 1, height: 32)
+    }
+
+    private var recDivider: some View {
+        Rectangle()
+            .fill(Color.primary.opacity(0.12))
+            .frame(height: 1)
+            .frame(maxWidth: .infinity)
     }
 
     private var quickTagsRow: some View {
@@ -796,27 +938,268 @@ struct RecreationDetailSheetContent: View {
     }
 
     private var recOverviewSection: some View {
-        VStack(alignment: .leading, spacing: HikBikSpacing.lg) {
-            quickActionsSection
-            quickStatsSection
-            RecreationSectionCard(title: "About This Recreation Area", icon: "camera.fill") {
-                    Text(area.description)
-                        .font(HikBikFont.body())
-                        .foregroundStyle(Color.hikbikForeground)
-                    .fixedSize(horizontal: false, vertical: true)
+        VStack(alignment: .leading, spacing: 24) {
+            if let directions = recDirectionsText, !directions.isEmpty {
+                recDirectionsBlock(directions)
+            } else {
+                recDirectionsBlock("Use the map below or tap \"Navigate\" in the Location section to get directions.")
             }
-            RecreationSectionCard(title: "Details", icon: "info.circle.fill") {
-                VStack(alignment: .leading, spacing: 8) {
-                    RecreationInfoRow("Category", area.categoryName)
-                    RecreationInfoRow("Agency", agencyDisplayName)
-                    RecreationInfoRow("Established", area.dateEstablished)
-                    RecreationInfoRow("Total Area", "\(area.areaAcres) acres")
-                    if let v = area.visitors {
-                        RecreationInfoRow("Annual Visitors", "\(v)")
+            recAddressBlock(recAddressOrLocationLine)
+            recAboutBlock
+            WeatherInfoView()
+                .padding(.vertical, 4)
+            recDivider
+                .padding(.vertical, 8)
+            recFacilitiesBlock
+            recDivider
+                .padding(.vertical, 8)
+            recCommunityFeedbackBlock
+        }
+    }
+
+    /// Community Feedback 預留區：RIDB API 目前未提供 Rating/Review/TotalReviews，顯示佔位文案
+    private var recCommunityFeedbackBlock: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 8) {
+                Image(systemName: "star.leadinghalf.filled")
+                    .font(.subheadline)
+                    .foregroundStyle(themeColor)
+                Text("Community Feedback")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(.primary)
+            }
+            Text("No official reviews available yet. Be the first to visit!")
+                .font(.body)
+                .foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.vertical, 12)
+    }
+
+    /// 方向指南區塊：解析出的 RecAreaDirections 短句 + 大按鈕 Start Navigation
+    private func recDirectionsBlock(_ directions: String) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(spacing: 8) {
+                Image(systemName: "location.fill")
+                    .font(.subheadline)
+                    .foregroundStyle(themeColor)
+                Text("Directions")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(.primary)
+            }
+            Text(directions)
+                .font(.body)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+            StartNavigationButton(coordinate: coordinate, themeColor: themeColor)
+        }
+        .padding(.top, 4)
+    }
+
+    /// 地址/位置：始終顯示；RIDB 有則用完整地址，否則用州名+座標，並可點擊開啟地圖
+    private func recAddressBlock(_ addressLine: String) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 8) {
+                Image(systemName: "mappin.circle.fill")
+                    .font(.subheadline)
+                    .foregroundStyle(themeColor)
+                Text("Location & Address")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(.primary)
+            }
+            Text(addressLine)
+                .font(.body)
+                .foregroundStyle(.secondary)
+            HStack(spacing: 12) {
+                if let q = addressLine.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed), let url = URL(string: "https://maps.apple.com/?q=\(q)") {
+                    Link(destination: url) {
+                        HStack(spacing: 6) {
+                            Image(systemName: "arrow.triangle.turn.up.right.diamond.fill")
+                            Text("Open in Maps")
+                                .font(.caption.weight(.semibold))
+                        }
+                        .foregroundStyle(themeColor)
+                    }
+                }
+                Link(destination: URL(string: "maps://?ll=\(coordinate.latitude),\(coordinate.longitude)&q=\(area.name.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? area.name)") ?? URL(string: "https://maps.apple.com")!) {
+                    HStack(spacing: 6) {
+                        Image(systemName: "location.fill")
+                        Text("Navigate")
+                            .font(.caption.weight(.semibold))
+                    }
+                    .foregroundStyle(themeColor)
+                }
+            }
+        }
+    }
+
+    /// About：非對稱排版，無白卡
+    private var recAboutBlock: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("About")
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(.primary)
+            Text(recDescriptionText)
+                .font(.body)
+                .foregroundStyle(.secondary)
+                .lineSpacing(6)
+                .padding(.leading, 0)
+                .frame(maxWidth: .infinity, alignment: .leading)
+        }
+    }
+
+    /// 設施列表：始終顯示；RIDB 有則列 RIDB（含地圖連結），否則列衍生設施 + 區塊位置說明
+    private var recFacilitiesBlock: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            HStack(spacing: 8) {
+                Image(systemName: "building.2.fill")
+                    .font(.subheadline)
+                    .foregroundStyle(themeColor)
+                Text("Facilities")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(.primary)
+            }
+            .padding(.bottom, 10)
+            if !recFilteredRIDBFacilities.isEmpty {
+                VStack(spacing: 0) {
+                    ForEach(recFilteredRIDBFacilities) { facility in
+                        Button {
+                            selectedRIDBFacility = facility
+                        } label: {
+                            VStack(alignment: .leading, spacing: 4) {
+                                HStack(spacing: 12) {
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text(recFilterFacilityTitle(facility.facilityName ?? "Facility"))
+                                            .font(.subheadline.weight(.medium))
+                                            .foregroundStyle(.primary)
+                                        if let type = facility.facilityType, !type.isEmpty {
+                                            Text(type.replacingOccurrences(of: "-", with: " ").uppercased())
+                                                .font(.caption2)
+                                                .foregroundStyle(.secondary)
+                                        }
+                                    }
+                                    Spacer(minLength: 8)
+                                    Image(systemName: "chevron.right")
+                                        .font(.caption.weight(.semibold))
+                                        .foregroundStyle(.tertiary)
+                                }
+                                if let lat = facility.facilityLatitude, let lon = facility.facilityLongitude {
+                                    Link(destination: URL(string: "https://maps.apple.com/?ll=\(lat),\(lon)&q=\(recFilterFacilityTitle(facility.facilityName ?? "").addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")") ?? URL(string: "https://maps.apple.com")!) {
+                                        HStack(spacing: 4) {
+                                            Image(systemName: "mappin")
+                                                .font(.caption2)
+                                            Text("View on map · \(String(format: "%.4f", lat)), \(String(format: "%.4f", lon))")
+                                                .font(.caption2)
+                                        }
+                                        .foregroundStyle(themeColor)
+                                    }
+                                }
+                            }
+                            .padding(.vertical, 12)
+                            .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                        if facility.id != recFilteredRIDBFacilities.last?.id {
+                            recDivider
+                                .padding(.leading, 0)
+                        }
+                    }
+                }
+            } else {
+                Text("Typical facilities in this area. Location: \(area.location.states.joined(separator: ", ")) — use \"Open in Maps\" or \"Navigate\" above to see the area.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .padding(.bottom, 8)
+                VStack(spacing: 0) {
+                    ForEach(recDerivedFacilities, id: \.name) { f in
+                        HStack(spacing: 12) {
+                            Image(systemName: f.icon)
+                                .foregroundStyle(f.available ? themeColor : .secondary)
+                            Text(f.name)
+                                .font(.subheadline)
+                                .foregroundStyle(.primary)
+                            Spacer()
+                        }
+                        .padding(.vertical, 10)
+                        if f.name != recDerivedFacilities.last?.name {
+                            recDivider
+                        }
                     }
                 }
             }
         }
+    }
+
+    /// 頁底 Metadata：RIDB 提煉的 Last Updated、電話（可撥打）、Email（可寄信）、官網/預訂連結
+    private var recMetadataSection: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            recDivider
+                .padding(.vertical, 16)
+            VStack(alignment: .leading, spacing: 10) {
+                HStack(alignment: .top, spacing: 24) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Last Updated")
+                            .font(.caption2)
+                            .foregroundStyle(.tertiary)
+                        Text(recViewModel.ridbRecArea?.lastUpdatedDate ?? "—")
+                            .font(.caption.weight(.medium))
+                            .foregroundStyle(.secondary)
+                    }
+                    if let phoneNum = recViewModel.ridbRecArea?.recAreaPhone?.trimmingCharacters(in: .whitespacesAndNewlines), !phoneNum.isEmpty, let url = URL(string: "tel:\(phoneNum.replacingOccurrences(of: " ", with: ""))") {
+                        Link(destination: url) {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Phone")
+                                    .font(.caption2)
+                                    .foregroundStyle(.tertiary)
+                                HStack(spacing: 4) {
+                                    Image(systemName: "phone.fill")
+                                        .font(.caption2)
+                                    Text(phoneNum)
+                                        .font(.caption.weight(.medium))
+                                }
+                                .foregroundStyle(themeColor)
+                            }
+                        }
+                    }
+                }
+                if let email = recViewModel.ridbRecArea?.recAreaEmail?.trimmingCharacters(in: .whitespacesAndNewlines), !email.isEmpty, let mailUrl = URL(string: "mailto:\(email)") {
+                    Link(destination: mailUrl) {
+                        HStack(spacing: 6) {
+                            Image(systemName: "envelope.fill")
+                                .font(.caption)
+                            Text(email)
+                                .font(.caption.weight(.medium))
+                        }
+                        .foregroundStyle(themeColor)
+                    }
+                }
+                if let web = recViewModel.ridbRecArea?.recAreaURL?.trimmingCharacters(in: .whitespacesAndNewlines), !web.isEmpty, let webUrl = URL(string: web) {
+                    Link(destination: webUrl) {
+                        HStack(spacing: 6) {
+                            Image(systemName: "link")
+                                .font(.caption)
+                            Text("Official Website")
+                                .font(.caption.weight(.medium))
+                        }
+                        .foregroundStyle(themeColor)
+                    }
+                }
+                if let reserve = recViewModel.ridbRecArea?.recAreaReservationURL?.trimmingCharacters(in: .whitespacesAndNewlines), !reserve.isEmpty, let reserveUrl = URL(string: reserve) {
+                    Link(destination: reserveUrl) {
+                        HStack(spacing: 6) {
+                            Image(systemName: "calendar.badge.clock")
+                                .font(.caption)
+                            Text("Reserve / Book")
+                                .font(.caption.weight(.medium))
+                        }
+                        .foregroundStyle(themeColor)
+                    }
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .padding(.top, 8)
+        .padding(.bottom, 24)
     }
 
     private var quickActionsSection: some View {
@@ -866,109 +1249,109 @@ struct RecreationDetailSheetContent: View {
     }
 
     private var recActivitiesSection: some View {
-        VStack(alignment: .leading, spacing: HikBikSpacing.lg) {
+        VStack(alignment: .leading, spacing: 20) {
             let activities = recExtractActivities(from: area.description)
             if !activities.isEmpty {
-                RecreationSectionCard(title: "Popular Activities", icon: "figure.hiking") {
-                    LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: HikBikSpacing.sm) {
-                        ForEach(activities, id: \.self) { activity in
-                            HStack(spacing: 8) {
-                                Image(systemName: "checkmark.circle.fill")
-                                    .foregroundStyle(Color.cyan)
-                                Text(activity)
-                                    .font(HikBikFont.caption())
-                                    .foregroundStyle(Color.hikbikPrimary)
-                            }
-                            .padding(.horizontal, 10)
+                Text("Popular Activities")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(.primary)
+                FlowLayout(spacing: 8) {
+                    ForEach(activities, id: \.self) { activity in
+                        Text(activity)
+                            .font(.caption.weight(.medium))
+                            .foregroundStyle(.primary)
+                            .padding(.horizontal, 12)
                             .padding(.vertical, 8)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .background(Color.hikbikMuted.opacity(0.2))
-                            .clipShape(RoundedRectangle(cornerRadius: HikBikRadius.md))
-                        }
+                            .background(themeColor.opacity(0.2))
+                            .clipShape(Capsule())
                     }
                 }
+                recDivider.padding(.vertical, 4)
             }
-            RecreationSectionCard(title: "Activity Tips", icon: "lightbulb.fill", tint: .orange) {
-                VStack(alignment: .leading, spacing: 8) {
-                    RecreationBullet(text: "Check weather conditions before heading out")
-                    RecreationBullet(text: "Bring plenty of water and sun protection")
-                    RecreationBullet(text: "Follow Leave No Trace principles")
-                    RecreationBullet(text: "Respect wildlife and maintain safe distances")
-                }
+            Text("Activity Tips")
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(.primary)
+            VStack(alignment: .leading, spacing: 8) {
+                RecreationBullet(text: "Check weather conditions before heading out")
+                RecreationBullet(text: "Bring plenty of water and sun protection")
+                RecreationBullet(text: "Follow Leave No Trace principles")
+                RecreationBullet(text: "Respect wildlife and maintain safe distances")
             }
         }
     }
 
     private var recFacilitiesSection: some View {
-        VStack(alignment: .leading, spacing: HikBikSpacing.lg) {
-            RecreationSectionCard(title: "Facilities & Amenities", icon: "building.2.fill") {
-                LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: HikBikSpacing.sm) {
-                    ForEach(recDerivedFacilities, id: \.name) { facility in
-                        HStack(spacing: 8) {
-                            Image(systemName: facility.icon)
-                                .foregroundStyle(facility.available ? Color.green : Color.hikbikMutedForeground)
-                            Text(facility.name)
-                                .font(HikBikFont.caption())
-                                .foregroundStyle(facility.available ? Color.hikbikPrimary : Color.hikbikMutedForeground)
-                        }
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 8)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .background(facility.available ? Color.green.opacity(0.1) : Color.hikbikMuted.opacity(0.2))
-                        .clipShape(RoundedRectangle(cornerRadius: HikBikRadius.md))
-                    }
-                }
-            }
+        VStack(alignment: .leading, spacing: 0) {
+            recFacilitiesBlock
         }
     }
 
+    /// RIDB 設施列表，過濾標題中 (REC AREA) 等冗餘字樣
+    private var recFilteredRIDBFacilities: [RIDBFacility] {
+        recViewModel.ridbFacilities
+    }
+
+    /// 移除 "(REC AREA)" 等冗餘字樣
+    private func recFilterFacilityTitle(_ name: String) -> String {
+        var s = name
+            .replacingOccurrences(of: "(REC AREA)", with: "", options: .caseInsensitive)
+            .replacingOccurrences(of: "(RECAREA)", with: "", options: .caseInsensitive)
+        while s.contains("  ") { s = s.replacingOccurrences(of: "  ", with: " ") }
+        return s.trimmingCharacters(in: .whitespacesAndNewlines).trimmingCharacters(in: CharacterSet(charactersIn: " ,"))
+    }
+
     private var recPlanSection: some View {
-        VStack(alignment: .leading, spacing: HikBikSpacing.lg) {
-            RecreationSectionCard(title: "Best Time to Visit", icon: "sun.max.fill") {
-                Text(recBestTimeToVisit)
-                    .font(HikBikFont.body())
-                    .foregroundStyle(Color.hikbikForeground)
-            }
-            RecreationSectionCard(title: "Seasonal Highlights", icon: "sparkles") {
-                LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: HikBikSpacing.sm) {
-                    ForEach(RecreationSeasonInfo.defaults) { season in
-                        VStack(alignment: .leading, spacing: 6) {
-                            HStack(spacing: 6) {
-                                Image(systemName: season.icon)
-                                    .foregroundStyle(season.tint)
-                                Text(season.name)
-                                    .font(HikBikFont.caption())
-                                    .fontWeight(.semibold)
-                                    .foregroundStyle(Color.hikbikPrimary)
-                            }
-                            Text(season.description)
-                                .font(HikBikFont.caption2())
-                                .foregroundStyle(Color.hikbikMutedForeground)
-                            FlowLayout(spacing: 4) {
-                                ForEach(season.activities, id: \.self) { act in
-                                    Text(act)
-                                        .font(HikBikFont.caption2())
-                                        .foregroundStyle(Color.hikbikPrimary)
-                                        .padding(.horizontal, 8)
-                                        .padding(.vertical, 4)
-                                        .background(season.tint.opacity(0.15))
-                                        .clipShape(Capsule())
-                                }
+        VStack(alignment: .leading, spacing: 20) {
+            Text("Best Time to Visit")
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(.primary)
+            Text(recBestTimeToVisit)
+                .font(.body)
+                .foregroundStyle(.secondary)
+                .lineSpacing(4)
+            recDivider.padding(.vertical, 4)
+            Text("Seasonal Highlights")
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(.primary)
+            VStack(alignment: .leading, spacing: 12) {
+                ForEach(RecreationSeasonInfo.defaults) { season in
+                    VStack(alignment: .leading, spacing: 6) {
+                        HStack(spacing: 6) {
+                            Image(systemName: season.icon)
+                                .foregroundStyle(season.tint)
+                            Text(season.name)
+                                .font(.caption.weight(.semibold))
+                                .foregroundStyle(.primary)
+                        }
+                        Text(season.description)
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                        FlowLayout(spacing: 4) {
+                            ForEach(season.activities, id: \.self) { act in
+                                Text(act)
+                                    .font(.caption2)
+                                    .foregroundStyle(.primary)
+                                    .padding(.horizontal, 8)
+                                    .padding(.vertical, 4)
+                                    .background(season.tint.opacity(0.2))
+                                    .clipShape(Capsule())
                             }
                         }
-                        .padding(HikBikSpacing.sm)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .background(season.tint.opacity(0.08))
-                        .clipShape(RoundedRectangle(cornerRadius: HikBikRadius.md))
                     }
+                    .padding(12)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(season.tint.opacity(0.08))
+                    .clipShape(RoundedRectangle(cornerRadius: 10))
                 }
             }
-            RecreationSectionCard(title: "Important Information", icon: "exclamationmark.triangle.fill", tint: .red) {
-                VStack(alignment: .leading, spacing: 8) {
-                    RecreationBullet(text: "Check for any current closures or restrictions before visiting")
-                    RecreationBullet(text: "Entrance fees may apply — check official website for details")
-                    RecreationBullet(text: "Cell phone coverage may be limited in remote areas")
-                }
+            recDivider.padding(.vertical, 4)
+            Text("Important Information")
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(.primary)
+            VStack(alignment: .leading, spacing: 8) {
+                RecreationBullet(text: "Check for any current closures or restrictions before visiting")
+                RecreationBullet(text: "Entrance fees may apply — check official website for details")
+                RecreationBullet(text: "Cell phone coverage may be limited in remote areas")
             }
         }
     }
@@ -1029,6 +1412,7 @@ struct RecreationDetailView: View {
 
     @State private var showDetailSheet = true
     @State private var selectedDetent: PresentationDetent = .fraction(0.6)
+    @State private var recAreaMarkerSelected = false
 
     private var coordinate: CLLocationCoordinate2D? {
         CLLocationCoordinate2D(
@@ -1047,7 +1431,10 @@ struct RecreationDetailView: View {
                     viewpoints: nil,
                     dangerZones: nil,
                     themeColor: recreationThemeColor,
-                    fixedHeight: fullScreenHeight
+                    fixedHeight: fullScreenHeight,
+                    recAreaStyle: true,
+                    isRecAreaMarkerSelected: recAreaMarkerSelected,
+                    onRecAreaMarkerTap: { recAreaMarkerSelected.toggle() }
                 )
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .clipped()
@@ -1112,6 +1499,189 @@ private enum RecreationDetailTab: CaseIterable {
         case .facilities: return "building.2.fill"
         case .plan: return "calendar"
         }
+    }
+}
+
+/// NRA 設施二級彈窗：Hero + 預定 CTA + 屬性條 + 描述 + 聯繫 + 天氣，去卡片化
+struct NRAFacilityDetailSheet: View {
+    let facility: RIDBFacility
+    var themeColor: Color
+
+    private var facilityTitle: String {
+        (facility.facilityName ?? "Facility")
+            .replacingOccurrences(of: "(REC AREA)", with: "", options: .caseInsensitive)
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+    private var descriptionText: String {
+        guard let raw = facility.facilityDescription, !raw.isEmpty else { return "" }
+        return RIDBAdapter.stripHTMLViaAttributedString(raw)
+    }
+    private var coordinate: CLLocationCoordinate2D? {
+        guard let lat = facility.facilityLatitude, let lon = facility.facilityLongitude else { return nil }
+        return CLLocationCoordinate2D(latitude: lat, longitude: lon)
+    }
+    private var phoneURL: URL? {
+        guard let num = facility.facilityPhone?.trimmingCharacters(in: .whitespacesAndNewlines), !num.isEmpty else { return nil }
+        return URL(string: "tel:\(num.replacingOccurrences(of: " ", with: ""))")
+    }
+    private var attributeBarItems: [(icon: String, label: String)] {
+        var list: [(icon: String, label: String)] = []
+        if let v = facility.checkInOutTime, !v.isEmpty { list.append(("clock.fill", v)) }
+        if let v = facility.petsAllowed, !v.isEmpty { list.append(("pawprint.fill", v)) }
+        if let v = facility.maxVehicleLength, !v.isEmpty { list.append(("car.fill", v)) }
+        return list
+    }
+
+    var body: some View {
+        NavigationStack {
+            VStack(spacing: 0) {
+                nraFacilityHero
+                FacilityReservationCTA(
+                    reservationURL: facility.reservationURL,
+                    isCampground: facility.isCampgroundType,
+                    themeColor: themeColor
+                )
+                .padding(.horizontal, 20)
+                .padding(.top, 12)
+                .padding(.bottom, 4)
+                nraFacilityQuickActions
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 16) {
+                        if !descriptionText.isEmpty {
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text("Description")
+                                    .font(.headline.weight(.semibold))
+                                    .foregroundStyle(.primary)
+                                Text(descriptionText)
+                                    .font(.body)
+                                    .foregroundStyle(.secondary)
+                            }
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(.vertical, 12)
+                        }
+                        FacilityAttributesBar(items: attributeBarItems, themeColor: themeColor)
+                            .padding(.horizontal, 20)
+                        WeatherInfoView()
+                            .padding(.horizontal, 20)
+                        if facility.facilityPhone != nil || facility.facilityEmail != nil {
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text("Contact")
+                                    .font(.headline.weight(.semibold))
+                                    .foregroundStyle(.primary)
+                                if let url = phoneURL {
+                                    Link(destination: url) {
+                                        HStack(spacing: 8) {
+                                            Image(systemName: "phone.fill")
+                                            Text(facility.facilityPhone ?? "Call")
+                                        }
+                                        .foregroundStyle(themeColor)
+                                    }
+                                }
+                                if let email = facility.facilityEmail, !email.isEmpty, let mailto = URL(string: "mailto:\(email)") {
+                                    Link(destination: mailto) {
+                                        HStack(spacing: 8) {
+                                            Image(systemName: "envelope.fill")
+                                            Text(email)
+                                        }
+                                        .foregroundStyle(themeColor)
+                                    }
+                                }
+                            }
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(.vertical, 12)
+                        }
+                    }
+                    .padding(.horizontal, 20)
+                    .padding(.bottom, 24)
+                }
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color(red: 0x1C/255, green: 0x1C/255, blue: 0x1E/255))
+            .navigationTitle(facilityTitle)
+            .navigationBarTitleDisplayMode(.inline)
+        }
+    }
+
+    private var nraFacilityHero: some View {
+        ZStack(alignment: .bottomLeading) {
+            LinearGradient(
+                colors: [themeColor.opacity(0.35), themeColor.opacity(0.12)],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+            Image(systemName: "tent.2.fill")
+                .font(.system(size: 80))
+                .foregroundStyle(themeColor.opacity(0.2))
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
+                .padding(.top, 24)
+                .padding(.trailing, 24)
+            VStack(alignment: .leading, spacing: 4) {
+                Text(facilityTitle)
+                    .font(.title2.weight(.bold))
+                    .foregroundStyle(.primary)
+                Text(facility.facilityType?.replacingOccurrences(of: "-", with: " ").uppercased() ?? "FACILITY")
+                    .font(.caption.weight(.medium))
+                    .foregroundStyle(themeColor)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(20)
+        }
+        .frame(height: 140)
+    }
+
+    private var nraFacilityQuickActions: some View {
+        HStack(spacing: 30) {
+            if phoneURL != nil {
+                Button {
+                    if let url = phoneURL { UIApplication.shared.open(url) }
+                } label: {
+                    VStack(spacing: 6) {
+                        Image(systemName: "phone.fill")
+                            .font(.title2)
+                        Text("Call")
+                            .font(.caption.weight(.medium))
+                    }
+                    .frame(maxWidth: .infinity)
+                    .foregroundStyle(.primary)
+                }
+                .buttonStyle(.plain)
+            }
+            if coordinate != nil {
+                Button {
+                    guard let c = coordinate else { return }
+                    let item = MKMapItem(placemark: MKPlacemark(coordinate: c))
+                    item.openInMaps(launchOptions: [MKLaunchOptionsDirectionsModeKey: MKLaunchOptionsDirectionsModeDriving])
+                } label: {
+                    VStack(spacing: 6) {
+                        Image(systemName: "map.fill")
+                            .font(.title2)
+                        Text("Directions")
+                            .font(.caption.weight(.medium))
+                    }
+                    .frame(maxWidth: .infinity)
+                    .foregroundStyle(.primary)
+                }
+                .buttonStyle(.plain)
+            }
+            if facility.reservationURL != nil {
+                Button {
+                    guard let s = facility.reservationURL, let url = URL(string: s) else { return }
+                    UIApplication.shared.open(url)
+                } label: {
+                    VStack(spacing: 6) {
+                        Image(systemName: "link.circle.fill")
+                            .font(.title2)
+                        Text("Reserve")
+                            .font(.caption.weight(.medium))
+                    }
+                    .frame(maxWidth: .infinity)
+                    .foregroundStyle(.primary)
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .padding(.vertical, 16)
+        .frame(maxWidth: .infinity)
     }
 }
 

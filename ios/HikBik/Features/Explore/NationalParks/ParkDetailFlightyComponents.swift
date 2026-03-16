@@ -24,8 +24,87 @@ private struct TopRoundedShape: Shape {
     }
 }
 
+// MARK: - 詳情頁地圖樣式（四類詳情頁共用：公園、森林、草原、休閒區）
+enum DetailMapStyle: Int, CaseIterable {
+    case standard
+    case imagery
+    case hybrid
+
+    @available(iOS 17.0, *)
+    var mapStyle: MapStyle {
+        switch self {
+        case .standard: return .standard(elevation: .flat)
+        case .imagery: return .imagery(elevation: .flat)
+        case .hybrid: return .hybrid(elevation: .flat)
+        }
+    }
+
+    var next: DetailMapStyle {
+        switch self {
+        case .standard: return .imagery
+        case .imagery: return .hybrid
+        case .hybrid: return .standard
+        }
+    }
+}
+
+/// 獨立的「地圖 + 樣式按鈕」子視圖：僅此 View 持有 currentMapStyle，切換時只重繪地圖區。
+/// 按鈕用 overlay 疊在地圖上，避免 Map 搶觸摸導致點擊無反應。
+struct DetailMapWithStyleSwitcher: View {
+    let center: CLLocationCoordinate2D
+    let markerTitle: String
+    var height: CGFloat = 180
+    var span: (lat: Double, lon: Double) = (0.15, 0.15)
+    @State private var currentMapStyle: DetailMapStyle = .standard
+
+    var body: some View {
+        Map(initialPosition: .region(MKCoordinateRegion(
+            center: center,
+            span: MKCoordinateSpan(latitudeDelta: span.lat, longitudeDelta: span.lon)
+        ))) {
+            Marker(markerTitle, coordinate: center)
+        }
+        .mapStyle(currentMapStyle.mapStyle)
+        .animation(nil, value: currentMapStyle)
+        .frame(height: height)
+        .clipShape(RoundedRectangle(cornerRadius: 14))
+        .overlay(alignment: .topTrailing) {
+            DetailMapStyleSwitcherButton(currentMapStyle: $currentMapStyle)
+                .padding(.top, 64)
+                .padding(.trailing, 12)
+        }
+        .frame(height: height)
+        .clipShape(RoundedRectangle(cornerRadius: 14))
+    }
+}
+
+/// 懸浮地圖樣式切換按鈕：40x40 Circle、.ultraThinMaterial；點擊僅更新 mapStyle。
+/// 外層 padding + contentShape 保證可點區域足夠大，避免被 Map 搶觸摸。
+struct DetailMapStyleSwitcherButton: View {
+    @Binding var currentMapStyle: DetailMapStyle
+
+    var body: some View {
+        Button {
+            var t = Transaction()
+            t.disablesAnimations = true
+            withTransaction(t) {
+                currentMapStyle = currentMapStyle.next
+            }
+        } label: {
+            Image(systemName: "square.2.layers.3d")
+                .font(.system(size: 18, weight: .medium))
+                .foregroundStyle(.primary)
+                .frame(width: 40, height: 40)
+                .background(.ultraThinMaterial, in: Circle())
+        }
+        .buttonStyle(.plain)
+        .padding(12)
+        .contentShape(Rectangle())
+    }
+}
+
 // MARK: - 1. 地圖區域 (MapHeaderView)
-/// 高度固定 40% 屏，衛星圖；相機跨度固定 0.1–0.3 避免過度縮放模糊，設施標註異步顯示不阻塞主視圖。
+/// 高度固定 40% 屏；支援 Standard / Satellite / Hybrid 切換，設施標註異步顯示不阻塞主視圖。
 struct MapHeaderView: View {
     var coordinate: CLLocationCoordinate2D?
     /// 點擊設施快覽時傳入，地圖上顯示該設施標註（延遲渲染，不阻塞地圖載入）
@@ -37,6 +116,10 @@ struct MapHeaderView: View {
     var themeColor: Color = Color(red: 0.98, green: 0.45, blue: 0.09) // 國家公園橙
     /// 若設為非 nil（如全屏），則使用該高度；否則為屏高 40%
     var fixedHeight: CGFloat? = nil
+    /// RecArea 專用：藍色圓圈 + 水域/山林圖標，可點擊放大
+    var recAreaStyle: Bool = false
+    var isRecAreaMarkerSelected: Bool = false
+    var onRecAreaMarkerTap: (() -> Void)? = nil
 
     /// 相機跨度固定於 0.1–0.3，避免自動縮放到過細導致模糊
     private static let cameraSpan = MKCoordinateSpan(latitudeDelta: 0.2, longitudeDelta: 0.2)
@@ -45,6 +128,8 @@ struct MapHeaderView: View {
     @State private var mapVisible = false
     /// 設施標註延遲顯示，確保地圖主視圖先載入再疊加，不阻塞衛星圖
     @State private var showFacilityAnnotation = false
+    /// 地圖樣式：Standard / Satellite / Hybrid，一鍵切換
+    @State private var currentMapStyle: DetailMapStyle = .imagery
 
     private var region: MKCoordinateRegion {
         let center = coordinate ?? CLLocationCoordinate2D(latitude: 39.5, longitude: -98.5)
@@ -74,15 +159,26 @@ struct MapHeaderView: View {
                 let center = coordinate ?? CLLocationCoordinate2D(latitude: 39.5, longitude: -98.5)
                 Map(initialPosition: .region(region), interactionModes: .all) {
                     Annotation("", coordinate: center) {
-                        ZStack {
-                            Circle()
-                                .fill(.white.opacity(0.9))
-                                .frame(width: 16, height: 16)
-                            Circle()
-                                .stroke(themeColor, lineWidth: 2)
-                                .frame(width: 16, height: 16)
+                        Group {
+                            if recAreaStyle {
+                                Button {
+                                    onRecAreaMarkerTap?()
+                                } label: {
+                                    RecAreaMapMarkerView(selected: isRecAreaMarkerSelected)
+                                }
+                                .buttonStyle(.plain)
+                            } else {
+                                ZStack {
+                                    Circle()
+                                        .fill(.white.opacity(0.9))
+                                        .frame(width: 16, height: 16)
+                                    Circle()
+                                        .stroke(themeColor, lineWidth: 2)
+                                        .frame(width: 16, height: 16)
+                                }
+                                .shadow(color: themeColor.opacity(0.6), radius: 6)
+                            }
                         }
-                        .shadow(color: themeColor.opacity(0.6), radius: 6)
                     }
                     if showFacilityAnnotation, let fac = facilityAnnotation {
                         Annotation(fac.name, coordinate: CLLocationCoordinate2D(latitude: fac.latitude, longitude: fac.longitude)) {
@@ -100,13 +196,21 @@ struct MapHeaderView: View {
                         }
                     }
                 }
-                .mapStyle(.imagery(elevation: .flat))
+                .mapStyle(currentMapStyle.mapStyle)
+                .animation(nil, value: currentMapStyle)
                 .preferredColorScheme(.dark)
                 .opacity(mapVisible ? 1 : 0)
             }
         }
         .frame(height: fixedHeight ?? UIScreen.main.bounds.height * 0.40)
         .clipped()
+        .overlay(alignment: .topTrailing) {
+            if #available(iOS 17.0, *) {
+                DetailMapStyleSwitcherButton(currentMapStyle: $currentMapStyle)
+                    .padding(.top, 64)
+                    .padding(.trailing, 16)
+            }
+        }
         .onAppear {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
                 withAnimation(.easeOut(duration: 0.25)) { mapVisible = true }
@@ -125,6 +229,29 @@ struct MapHeaderView: View {
                 showFacilityAnnotation = true
             }
         }
+    }
+}
+
+/// RecArea 地圖標記：藍色圓圈 + 水域/山林圖標，選中時縮放
+private struct RecAreaMapMarkerView: View {
+    var selected: Bool
+    private let size: CGFloat = 44
+
+    var body: some View {
+        ZStack {
+            Circle()
+                .fill(Color.blue.opacity(0.9))
+                .frame(width: size, height: size)
+            Circle()
+                .stroke(Color.white, lineWidth: 2)
+                .frame(width: size, height: size)
+            Image(systemName: "water.waves")
+                .font(.system(size: 20, weight: .medium))
+                .foregroundStyle(.white)
+        }
+        .shadow(color: Color.blue.opacity(0.5), radius: 6)
+        .scaleEffect(selected ? 1.2 : 1.0)
+        .animation(.easeInOut(duration: 0.2), value: selected)
     }
 }
 

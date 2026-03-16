@@ -3,7 +3,11 @@ import MapKit
 
 struct ParkDetailView: View {
     let park: Park
-    
+
+    private var parkCoordinate: CLLocationCoordinate2D {
+        CLLocationCoordinate2D(latitude: park.latitude, longitude: park.longitude)
+    }
+
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
@@ -54,13 +58,12 @@ struct ParkDetailView: View {
                 }
                 .padding(.horizontal)
                 
-                Map(initialPosition: .region(MKCoordinateRegion(
-                    center: CLLocationCoordinate2D(latitude: park.latitude, longitude: park.longitude),
-                    span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)
-                ))) {
-                    Marker(park.name, coordinate: CLLocationCoordinate2D(latitude: park.latitude, longitude: park.longitude))
-                }
-                .frame(height: 200)
+                DetailMapWithStyleSwitcher(
+                    center: parkCoordinate,
+                    markerTitle: park.name,
+                    height: 200,
+                    span: (0.05, 0.05)
+                )
                 .clipShape(RoundedRectangle(cornerRadius: HikBikRadius.lg))
             }
         }

@@ -1,12 +1,18 @@
 // 与 Web 探索入口一致：分类列表
 import SwiftUI
 
+private let stateParksComingSoonGreen = Color(red: 0.2, green: 0.6, blue: 0.3)
+
 struct ExploreView: View {
+    @State private var showStateParksComingSoon = false
+
     var body: some View {
         NavigationStack {
             List {
                 Section {
-                    NavigationLink(value: ExploreDestination.stateParks) {
+                    Button {
+                        showStateParksComingSoon = true
+                    } label: {
                         Label("State Parks", systemImage: "map.fill")
                             .foregroundStyle(Color.hikbikPrimary)
                     }
@@ -45,6 +51,12 @@ struct ExploreView: View {
             .navigationDestination(for: ExploreDestination.self) { dest in
                 exploreDestinationView(dest)
             }
+            .alert("State Parks & Forests", isPresented: $showStateParksComingSoon) {
+                Button("Got it", role: .cancel) {}
+            } message: {
+                Text("We are hard at work bringing State data to HikBik. Coming soon in a future update!")
+            }
+            .tint(stateParksComingSoonGreen)
         }
     }
 

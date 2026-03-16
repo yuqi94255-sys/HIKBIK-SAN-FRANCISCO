@@ -83,9 +83,12 @@ private struct FavoritesMiniButton: View {
     }
 }
 
+private let stateParksComingSoonGreen = Color(red: 0.2, green: 0.6, blue: 0.3)
+
 struct HomeView: View {
     @ObservedObject private var trackDataManager = TrackDataManager.shared
     @State private var selectedCountry: Country = .unitedStates
+    @State private var showStateParksComingSoon = false
 
     var body: some View {
         NavigationStack {
@@ -117,7 +120,12 @@ struct HomeView: View {
                                 ScrollView(.horizontal, showsIndicators: false) {
                                     HStack(spacing: 20) {
                                         ForEach(AdventureCardData.placeCards) { model in
-                                            ThemedAdventureCard(model: model, cardWidth: cardWidth, cardHeight: 145)
+                                            ThemedAdventureCard(
+                                                model: model,
+                                                cardWidth: cardWidth,
+                                                cardHeight: 145,
+                                                onStateParksTap: model.destination == .stateParks ? { showStateParksComingSoon = true } : nil
+                                            )
                                         }
                                     }
                                     .padding(.leading, 20)
@@ -153,6 +161,12 @@ struct HomeView: View {
             .navigationDestination(for: DraftItem.self) { draft in
                 ManualJourneyDetailView(journey: draft.toManualJourney())
             }
+            .alert("State Parks & Forests", isPresented: $showStateParksComingSoon) {
+                Button("Got it", role: .cancel) {}
+            } message: {
+                Text("We are hard at work bringing State data to HikBik. Coming soon in a future update!")
+            }
+            .tint(stateParksComingSoonGreen)
         }
     }
 
@@ -323,62 +337,72 @@ struct ThemedAdventureCard: View {
     let model: AdventureCardModel
     var cardWidth: CGFloat? = nil
     var cardHeight: CGFloat = 96
+    /// 非 nil 時，State Parks 卡片改為觸發此回調（顯示 Coming Soon Alert）而非導航
+    var onStateParksTap: (() -> Void)? = nil
+
+    private var cardContent: some View {
+        ZStack {
+            cardBackgroundTinted(theme: model.theme)
+            LinearGradient(
+                colors: [
+                    model.theme.color.opacity(0.2),
+                    model.theme.color.opacity(0.05),
+                    Color.clear
+                ],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+            TopoBackgroundView(lineColor: model.theme.color)
+                .opacity(0.45)
+                .blendMode(.screen)
+            HStack(spacing: 0) {
+                RoundedRectangle(cornerRadius: 2)
+                    .fill(model.theme.color)
+                    .frame(width: 3)
+                    .padding(.leading, 0)
+                    .padding(.vertical, 18)
+
+                HStack(spacing: 12) {
+                    Image(systemName: model.iconName)
+                        .font(.system(size: 21, weight: .medium))
+                        .foregroundColor(model.theme.color)
+
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(model.title)
+                            .font(.system(size: 15, weight: .bold))
+                            .foregroundColor(.white)
+                        Text(model.subtitle)
+                            .font(.system(size: 11, weight: .regular))
+                            .foregroundColor(.white.opacity(0.6))
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundColor(Color(white: 0.6))
+                }
+                .padding(.horizontal, 14)
+                .padding(.vertical, 14)
+            }
+        }
+        .frame(width: cardWidth ?? .infinity, height: cardHeight)
+        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .strokeBorder(model.theme.color.opacity(0.75), lineWidth: 1)
+        )
+        .shadow(color: model.theme.color.opacity(0.4), radius: 8, x: 0, y: 0)
+        .shadow(color: model.theme.color.opacity(0.18), radius: 14, x: 0, y: 0)
+        .shadow(color: .black.opacity(0.35), radius: 8, x: 0, y: 4)
+    }
 
     var body: some View {
-        NavigationLink(value: model.destination) {
-            ZStack {
-                cardBackgroundTinted(theme: model.theme)
-                LinearGradient(
-                    colors: [
-                        model.theme.color.opacity(0.2),
-                        model.theme.color.opacity(0.05),
-                        Color.clear
-                    ],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-                TopoBackgroundView(lineColor: model.theme.color)
-                    .opacity(0.45)
-                    .blendMode(.screen)
-                HStack(spacing: 0) {
-                    RoundedRectangle(cornerRadius: 2)
-                        .fill(model.theme.color)
-                        .frame(width: 3)
-                        .padding(.leading, 0)
-                        .padding(.vertical, 18)
-
-                    HStack(spacing: 12) {
-                        Image(systemName: model.iconName)
-                            .font(.system(size: 21, weight: .medium))
-                            .foregroundColor(model.theme.color)
-
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(model.title)
-                                .font(.system(size: 15, weight: .bold))
-                                .foregroundColor(.white)
-                            Text(model.subtitle)
-                                .font(.system(size: 11, weight: .regular))
-                                .foregroundColor(.white.opacity(0.6))
-                        }
-                        .frame(maxWidth: .infinity, alignment: .leading)
-
-                        Image(systemName: "chevron.right")
-                            .font(.system(size: 11, weight: .semibold))
-                            .foregroundColor(Color(white: 0.6))
-                    }
-                    .padding(.horizontal, 14)
-                    .padding(.vertical, 14)
-                }
+        Group {
+            if model.destination == .stateParks, let tap = onStateParksTap {
+                Button { tap() } label: { cardContent }
+            } else {
+                NavigationLink(value: model.destination) { cardContent }
             }
-            .frame(width: cardWidth ?? .infinity, height: cardHeight)
-            .clipShape(RoundedRectangle(cornerRadius: 16))
-            .overlay(
-                RoundedRectangle(cornerRadius: 16)
-                    .strokeBorder(model.theme.color.opacity(0.75), lineWidth: 1)
-            )
-            .shadow(color: model.theme.color.opacity(0.4), radius: 8, x: 0, y: 0)
-            .shadow(color: model.theme.color.opacity(0.18), radius: 14, x: 0, y: 0)
-            .shadow(color: .black.opacity(0.35), radius: 8, x: 0, y: 4)
         }
         .buttonStyle(ScaleButtonStyle())
     }

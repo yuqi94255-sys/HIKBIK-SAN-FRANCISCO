@@ -23,7 +23,9 @@ private let stateNameToCode: [String: String] = [
 ]
 
 struct GrasslandsTab: View {
-    private let grasslands = DataLoader.loadNationalGrasslands()
+    @StateObject private var ridbViewModel = ExploreRIDBViewModel()
+
+    private var grasslands: [NationalGrassland] { ridbViewModel.grasslands }
 
     @State private var currentHeroIndex: Int = 0
     @State private var selectedStateName: String = ""

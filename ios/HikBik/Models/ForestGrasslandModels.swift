@@ -58,6 +58,34 @@ struct NationalGrassland: Codable, Identifiable, Hashable {
     let managingForest: String?
 }
 
+// MARK: - 設施詳情嵌套（對齊 RIDB API：FacilityDescription / Phone / Email / Address / Organization）
+
+struct FacilityAddress: Codable, Hashable {
+    let streetAddress1: String?
+    let streetAddress2: String?
+    let city: String?
+    let stateCode: String?
+    let postalCode: String?
+    let addressType: String?
+    let latitude: Double?
+    let longitude: Double?
+}
+
+struct FacilityPhone: Codable, Hashable {
+    let phoneNumber: String
+    let phoneType: String?
+}
+
+struct FacilityEmail: Codable, Hashable {
+    let email: String
+}
+
+struct FacilityOrganization: Codable, Hashable {
+    let id: String?
+    let name: String?
+    let url: String?
+}
+
 struct ForestFacility: Codable, Identifiable, Hashable {
     let id: String
     let name: String
@@ -68,6 +96,35 @@ struct ForestFacility: Codable, Identifiable, Hashable {
     let details: String?
     let seasonalInfo: String?
     let wheelchairAccessible: Bool?
+    /// 完整描述（HTML/Markdown），詳情頁 About 使用
+    let facilityDescription: String?
+    let facilityPhones: [FacilityPhone]?
+    let facilityEmails: [FacilityEmail]?
+    let facilityAddresses: [FacilityAddress]?
+    let managingOrganization: FacilityOrganization?
+    /// 預定頁 URL（若無則可能為 First-come First-served）
+    let reservationURL: String?
+    /// 設施類型描述（用於判斷營地 / 先到先得）
+    let facilityTypeDescription: String?
+}
+
+extension ForestFacility {
+    /// 是否為營地類
+    var isCampgroundCategory: Bool {
+        let raw = (category + (facilityTypeDescription ?? "")).lowercased()
+        return raw.contains("camp") || raw.contains("campsite")
+    }
+}
+
+extension ForestFacility {
+    /// 縮略地址：首個 FacilityAddress 的 city + stateCode，或 locations.first，供列表行顯示
+    var abbreviatedAddress: String {
+        if let addr = facilityAddresses?.first {
+            let parts = [addr.city, addr.stateCode].compactMap { $0 }
+            if !parts.isEmpty { return parts.joined(separator: ", ") }
+        }
+        return locations?.first ?? ""
+    }
 }
 
 struct ForestFacilitiesData: Codable, Hashable {
