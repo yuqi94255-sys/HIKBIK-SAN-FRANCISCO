@@ -1,0 +1,54 @@
+{
+  "trackId": "yosemite-half-dome-cables",
+  "type": "OFFICIAL_DETAILED_TRACK",
+  "theme": {
+    "primaryColor": "#22C55E",
+    "accentColor": "#4ADE80"
+  },
+  "header": {
+    "badge": "DETAILED TRACK",
+    "title": "Half Dome Cables Section",
+    "location": "Yosemite National Park, CA",
+    "imageName": "yosemite_half_dome_hero",
+    "rating": "4.9",
+    "reviewsCount": 1284
+  },
+  "dashboard": {
+    "trackQuality": "Excellent",
+    "safetyRating": "3.5/5",
+    "distance": "0.5 mi",
+    "duration": "1-2 hrs"
+  },
+  "elevationProfile": {
+    "totalGain": "+400 ft",
+    "totalLoss": "0 ft",
+    "startAlt": "8,442 ft",
+    "maxAlt": "8,842 ft",
+    "endAlt": "8,842 ft",
+    "dataPoints": [8442, 8500, 8650, 8750, 8842]
+  },
+  "weather": {
+    "location": "Yosemite Valley, CA",
+    "forecast": [
+      {"time": "Now", "temp": "68°F", "condition": "Sunny", "wind": "15 mph"},
+      {"time": "1 PM", "temp": "70°F", "condition": "Sunny", "wind": "18 mph"},
+      {"time": "2 PM", "temp": "71°F", "condition": "Windy", "wind": "22 mph"}
+    ]
+  },
+  "technicalSpecs": {
+    "surface": "Granite Rock",
+    "cellSignal": "None",
+    "vehicleAccess": "No",
+    "permit": "REQUIRED"
+  },
+  "waypoints": [
+    {"name": "Sub Dome Base", "distance": "0.0 mi"},
+    {"name": "Base of Cables", "distance": "0.2 mi"},
+    {"name": "Half Dome Summit", "distance": "0.5 mi"}
+  ],
+  "essentialGear": [
+    {"item": "Leather Gloves", "isMandatory": true, "icon": "hand.raised.fill"},
+    {"item": "Climbing Harness", "isMandatory": false, "icon": "figure.climbing"},
+    {"item": "Grip Boots", "isMandatory": true, "icon": "shoe.fill"}
+  ]
+}

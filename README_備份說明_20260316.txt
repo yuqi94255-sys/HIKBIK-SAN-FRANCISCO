@@ -1,0 +1,27 @@
+備份狀態說明（2026-03-16）
+============================
+
+已完成的備份
+------------
+1. Git 提交：當前專案狀態已提交到 main 分支
+   提交訊息：「Backup 20260316: 營地預定 UI、地圖樣式切換、設施詳情 RIDB、去卡片化、NRA 地址/設施優化」
+
+2. Git 標籤：backup-20260316
+   還原到此狀態：git checkout backup-20260316
+   之後若要回到最新開發：git checkout main
+
+在 Xcode 中編譯與運行
+--------------------
+1. 用 Xcode 開啟：ios/HikBik.xcodeproj
+2. 選擇目標裝置或模擬器（例如 iPhone 16）
+3. 按 Run (⌘R)
+
+若在終端曾出現模擬器或 DerivedData 相關錯誤，請直接在 Xcode 內執行 Build (⌘B) 或 Run，以本機環境為準。備份未改動任何原始碼，僅為提交與標籤。
+
+本備份包含的變更摘要
+-------------------
+- 營地預定：FacilityReservationCTA、Reserve on Recreation.gov / First-come 提示
+- 設施詳情：RIDB EntityLink/Attributes、FacilityAttributesBar、NRAFacilityDetailSheet 重構
+- 地圖樣式切換：DetailMapStyle、DetailMapWithStyleSwitcher、右上角按鈕、overlay 修復點擊
+- NRA 詳情：地址/設施 fallback、依名稱解析 RecAreaID、Location & Navigate
+- 去卡片化：設施詳情區塊、天氣模組一致

@@ -1,5 +1,7 @@
 import SwiftUI
 
+private let exploreListDarkBackground = Color(hex: "1A3324")
+
 private let forestHeroImages = [
     "https://images.unsplash.com/photo-1592489499861-c5b598a13f8b?w=1080",
     "https://images.unsplash.com/photo-1659514297099-af33ba8f1df9?w=1080",
@@ -32,7 +34,6 @@ struct ForestsTab: View {
     @State private var scrollOffset: CGFloat = 0
     @State private var heroTimer: Timer?
     @State private var showStatePicker: Bool = false
-    @State private var stateSearchText: String = ""
 
     private var availableStates: [String] {
         var set = Set<String>()
@@ -46,33 +47,14 @@ struct ForestsTab: View {
         return set.sorted()
     }
 
-    private var statesByLetter: [(letter: String, states: [String])] {
-        let grouped = Dictionary(grouping: availableStates) { state in
-            String(state.prefix(1)).uppercased()
+    /// 每个州在 Forest 类别下的地点数量
+    private var stateCounts: [String: Int] {
+        var counts: [String: Int] = [:]
+        for forest in forests {
+            let states = forest.states ?? [forest.state]
+            for s in states { counts[s, default: 0] += 1 }
         }
-        return grouped.keys.sorted().map { letter in
-            (letter: letter, states: (grouped[letter] ?? []).sorted())
-        }
-    }
-
-    private var filteredStatesByLetter: [(letter: String, states: [String])] {
-        let query = stateSearchText.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
-        if query.isEmpty { return statesByLetter }
-        let filtered = availableStates.filter { state in
-            state.lowercased().contains(query) || (stateNameToCode[state] ?? "").lowercased().contains(query)
-        }
-        let grouped = Dictionary(grouping: filtered) { String($0.prefix(1)).uppercased() }
-        return grouped.keys.sorted().map { letter in
-            (letter: letter, states: (grouped[letter] ?? []).sorted())
-        }
-    }
-
-    private var allLetters: [String] {
-        (65...90).map { String(Unicode.Scalar($0)) }
-    }
-
-    private func hasStatesInFiltered(forLetter letter: String) -> Bool {
-        filteredStatesByLetter.contains { $0.letter == letter }
+        return counts
     }
 
     private var filteredForests: [NationalForest] {
@@ -98,9 +80,11 @@ struct ForestsTab: View {
         .onPreferenceChange(ScrollOffsetKey.self) { value in
             scrollOffset = value
         }
-        .background(Color.hikbikBackground)
+        .background(exploreListDarkBackground.ignoresSafeArea())
         .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
+        .toolbarBackground(.hidden, for: .navigationBar)
+        .toolbarColorScheme(.dark, for: .navigationBar)
         .navigationDestination(for: NationalForest.self) { forest in
             ForestDetailView(forest: forest)
         }
@@ -197,95 +181,21 @@ struct ForestsTab: View {
             .padding(.horizontal, HikBikSpacing.lg)
             .padding(.vertical, 14)
             .frame(maxWidth: .infinity)
-            .background(.ultraThinMaterial)
-            .overlay(RoundedRectangle(cornerRadius: HikBikRadius.lg).stroke(Color.white.opacity(0.5), lineWidth: 2))
+            .background(Color.black.opacity(0.35))
+            .overlay(RoundedRectangle(cornerRadius: HikBikRadius.lg).stroke(Color.white.opacity(0.2), lineWidth: 0.5))
             .clipShape(RoundedRectangle(cornerRadius: HikBikRadius.lg))
         }
         .buttonStyle(.plain)
-        .sheet(isPresented: $showStatePicker) {
-            statePickerSheet
+        .fullScreenCover(isPresented: $showStatePicker) {
+            StatePickerSheetView(
+                selectedStateName: $selectedStateName,
+                isPresented: $showStatePicker,
+                category: .forest,
+                availableStates: availableStates,
+                stateCounts: stateCounts,
+                themeColor: Color(red: 0.2, green: 0.6, blue: 0.3)
+            )
         }
-        .onChange(of: showStatePicker) { _, show in
-            if !show { stateSearchText = "" }
-        }
-    }
-
-    private var statePickerSheet: some View {
-        NavigationStack {
-            ScrollViewReader { proxy in
-                HStack(spacing: 0) {
-                    List {
-                        ForEach(filteredStatesByLetter, id: \.letter) { group in
-                            Section(header: Text(group.letter).id(group.letter)) {
-                                ForEach(group.states, id: \.self) { state in
-                                    Button {
-                                        selectedStateName = state
-                                        showStatePicker = false
-                                    } label: {
-                                        HStack {
-                                            Text(state)
-                                                .font(.body)
-                                                .foregroundStyle(Color.hikbikPrimary)
-                                            Spacer()
-                                            Text(stateNameToCode[state] ?? "")
-                                                .font(.caption)
-                                                .foregroundStyle(Color.hikbikMutedForeground)
-                                            if selectedStateName == state {
-                                                Image(systemName: "checkmark")
-                                                    .font(.caption.weight(.semibold))
-                                                    .foregroundStyle(Color.hikbikTabActive)
-                                            }
-                                        }
-                                    }
-                                    .buttonStyle(.plain)
-                                }
-                            }
-                        }
-                    }
-                    .listStyle(.insetGrouped)
-                    .searchable(text: $stateSearchText, prompt: "Search states...")
-                    .navigationTitle("Select State")
-                    .navigationBarTitleDisplayMode(.inline)
-
-                    VStack(spacing: 1) {
-                        ForEach(allLetters, id: \.self) { letter in
-                            Button {
-                                guard hasStatesInFiltered(forLetter: letter) else { return }
-                                withAnimation(.easeInOut(duration: 0.2)) {
-                                    proxy.scrollTo(letter, anchor: .top)
-                                }
-                            } label: {
-                                Text(letter)
-                                    .font(.system(size: 9, weight: .medium))
-                                    .foregroundStyle(hasStatesInFiltered(forLetter: letter) ? Color.hikbikMutedForeground : Color.hikbikMutedForeground.opacity(0.5))
-                                    .frame(width: 18, height: 14)
-                            }
-                            .buttonStyle(.plain)
-                            .disabled(!hasStatesInFiltered(forLetter: letter))
-                        }
-                    }
-                    .padding(.vertical, 6)
-                    .padding(.horizontal, 5)
-                    .background(Color.hikbikSecondary.opacity(0.5))
-                }
-            }
-            .background(Color.hikbikBackground)
-            .toolbarBackground(.regularMaterial, for: .navigationBar)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Done") {
-                        showStatePicker = false
-                    }
-                    .font(.subheadline.weight(.medium))
-                    .foregroundStyle(Color.hikbikTabActive)
-                    .buttonStyle(.borderless)
-                }
-            }
-        }
-        .presentationBackground(.regularMaterial)
-        .presentationCornerRadius(16)
-        .presentationDetents([.height(320), .medium])
-        .presentationDragIndicator(.visible)
     }
 
     private var cardsSection: some View {
@@ -305,7 +215,7 @@ struct ForestsTab: View {
                 )
                 .padding(.vertical, 40)
             } else {
-                LazyVStack(spacing: HikBikSpacing.lg) {
+                LazyVStack(spacing: 22) {
                     ForEach(filteredForests) { forest in
                         NavigationLink(value: forest) {
                             NationalForestCardView(
@@ -318,7 +228,7 @@ struct ForestsTab: View {
                 }
             }
         }
-        .padding(.horizontal, HikBikSpacing.md)
+        .padding(.horizontal, 20)
         .padding(.vertical, HikBikSpacing.lg)
     }
 }

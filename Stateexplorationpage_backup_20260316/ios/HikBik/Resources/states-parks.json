@@ -1,0 +1,27 @@
+{
+  "IN": {
+    "name": "Indiana",
+    "code": "IN",
+    "description": "Explore Indiana's diverse state parks and forests featuring stunning waterfalls, scenic lakes, towering sand dunes, and hardwood forests.",
+    "bounds": [[37.8, -88.1], [41.8, -84.8]],
+    "regions": ["Northern", "Central", "Eastern", "Southern", "Western"],
+    "images": [
+      "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800",
+      "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=800"
+    ],
+    "parks": [
+      {"id":1,"name":"Indiana Dunes State Park","type":"State Park","description":"Iconic park on Lake Michigan featuring towering sand dunes reaching 200 feet high. Offers 3 miles of pristine beaches, 16 miles of hiking trails.","image":"https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800","activities":["Camping","Hiking","Fishing","Swimming","Picnicking","Birding"],"latitude":41.6593,"longitude":-87.063,"popularity":10,"hours":"Open daily: 7:00 AM - 11:00 PM","entryFee":"$7 per vehicle (IN residents), $12 (out-of-state)","phone":"(219) 926-1952"},
+      {"id":2,"name":"Brown County State Park","type":"State Park","description":"Indiana's largest state park covering 15,776 acres of scenic hills and forests. Known as the 'Little Smokies' for stunning fall foliage.","image":"https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=800","activities":["Camping","Hiking","Fishing","Boating","Swimming","Mountain Biking","Horseback Riding"],"latitude":39.1464,"longitude":-86.229,"popularity":10,"hours":"Open daily: 7:00 AM - 11:00 PM","entryFee":"$7 per vehicle (IN residents), $12 (out-of-state)","phone":"(812) 988-6406"},
+      {"id":3,"name":"Turkey Run State Park","type":"State Park","description":"Famous for spectacular sandstone gorges carved by Sugar Creek. Features stunning slot canyons, ladders through rock passages, and scenic suspension bridge.","image":"https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=800","activities":["Camping","Hiking","Fishing","Boating","Swimming","Picnicking","Birding"],"latitude":39.9189,"longitude":-87.2045,"popularity":10,"hours":"Open daily: 7:00 AM - 11:00 PM","entryFee":"$7 per vehicle (IN residents), $12 (out-of-state)","phone":"(765) 597-2635"}
+    ]
+  },
+  "CA": {
+    "name": "California",
+    "code": "CA",
+    "description": "From coastal redwoods to desert parks, California state parks offer world-class recreation and scenery.",
+    "images": ["https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800"],
+    "parks": [
+      {"id":1,"name":"Big Sur State Park","type":"State Park","description":"Spectacular coastal park with rugged cliffs, redwood groves, and the famous McWay Falls.","image":"https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800","activities":["Hiking","Camping","Scenic drives","Photography"],"latitude":36.27,"longitude":-121.81,"popularity":10,"hours":"Sunrise to sunset","entryFee":"$10 per vehicle","phone":"(831) 667-2315"}
+    ]
+  }
+}

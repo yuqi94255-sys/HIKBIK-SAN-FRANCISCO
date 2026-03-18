@@ -1,6 +1,8 @@
 import SwiftUI
 import MapKit
 
+private let exploreListDarkBackground = Color(hex: "1A3324")
+
 private let recreationHeroImages = [
     "https://images.unsplash.com/photo-1580541631950-7282082b53ce?w=1080",
     "https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=1080",
@@ -37,7 +39,6 @@ struct RecreationTab: View {
     @State private var scrollOffset: CGFloat = 0
     @State private var heroTimer: Timer?
     @State private var showStatePicker: Bool = false
-    @State private var stateSearchText: String = ""
     @State private var searchQuery: String = ""
     @State private var sortBy: RecreationSort = .name
     @State private var favoriteIds: Set<String> = []
@@ -50,33 +51,13 @@ struct RecreationTab: View {
         return set.sorted()
     }
 
-    private var statesByLetter: [(letter: String, states: [String])] {
-        let grouped = Dictionary(grouping: availableStates) { state in
-            String(state.prefix(1)).uppercased()
+    /// 每个州在 RecArea 类别下的地点数量
+    private var stateCounts: [String: Int] {
+        var counts: [String: Int] = [:]
+        for area in areas {
+            for s in area.location.states { counts[s, default: 0] += 1 }
         }
-        return grouped.keys.sorted().map { letter in
-            (letter: letter, states: (grouped[letter] ?? []).sorted())
-        }
-    }
-
-    private var filteredStatesByLetter: [(letter: String, states: [String])] {
-        let query = stateSearchText.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
-        if query.isEmpty { return statesByLetter }
-        let filtered = availableStates.filter { state in
-            state.lowercased().contains(query) || (stateNameToCode[state] ?? "").lowercased().contains(query)
-        }
-        let grouped = Dictionary(grouping: filtered) { String($0.prefix(1)).uppercased() }
-        return grouped.keys.sorted().map { letter in
-            (letter: letter, states: (grouped[letter] ?? []).sorted())
-        }
-    }
-
-    private var allLetters: [String] {
-        (65...90).map { String(Unicode.Scalar($0)) }
-    }
-
-    private func hasStatesInFiltered(forLetter letter: String) -> Bool {
-        filteredStatesByLetter.contains { $0.letter == letter }
+        return counts
     }
 
     private var filteredAreas: [NationalRecreationArea] {
@@ -125,9 +106,11 @@ struct RecreationTab: View {
         .onPreferenceChange(RecreationScrollOffsetKey.self) { value in
             scrollOffset = value
         }
-        .background(Color.hikbikBackground)
+        .background(exploreListDarkBackground.ignoresSafeArea())
         .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
+        .toolbarBackground(.hidden, for: .navigationBar)
+        .toolbarColorScheme(.dark, for: .navigationBar)
         .navigationDestination(for: NationalRecreationArea.self) { area in
             RecreationDetailView(area: area)
         }
@@ -135,7 +118,7 @@ struct RecreationTab: View {
             if selectedStateName.isEmpty, let first = availableStates.first {
                 selectedStateName = first
             }
-            favoriteIds = Set(FavoritesStore.loadIds(.nationalrecreation))
+            favoriteIds = Set(FavoritesManager.shared.load().filter { $0.id.hasPrefix("nationalrecreation:") }.map { $0.id.replacingOccurrences(of: "nationalrecreation:", with: "") })
             heroTimer = Timer.scheduledTimer(withTimeInterval: 4, repeats: true) { _ in
                 DispatchQueue.main.async {
                     currentHeroIndex = (currentHeroIndex + 1) % recreationHeroImages.count
@@ -225,95 +208,21 @@ struct RecreationTab: View {
             .padding(.horizontal, HikBikSpacing.lg)
             .padding(.vertical, 14)
             .frame(maxWidth: .infinity)
-            .background(.ultraThinMaterial)
-            .overlay(RoundedRectangle(cornerRadius: HikBikRadius.lg).stroke(Color.white.opacity(0.5), lineWidth: 2))
+            .background(Color.black.opacity(0.35))
+            .overlay(RoundedRectangle(cornerRadius: HikBikRadius.lg).stroke(Color.white.opacity(0.2), lineWidth: 0.5))
             .clipShape(RoundedRectangle(cornerRadius: HikBikRadius.lg))
         }
         .buttonStyle(.plain)
-        .sheet(isPresented: $showStatePicker) {
-            statePickerSheet
+        .fullScreenCover(isPresented: $showStatePicker) {
+            StatePickerSheetView(
+                selectedStateName: $selectedStateName,
+                isPresented: $showStatePicker,
+                category: .recArea,
+                availableStates: availableStates,
+                stateCounts: stateCounts,
+                themeColor: recreationThemeColor
+            )
         }
-        .onChange(of: showStatePicker) { _, show in
-            if !show { stateSearchText = "" }
-        }
-    }
-
-    private var statePickerSheet: some View {
-        NavigationStack {
-            ScrollViewReader { proxy in
-                HStack(spacing: 0) {
-                    List {
-                        ForEach(filteredStatesByLetter, id: \.letter) { group in
-                            Section(header: Text(group.letter).id(group.letter)) {
-                                ForEach(group.states, id: \.self) { state in
-                                    Button {
-                                        selectedStateName = state
-                                        showStatePicker = false
-                                    } label: {
-                                        HStack {
-                                            Text(state)
-                                                .font(.body)
-                                                .foregroundStyle(Color.hikbikPrimary)
-                                            Spacer()
-                                            Text(stateNameToCode[state] ?? "")
-                                                .font(.caption)
-                                                .foregroundStyle(Color.hikbikMutedForeground)
-                                            if selectedStateName == state {
-                                                Image(systemName: "checkmark")
-                                                    .font(.caption.weight(.semibold))
-                                                    .foregroundStyle(Color.cyan)
-                                            }
-                                        }
-                                    }
-                                    .buttonStyle(.plain)
-                                }
-                            }
-                        }
-                    }
-                    .listStyle(.insetGrouped)
-                    .searchable(text: $stateSearchText, prompt: "Search states...")
-                    .navigationTitle("Select State")
-                    .navigationBarTitleDisplayMode(.inline)
-
-                    VStack(spacing: 1) {
-                        ForEach(allLetters, id: \.self) { letter in
-                            Button {
-                                guard hasStatesInFiltered(forLetter: letter) else { return }
-                                withAnimation(.easeInOut(duration: 0.2)) {
-                                    proxy.scrollTo(letter, anchor: .top)
-                                }
-                            } label: {
-                                Text(letter)
-                                    .font(.system(size: 9, weight: .medium))
-                                    .foregroundStyle(hasStatesInFiltered(forLetter: letter) ? Color.hikbikMutedForeground : Color.hikbikMutedForeground.opacity(0.5))
-                                    .frame(width: 18, height: 14)
-                            }
-                            .buttonStyle(.plain)
-                            .disabled(!hasStatesInFiltered(forLetter: letter))
-                        }
-                    }
-                    .padding(.vertical, 6)
-                    .padding(.horizontal, 5)
-                    .background(Color.hikbikSecondary.opacity(0.5))
-                }
-            }
-            .background(Color.hikbikBackground)
-            .toolbarBackground(.regularMaterial, for: .navigationBar)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Done") {
-                        showStatePicker = false
-                    }
-                    .font(.subheadline.weight(.medium))
-                    .foregroundStyle(Color.cyan)
-                    .buttonStyle(.borderless)
-                }
-            }
-        }
-        .presentationBackground(.regularMaterial)
-        .presentationCornerRadius(16)
-        .presentationDetents([.height(320), .medium])
-        .presentationDragIndicator(.visible)
     }
 
     private var searchSection: some View {
@@ -371,34 +280,42 @@ struct RecreationTab: View {
                 )
                 .padding(.vertical, 40)
             } else {
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: HikBikSpacing.md) {
-                        ForEach(filteredAreas) { area in
-                NavigationLink(value: area) {
-                                RecreationCardView(
-                                    area: area,
-                                    isFavorite: favoriteIds.contains(String(area.id)),
-                                    onToggleFavorite: { toggleFavorite(area) }
-                                )
-                            }
-                            .buttonStyle(.plain)
+                LazyVStack(spacing: 22) {
+                    ForEach(filteredAreas) { area in
+                        NavigationLink(value: area) {
+                            RecreationCardView(
+                                area: area,
+                                isFavorite: favoriteIds.contains(String(area.id)),
+                                onToggleFavorite: { toggleFavorite(area) }
+                            )
                         }
+                        .buttonStyle(.plain)
                     }
-                    .padding(.horizontal, HikBikSpacing.lg)
-                    .padding(.vertical, HikBikSpacing.lg)
                 }
+                .padding(.horizontal, 20)
+                .padding(.vertical, HikBikSpacing.lg)
             }
         }
     }
 
     private func toggleFavorite(_ area: NationalRecreationArea) {
-        let id = String(area.id)
-        if favoriteIds.contains(id) {
-            FavoritesStore.remove(.nationalrecreation, id: id)
-            favoriteIds.remove(id)
+        let favId = "nationalrecreation:\(area.id)"
+        if FavoritesManager.shared.contains(id: favId) {
+            FavoritesManager.shared.remove(favId)
+            favoriteIds.remove(String(area.id))
         } else {
-            FavoritesStore.add(.nationalrecreation, id: id, stateName: area.location.states.first)
-            favoriteIds.insert(id)
+            let coord = area.location.coordinates
+            let dest = SavedDestination(
+                id: favId,
+                name: area.name,
+                category: .recreationArea,
+                agency: area.agency,
+                imageUrl: area.photoUrl ?? area.photo,
+                latitude: coord.latitude,
+                longitude: coord.longitude
+            )
+            FavoritesManager.shared.save(dest)
+            favoriteIds.insert(String(area.id))
         }
     }
 }
@@ -419,102 +336,40 @@ private struct RecreationCardView: View {
         area.photoUrl ?? area.photo ?? "https://images.unsplash.com/photo-1580541631950-7282082b53ce?w=800"
     }
 
-    var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            ZStack(alignment: .topTrailing) {
-                AsyncImage(url: URL(string: imageUrl)) { phase in
-                    switch phase {
-                    case .success(let img):
-                        img.resizable().scaledToFill()
-                    default:
-                        Color.hikbikMuted
-                    }
-                }
-                .frame(height: 140)
-                .clipped()
-                LinearGradient(colors: [.clear, .black.opacity(0.4)], startPoint: .top, endPoint: .bottom)
-
-                    HStack {
-                    Button(action: onToggleFavorite) {
-                        Image(systemName: isFavorite ? "heart.fill" : "heart")
-                            .font(.system(size: 14, weight: .semibold))
-                            .foregroundStyle(isFavorite ? Color.white : Color.hikbikPrimary)
-                            .frame(width: 28, height: 28)
-                            .background(isFavorite ? Color.hikbikDestructive : Color.white.opacity(0.9), in: Circle())
-                    }
-                    Spacer()
-                    Text(area.location.states.joined(separator: ", "))
-                        .font(HikBikFont.caption2())
-                        .foregroundStyle(.white)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
-                        .background(.ultraThinMaterial)
-                        .clipShape(Capsule())
-                }
-                .padding(8)
-            }
-            .frame(height: 140)
-
-            VStack(alignment: .leading, spacing: HikBikSpacing.sm) {
-                            Text(area.name)
-                                .font(HikBikFont.headline())
-                                .foregroundStyle(Color.hikbikPrimary)
-                    .lineLimit(2)
-
-                VStack(alignment: .leading, spacing: 4) {
-                    HStack(spacing: 6) {
-                        Image(systemName: "mappin.and.ellipse")
-                            .font(.caption)
-                            .foregroundStyle(Color.cyan)
-                        Text("\(area.areaAcres) acres")
-                            .font(HikBikFont.caption())
-                            .foregroundStyle(Color.hikbikMutedForeground)
-                    }
-                    HStack(spacing: 6) {
-                        Image(systemName: "calendar")
-                            .font(.caption)
-                            .foregroundStyle(Color.cyan)
-                        Text("Est. \(area.dateEstablished)")
-                            .font(HikBikFont.caption())
-                            .foregroundStyle(Color.hikbikMutedForeground)
-                    }
-                    if let visitors = area.visitors {
-                        HStack(spacing: 6) {
-                            Image(systemName: "chart.line.uptrend.xyaxis")
-                                .font(.caption)
-                                .foregroundStyle(Color.cyan)
-                            Text("\(visitors) visitors")
-                                .font(HikBikFont.caption())
-                                .foregroundStyle(Color.hikbikMutedForeground)
-                        }
-                    }
-                }
-
-                Text(area.categoryName)
-                    .font(HikBikFont.caption())
-                    .foregroundStyle(Color.cyan)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
-                    .background(Color.cyan.opacity(0.1))
-                    .clipShape(Capsule())
-
-                HStack {
-                    Text("View Details")
-                        .font(HikBikFont.caption())
-                        .foregroundStyle(Color.cyan)
-                    Image(systemName: "chevron.right")
-                        .font(.caption.weight(.semibold))
-                        .foregroundStyle(Color.cyan)
-                }
-            }
-            .padding(HikBikSpacing.md)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Color.hikbikCard)
+    private var attributes: [(icon: String, text: String)] {
+        var list: [(icon: String, text: String)] = [
+            ("square.dashed", "\(area.areaAcres) acres"),
+            ("calendar", "Est. \(area.dateEstablished)")
+        ]
+        if let v = area.visitors {
+            list.append(("person.2.fill", "\(v) visitors"))
         }
-        .clipShape(RoundedRectangle(cornerRadius: HikBikRadius.xl))
-        .overlay(RoundedRectangle(cornerRadius: HikBikRadius.xl).stroke(Color.hikbikBorder, lineWidth: 1))
-        .shadow(color: .black.opacity(0.06), radius: 8, x: 0, y: 2)
-        .frame(width: 240)
+        return list
+    }
+
+    private var locationLabel: String {
+        area.location.states.joined(separator: ", ")
+    }
+
+    var body: some View {
+        ZStack(alignment: .topLeading) {
+            PanoramaDestinationCard(
+                imageUrl: imageUrl,
+                title: area.name,
+                locationLabel: locationLabel,
+                iconAccent: ParkCategoryAccent.recreation.color,
+                attributes: attributes
+            )
+
+            Button(action: onToggleFavorite) {
+                Image(systemName: isFavorite ? "heart.fill" : "heart")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(isFavorite ? .white : Color.hikbikPrimary)
+                    .frame(width: 28, height: 28)
+                    .background(isFavorite ? Color.hikbikDestructive : Color.white.opacity(0.9), in: Circle())
+            }
+            .padding(12)
+        }
     }
 }
 
@@ -671,11 +526,11 @@ final class RecreationDetailSheetViewModel: ObservableObject {
 
 struct RecreationDetailSheetContent: View {
     let area: NationalRecreationArea
+    @Binding var isFavorite: Bool
     var themeColor: Color = recreationThemeColor
 
     @StateObject private var recViewModel = RecreationDetailSheetViewModel()
     @State private var activeTab: RecreationDetailTab = .overview
-    @State private var isFavorite: Bool = false
     @State private var selectedRIDBFacility: RIDBFacility?
     
     private var coordinate: CLLocationCoordinate2D {
@@ -783,12 +638,23 @@ struct RecreationDetailSheetContent: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(recreationSheetBackgroundColor)
-        .onAppear {
-            isFavorite = FavoritesStore.contains(.nationalrecreation, id: String(area.id))
-            recViewModel.load(areaName: area.name, fallbackRecAreaId: String(area.id))
+        .overlay(alignment: .topTrailing) {
+            FavoriteButton(
+                id: "nationalrecreation:\(area.id)",
+                name: area.name,
+                category: .recreationArea,
+                agency: area.agency,
+                imageUrl: area.photoUrl ?? area.photo,
+                latitude: coordinate.latitude,
+                longitude: coordinate.longitude,
+                isFavorite: $isFavorite
+            )
+            .padding(.top, 52)
+            .padding(.trailing, 20)
         }
+        .onAppear { recViewModel.load(areaName: area.name, fallbackRecAreaId: String(area.id)) }
         .sheet(item: $selectedRIDBFacility) { facility in
-            NRAFacilityDetailSheet(facility: facility, themeColor: themeColor)
+            NRAFacilityDetailSheet(areaId: area.id, areaAgency: area.agency, facility: facility, themeColor: themeColor)
         }
     }
 
@@ -813,20 +679,6 @@ struct RecreationDetailSheetContent: View {
                     .foregroundStyle(.tertiary)
             }
             Spacer(minLength: 8)
-            Button {
-                let id = String(area.id)
-                if isFavorite {
-                    FavoritesStore.remove(.nationalrecreation, id: id)
-                    isFavorite = false
-                } else {
-                    FavoritesStore.add(.nationalrecreation, id: id, stateName: area.location.states.first)
-                    isFavorite = true
-                }
-            } label: {
-                Image(systemName: isFavorite ? "heart.fill" : "heart")
-                    .font(.title3)
-                    .foregroundStyle(isFavorite ? Color.red : .secondary)
-            }
         }
         .padding(.horizontal, 20)
         .padding(.bottom, 12)
@@ -1413,6 +1265,7 @@ struct RecreationDetailView: View {
     @State private var showDetailSheet = true
     @State private var selectedDetent: PresentationDetent = .fraction(0.6)
     @State private var recAreaMarkerSelected = false
+    @State private var isFavorite = false
 
     private var coordinate: CLLocationCoordinate2D? {
         CLLocationCoordinate2D(
@@ -1444,8 +1297,9 @@ struct RecreationDetailView: View {
             .background(Color(red: 0x1C/255, green: 0x1C/255, blue: 0x1E/255))
         }
         .ignoresSafeArea(.all)
+        .onAppear { isFavorite = FavoritesManager.shared.contains(id: "nationalrecreation:\(area.id)") }
         .sheet(isPresented: $showDetailSheet) {
-            RecreationDetailSheetContent(area: area, themeColor: recreationThemeColor)
+            RecreationDetailSheetContent(area: area, isFavorite: $isFavorite, themeColor: recreationThemeColor)
                 .presentationDetents([.height(200), .fraction(0.6), .large], selection: $selectedDetent)
                 .presentationDragIndicator(.visible)
                 .presentationBackgroundInteraction(.enabled(upThrough: .fraction(0.6)))
@@ -1504,8 +1358,12 @@ private enum RecreationDetailTab: CaseIterable {
 
 /// NRA 設施二級彈窗：Hero + 預定 CTA + 屬性條 + 描述 + 聯繫 + 天氣，去卡片化
 struct NRAFacilityDetailSheet: View {
+    let areaId: Int
+    let areaAgency: String
     let facility: RIDBFacility
     var themeColor: Color
+
+    @State private var isFavorite = false
 
     private var facilityTitle: String {
         (facility.facilityName ?? "Facility")
@@ -1597,6 +1455,21 @@ struct NRAFacilityDetailSheet: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background(Color(red: 0x1C/255, green: 0x1C/255, blue: 0x1E/255))
+            .overlay(alignment: .topTrailing) {
+                FavoriteButton(
+                    id: "nationalrecreation:\(areaId):facility:\(facility.facilityID)",
+                    name: facilityTitle,
+                    category: .recreationArea,
+                    agency: areaAgency,
+                    imageUrl: nil,
+                    latitude: coordinate?.latitude ?? 0,
+                    longitude: coordinate?.longitude ?? 0,
+                    isFavorite: $isFavorite
+                )
+                .padding(.top, 52)
+                .padding(.trailing, 20)
+            }
+            .onAppear { isFavorite = FavoritesManager.shared.contains(id: "nationalrecreation:\(areaId):facility:\(facility.facilityID)") }
             .navigationTitle(facilityTitle)
             .navigationBarTitleDisplayMode(.inline)
         }

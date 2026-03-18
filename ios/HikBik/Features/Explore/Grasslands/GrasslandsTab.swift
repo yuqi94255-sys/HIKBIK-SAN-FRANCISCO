@@ -1,5 +1,7 @@
 import SwiftUI
 
+private let exploreListDarkBackground = Color(hex: "1A3324")
+
 private let grasslandHeroImages = [
     "https://images.unsplash.com/photo-1595147389795-37094173bfd8?w=1080",
     "https://images.unsplash.com/photo-1633813128468-7f53a60f3cd7?w=1080",
@@ -32,7 +34,6 @@ struct GrasslandsTab: View {
     @State private var scrollOffset: CGFloat = 0
     @State private var heroTimer: Timer?
     @State private var showStatePicker: Bool = false
-    @State private var stateSearchText: String = ""
     @State private var searchQuery: String = ""
 
     private var availableStates: [String] {
@@ -50,33 +51,18 @@ struct GrasslandsTab: View {
         return set.sorted()
     }
 
-    private var statesByLetter: [(letter: String, states: [String])] {
-        let grouped = Dictionary(grouping: availableStates) { state in
-            String(state.prefix(1)).uppercased()
+    /// 每个州在 Grassland 类别下的地点数量
+    private var stateCounts: [String: Int] {
+        var counts: [String: Int] = [:]
+        for g in grasslands {
+            let states: [String] = g.states ?? grasslandStateList(g.state)
+            for s in states { counts[s, default: 0] += 1 }
         }
-        return grouped.keys.sorted().map { letter in
-            (letter: letter, states: (grouped[letter] ?? []).sorted())
-        }
+        return counts
     }
 
-    private var filteredStatesByLetter: [(letter: String, states: [String])] {
-        let query = stateSearchText.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
-        if query.isEmpty { return statesByLetter }
-        let filtered = availableStates.filter { state in
-            state.lowercased().contains(query) || (stateNameToCode[state] ?? "").lowercased().contains(query)
-        }
-        let grouped = Dictionary(grouping: filtered) { String($0.prefix(1)).uppercased() }
-        return grouped.keys.sorted().map { letter in
-            (letter: letter, states: (grouped[letter] ?? []).sorted())
-        }
-    }
-
-    private var allLetters: [String] {
-        (65...90).map { String(Unicode.Scalar($0)) }
-    }
-
-    private func hasStatesInFiltered(forLetter letter: String) -> Bool {
-        filteredStatesByLetter.contains { $0.letter == letter }
+    private func grasslandStateList(_ state: String) -> [String] {
+        state.split(separator: ",").map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
     }
 
     private var filteredGrasslands: [NationalGrassland] {
@@ -120,9 +106,11 @@ struct GrasslandsTab: View {
         .onPreferenceChange(GrasslandsScrollOffsetKey.self) { value in
             scrollOffset = value
         }
-        .background(Color.hikbikBackground)
+        .background(exploreListDarkBackground.ignoresSafeArea())
         .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
+        .toolbarBackground(.hidden, for: .navigationBar)
+        .toolbarColorScheme(.dark, for: .navigationBar)
         .navigationDestination(for: NationalGrassland.self) { g in
             GrasslandDetailView(grassland: g)
         }
@@ -219,95 +207,21 @@ struct GrasslandsTab: View {
             .padding(.horizontal, HikBikSpacing.lg)
             .padding(.vertical, 14)
             .frame(maxWidth: .infinity)
-            .background(.ultraThinMaterial)
-            .overlay(RoundedRectangle(cornerRadius: HikBikRadius.lg).stroke(Color.white.opacity(0.5), lineWidth: 2))
+            .background(Color.black.opacity(0.35))
+            .overlay(RoundedRectangle(cornerRadius: HikBikRadius.lg).stroke(Color.white.opacity(0.2), lineWidth: 0.5))
             .clipShape(RoundedRectangle(cornerRadius: HikBikRadius.lg))
         }
         .buttonStyle(.plain)
-        .sheet(isPresented: $showStatePicker) {
-            statePickerSheet
+        .fullScreenCover(isPresented: $showStatePicker) {
+            StatePickerSheetView(
+                selectedStateName: $selectedStateName,
+                isPresented: $showStatePicker,
+                category: .grassland,
+                availableStates: availableStates,
+                stateCounts: stateCounts,
+                themeColor: Color(red: 0.55, green: 0.45, blue: 0.2)
+            )
         }
-        .onChange(of: showStatePicker) { _, show in
-            if !show { stateSearchText = "" }
-        }
-    }
-
-    private var statePickerSheet: some View {
-        NavigationStack {
-            ScrollViewReader { proxy in
-                HStack(spacing: 0) {
-                    List {
-                        ForEach(filteredStatesByLetter, id: \.letter) { group in
-                            Section(header: Text(group.letter).id(group.letter)) {
-                                ForEach(group.states, id: \.self) { state in
-                                    Button {
-                                        selectedStateName = state
-                                        showStatePicker = false
-                                    } label: {
-                    HStack {
-                                            Text(state)
-                                                .font(.body)
-                                .foregroundStyle(Color.hikbikPrimary)
-                                            Spacer()
-                                            Text(stateNameToCode[state] ?? "")
-                                                .font(.caption)
-                                .foregroundStyle(Color.hikbikMutedForeground)
-                                            if selectedStateName == state {
-                                                Image(systemName: "checkmark")
-                                                    .font(.caption.weight(.semibold))
-                                                    .foregroundStyle(Color.hikbikTabActive)
-                                            }
-                                        }
-                                    }
-                                    .buttonStyle(.plain)
-                                }
-                            }
-                        }
-                    }
-                    .listStyle(.insetGrouped)
-                    .searchable(text: $stateSearchText, prompt: "Search states...")
-                    .navigationTitle("Select State")
-                    .navigationBarTitleDisplayMode(.inline)
-
-                    VStack(spacing: 1) {
-                        ForEach(allLetters, id: \.self) { letter in
-                            Button {
-                                guard hasStatesInFiltered(forLetter: letter) else { return }
-                                withAnimation(.easeInOut(duration: 0.2)) {
-                                    proxy.scrollTo(letter, anchor: .top)
-                                }
-                            } label: {
-                                Text(letter)
-                                    .font(.system(size: 9, weight: .medium))
-                                    .foregroundStyle(hasStatesInFiltered(forLetter: letter) ? Color.hikbikMutedForeground : Color.hikbikMutedForeground.opacity(0.5))
-                                    .frame(width: 18, height: 14)
-                            }
-                            .buttonStyle(.plain)
-                            .disabled(!hasStatesInFiltered(forLetter: letter))
-                        }
-                    }
-                    .padding(.vertical, 6)
-                    .padding(.horizontal, 5)
-                    .background(Color.hikbikSecondary.opacity(0.5))
-                }
-            }
-            .background(Color.hikbikBackground)
-            .toolbarBackground(.regularMaterial, for: .navigationBar)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Done") {
-                        showStatePicker = false
-                    }
-                    .font(.subheadline.weight(.medium))
-                    .foregroundStyle(Color.hikbikTabActive)
-                    .buttonStyle(.borderless)
-                }
-            }
-        }
-        .presentationBackground(.regularMaterial)
-        .presentationCornerRadius(16)
-        .presentationDetents([.height(320), .medium])
-        .presentationDragIndicator(.visible)
     }
 
     private var searchSection: some View {
@@ -347,18 +261,16 @@ struct GrasslandsTab: View {
                 )
                 .padding(.vertical, 40)
             } else {
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: HikBikSpacing.md) {
-                        ForEach(filteredGrasslands) { grassland in
-                            NavigationLink(value: grassland) {
-                                GrasslandCardView(grassland: grassland)
-                            }
-                            .buttonStyle(.plain)
+                LazyVStack(spacing: 22) {
+                    ForEach(filteredGrasslands) { grassland in
+                        NavigationLink(value: grassland) {
+                            GrasslandCardView(grassland: grassland)
                         }
+                        .buttonStyle(.plain)
                     }
-                    .padding(.horizontal, HikBikSpacing.lg)
-                    .padding(.vertical, HikBikSpacing.lg)
                 }
+                .padding(.horizontal, 20)
+                .padding(.vertical, HikBikSpacing.lg)
             }
         }
     }
@@ -378,69 +290,32 @@ private struct GrasslandCardView: View {
         grassland.photos?.first ?? "https://images.unsplash.com/photo-1595147389795-37094173bfd8?w=800"
     }
 
-    var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            ZStack(alignment: .topTrailing) {
-                AsyncImage(url: URL(string: imageUrl)) { phase in
-                    switch phase {
-                    case .success(let img):
-                        img.resizable().scaledToFill()
-                    default:
-                        Color.hikbikMuted
-                    }
-                }
-                .frame(height: 140)
-                .clipped()
-                LinearGradient(colors: [.clear, .black.opacity(0.4)], startPoint: .top, endPoint: .bottom)
-                Text(grassland.state)
-                    .font(HikBikFont.caption2())
-                    .foregroundStyle(.white)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
-                    .background(.ultraThinMaterial)
-                    .clipShape(Capsule())
-                    .padding(8)
-            }
-            .frame(height: 140)
-
-            VStack(alignment: .leading, spacing: HikBikSpacing.sm) {
-                Text(grassland.name)
-                    .font(HikBikFont.headline())
-                    .foregroundStyle(Color.hikbikPrimary)
-                    .lineLimit(2)
-                Text(grassland.region)
-                    .font(HikBikFont.caption())
-                    .foregroundStyle(Color.hikbikMutedForeground)
-                if let activities = grassland.activities, !activities.isEmpty {
-                    FlowLayout(spacing: 4) {
-                        ForEach(activities.prefix(3), id: \.self) { a in
-                            Text(a)
-                                .font(HikBikFont.caption2())
-                                .foregroundStyle(Color.hikbikTabActive)
-                                .padding(.horizontal, 6)
-                                .padding(.vertical, 2)
-                                .background(Color.hikbikTabActiveTint)
-                                .clipShape(Capsule())
-                        }
-                    }
-                }
-                HStack {
-                    Text("View Details")
-                        .font(HikBikFont.caption())
-                        .foregroundStyle(Color.hikbikTabActive)
-                    Image(systemName: "chevron.right")
-                        .font(.caption.weight(.semibold))
-                        .foregroundStyle(Color.hikbikTabActive)
-                }
-            }
-            .padding(HikBikSpacing.md)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Color.hikbikCard)
+    private var attributes: [(icon: String, text: String)] {
+        var list: [(icon: String, text: String)] = []
+        if let established = grassland.established {
+            list.append(("calendar", "Est. \(established)"))
         }
-        .clipShape(RoundedRectangle(cornerRadius: HikBikRadius.xl))
-        .overlay(RoundedRectangle(cornerRadius: HikBikRadius.xl).stroke(Color.hikbikBorder, lineWidth: 1))
-        .shadow(color: .black.opacity(0.06), radius: 8, x: 0, y: 2)
-        .frame(width: 240)
+        if let visitors = grassland.visitors {
+            list.append(("person.2.fill", visitors))
+        }
+        if let acres = grassland.acres {
+            list.append(("square.dashed", "\(acres) acres"))
+        }
+        return list
+    }
+
+    private var locationLabel: String {
+        grassland.region.isEmpty ? grassland.state : grassland.region
+    }
+
+    var body: some View {
+        PanoramaDestinationCard(
+            imageUrl: imageUrl,
+            title: grassland.name,
+            locationLabel: locationLabel,
+            iconAccent: ParkCategoryAccent.grassland.color,
+            attributes: attributes
+        )
     }
 }
 

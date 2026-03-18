@@ -31,6 +31,8 @@ struct CommunityJourney: Codable {
     var isFavorited: Bool
     /// 經過 ImageUploadService 處理的封面 URL（16:10、最大 1920、JPEG 85%），優先於 days.first?.photoURL
     var coverImageURL: String?
+    /// 媒體池：多圖輪播 URL 數組，與 PostMediaStore 同步；為空時詳情用 coverImageURL / 首日圖
+    var imageUrls: [String]?
     /// 封面比例，明確記錄 16/10，有助於 UI 渲染穩定性
     var aspectRatio: Double?
 
@@ -50,6 +52,7 @@ struct CommunityJourney: Codable {
         isLiked: Bool = false,
         isFavorited: Bool = false,
         coverImageURL: String? = nil,
+        imageUrls: [String]? = nil,
         aspectRatio: Double? = 16.0 / 10.0
     ) {
         self.journeyName = journeyName
@@ -67,13 +70,14 @@ struct CommunityJourney: Codable {
         self.isLiked = isLiked
         self.isFavorited = isFavorited
         self.coverImageURL = coverImageURL
+        self.imageUrls = imageUrls
         self.aspectRatio = aspectRatio
     }
 
     enum CodingKeys: String, CodingKey {
         case journeyName, days, selectedStates, duration, vehicle, pace, difficulty, tags, state
         case author, likeCount, commentCount, isLiked, isFavorited
-        case coverImageURL, aspectRatio
+        case coverImageURL, imageUrls, aspectRatio
     }
 
     init(from decoder: Decoder) throws {
@@ -96,11 +100,12 @@ struct CommunityJourney: Codable {
         isLiked = (try? c.decode(Bool.self, forKey: .isLiked)) ?? false
         isFavorited = (try? c.decode(Bool.self, forKey: .isFavorited)) ?? false
         coverImageURL = try c.decodeIfPresent(String.self, forKey: .coverImageURL)
+        imageUrls = try c.decodeIfPresent([String].self, forKey: .imageUrls)
         aspectRatio = try c.decodeIfPresent(Double.self, forKey: .aspectRatio)
     }
 
-    /// 從 MacroJourneyPost 建構（可傳入經預處理的 coverImageURL）
-    static func from(_ post: MacroJourneyPost, author: CommunityAuthor? = nil, likeCount: Int = 0, commentCount: Int = 0, coverImageURL: String? = nil) -> CommunityJourney {
+    /// 從 MacroJourneyPost 建構（可傳入經預處理的 coverImageURL）。若傳入 imageUrls 則優先使用（發布時 PostMediaStore 寫入的 URL 數組）。
+    static func from(_ post: MacroJourneyPost, author: CommunityAuthor? = nil, likeCount: Int = 0, commentCount: Int = 0, coverImageURL: String? = nil, imageUrls: [String]? = nil) -> CommunityJourney {
         let imgsFirst: (JourneyDay) -> String? = { ($0.images ?? $0.dayPhotos)?.first }
         let days = post.days.map { d in
             let recs = d.recommendations?.map { CommunityRecommendation(title: $0.title, link: $0.link) }
@@ -136,6 +141,17 @@ struct CommunityJourney: Codable {
         } else if !stateDisplay.isEmpty, specTags.first != stateDisplay {
             specTags.insert(stateDisplay, at: 0)
         }
+        /// 全流程多圖：優先使用傳入的 imageUrls（發布時寫入的），否則由封面 + 各日 images/dayPhotos 合併
+        var allImageUrls: [String] = imageUrls ?? []
+        if allImageUrls.isEmpty {
+            if let cover = coverImageURL, !cover.isEmpty { allImageUrls.append(cover) }
+            for d in post.days {
+                let imgs = d.images ?? d.dayPhotos ?? []
+                for url in imgs where !url.isEmpty { allImageUrls.append(url) }
+            }
+            if allImageUrls.isEmpty, let c = coverImageURL, !c.isEmpty { allImageUrls = [c] }
+        }
+
         return CommunityJourney(
             journeyName: post.journeyName,
             days: days,
@@ -150,6 +166,7 @@ struct CommunityJourney: Codable {
             likeCount: likeCount,
             commentCount: commentCount,
             coverImageURL: coverImageURL,
+            imageUrls: allImageUrls.isEmpty ? nil : allImageUrls,
             aspectRatio: 16.0 / 10.0
         )
     }

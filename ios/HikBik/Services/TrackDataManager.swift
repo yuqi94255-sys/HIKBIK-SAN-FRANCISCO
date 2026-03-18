@@ -92,9 +92,17 @@ final class TrackDataManager: ObservableObject {
         objectWillChange.send()
     }
 
+    /// 刪除已發布項：從列表移除、持久化、清理 PostMedia 文件與緩存、廣播 PostDeleted 供 Community 同步刷新
     func removePublished(id: UUID) {
+        guard let index = publishedTracks.firstIndex(where: { $0.id == id }) else { return }
+        let draft = publishedTracks[index]
+        let postId = draft.category == .detailedTrack
+            ? PostMediaStore.publishId(publishedIndex: index, trackRouteID: draft.id.uuidString)
+            : PostMediaStore.publishId(publishedIndex: index, trackRouteID: nil)
         publishedTracks.removeAll { $0.id == id }
         savePublishedTracksToStore()
+        PostMediaStore.shared.destroyAllMedia(for: postId)
+        NotificationCenter.default.post(name: .postDeleted, object: nil, userInfo: ["id": postId])
         objectWillChange.send()
     }
 

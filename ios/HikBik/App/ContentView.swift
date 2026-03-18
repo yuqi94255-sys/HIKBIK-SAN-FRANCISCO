@@ -31,6 +31,7 @@ struct ContentView: View {
         .environmentObject(currentUser)
         .environmentObject(socialManager)
         .environmentObject(TrackDataManager.shared)
+        .environmentObject(PostCommentStore.shared)
         .tint(Color.hikbikTabActive)
         .onAppear {
             let appearance = UITabBarAppearance()
@@ -56,4 +57,5 @@ struct ContentView: View {
         .environmentObject(CurrentUser())
         .environmentObject(SocialManager())
         .environmentObject(TrackDataManager.shared)
+        .environmentObject(PostCommentStore.shared)
 }

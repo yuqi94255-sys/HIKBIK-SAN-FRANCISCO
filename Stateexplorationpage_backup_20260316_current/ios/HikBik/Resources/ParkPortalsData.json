@@ -1,0 +1,1105 @@
+{
+  "_meta": {
+    "description": "HIKBIK curated park portal data — airports, entrances, drive times, tips",
+    "schema": "portals[] + proTip"
+  },
+  "parks": {
+    "great-smoky-mountains": {
+      "portals": [
+        {
+          "type": "Fastest",
+          "airport": "TYS (Knoxville)",
+          "driveTime": "1.0 hr",
+          "entrance": "Gatlinburg",
+          "tip": "Nearest regional hub."
+        },
+        {
+          "type": "Major Hub",
+          "airport": "CLT (Charlotte)",
+          "driveTime": "3.0 hr",
+          "entrance": "Cherokee",
+          "tip": "AA hub with wide rental options."
+        },
+        {
+          "type": "Major Hub",
+          "airport": "BNA (Nashville)",
+          "driveTime": "3.5 hr",
+          "entrance": "Gatlinburg",
+          "tip": "Ideal for Tennessee road trip itineraries."
+        },
+        {
+          "type": "Global Hub",
+          "airport": "ATL (Atlanta)",
+          "driveTime": "3.5 hr",
+          "entrance": "Cherokee",
+          "tip": "Best international fares; largest rental fleet."
+        }
+      ],
+      "proTip": "Gatlinburg traffic is heavy in fall; fly into CLT and enter via Cherokee for smoother access."
+    },
+    "yosemite": {
+      "portals": [
+        {
+          "type": "Fastest",
+          "airport": "FAT (Fresno)",
+          "driveTime": "1.5 hr",
+          "entrance": "South Entrance",
+          "tip": "Direct to park south entrance."
+        },
+        {
+          "type": "Major Hub",
+          "airport": "SFO (San Francisco)",
+          "driveTime": "4.0 hr",
+          "entrance": "Big Oak Flat",
+          "tip": "Most flights; best rental selection."
+        },
+        {
+          "type": "Major Hub",
+          "airport": "SJC (San Jose)",
+          "driveTime": "3.5 hr",
+          "entrance": "Big Oak Flat",
+          "tip": "Silicon Valley gateway; avoids SFO congestion."
+        }
+      ],
+      "proTip": "Reserve entry in advance. SFO rentals often include toll transponder; bring your own from FAT."
+    },
+    "yellowstone": {
+      "portals": [
+        {
+          "type": "Fastest",
+          "airport": "BZN (Bozeman)",
+          "driveTime": "1.5 hr",
+          "entrance": "North/West Gate",
+          "tip": "Yellowstone's most popular gateway."
+        },
+        {
+          "type": "Fastest",
+          "airport": "JAC (Jackson Hole)",
+          "driveTime": "1.0 hr",
+          "entrance": "South Gate",
+          "tip": "Direct to Grand Teton and Yellowstone south gate."
+        },
+        {
+          "type": "Major Hub",
+          "airport": "SLC (Salt Lake City)",
+          "driveTime": "4.5 hr",
+          "entrance": "West Gate",
+          "tip": "Best rental value."
+        }
+      ],
+      "proTip": "Rent a large SUV. JAC airport rentals have high fees; consider pickup in Jackson."
+    },
+    "grand-canyon": {
+      "portals": [
+        {
+          "type": "Fastest",
+          "airport": "FLG (Flagstaff)",
+          "driveTime": "1.5 hr",
+          "entrance": "South Rim",
+          "tip": "Nearest small-city gateway."
+        },
+        {
+          "type": "Major Hub",
+          "airport": "PHX (Phoenix)",
+          "driveTime": "3.5 hr",
+          "entrance": "South Rim",
+          "tip": "Most popular option."
+        },
+        {
+          "type": "Major Hub",
+          "airport": "LAS (Las Vegas)",
+          "driveTime": "4.5 hr",
+          "entrance": "South/North Rim",
+          "tip": "Widest rental selection."
+        }
+      ],
+      "proTip": "South Rim open year-round; North Rim summer only and farther from hubs."
+    },
+    "zion": {
+      "portals": [
+        {
+          "type": "Fastest",
+          "airport": "SGU (St. George)",
+          "driveTime": "1.0 hr",
+          "entrance": "Springdale",
+          "tip": "Fastest route to park."
+        },
+        {
+          "type": "Major Hub",
+          "airport": "LAS (Las Vegas)",
+          "driveTime": "2.5 hr",
+          "entrance": "Springdale",
+          "tip": "Top recommended gateway; excellent road conditions."
+        }
+      ],
+      "proTip": "No private cars in peak season. Park in Springdale and shuttle; rent SUV for nearby areas."
+    },
+    "bryce-canyon": {
+      "portals": [
+        {
+          "type": "Fastest",
+          "airport": "SGU (St. George)",
+          "driveTime": "2.0 hr",
+          "entrance": "Hwy 63 Entrance",
+          "tip": "Nearest regional airport; quick access."
+        },
+        {
+          "type": "Major Hub",
+          "airport": "LAS (Las Vegas)",
+          "driveTime": "4.0 hr",
+          "entrance": "Hwy 63 Entrance",
+          "tip": "Grand Circle gateway; cheapest rentals."
+        },
+        {
+          "type": "Regional Hub",
+          "airport": "SLC (Salt Lake City)",
+          "driveTime": "4.0 hr",
+          "entrance": "Hwy 63 Entrance",
+          "tip": "Ideal for linking with northern parks."
+        }
+      ],
+      "proTip": "Elevation 8000+ ft. Winter (Nov\u2013Mar) rentals: confirm snow tires or AWD."
+    },
+    "canyonlands": {
+      "portals": [
+        {
+          "type": "Fastest",
+          "airport": "CNY (Moab)",
+          "driveTime": "35 min",
+          "entrance": "Island in the Sky",
+          "tip": "Closest to Island in the Sky."
+        },
+        {
+          "type": "Major Hub",
+          "airport": "SLC (Salt Lake City)",
+          "driveTime": "4.0 hr",
+          "entrance": "Island in the Sky",
+          "tip": "Best rental hub; plenty of SUVs."
+        },
+        {
+          "type": "Regional Hub",
+          "airport": "GJT (Grand Junction)",
+          "driveTime": "1.5 hr",
+          "entrance": "Island in the Sky",
+          "tip": "Solid regional alternative."
+        }
+      ],
+      "proTip": "Needles adds 1.5 hr; Maze requires 4WD Jeep rental in Moab."
+    },
+    "capitol-reef": {
+      "portals": [
+        {
+          "type": "Fastest Hub",
+          "airport": "SLC (Salt Lake City)",
+          "driveTime": "3.5 hr",
+          "entrance": "Hwy 24 Entrance",
+          "tip": "Best gateway; smooth, straight roads."
+        },
+        {
+          "type": "Major Hub",
+          "airport": "LAS (Las Vegas)",
+          "driveTime": "5.0 hr",
+          "entrance": "Hwy 24 Entrance",
+          "tip": "Ideal for Zion/Bryce combo."
+        }
+      ],
+      "proTip": "Hwy 24 is scenic. Unpaved roads in park; rent mid-size SUV."
+    },
+    "acadia": {
+      "portals": [
+        {
+          "type": "Fastest",
+          "airport": "BGR (Bangor)",
+          "driveTime": "1.0 hr",
+          "entrance": "Hulls Cove",
+          "tip": "Nearest major airport."
+        },
+        {
+          "type": "Major Hub",
+          "airport": "BOS (Boston)",
+          "driveTime": "4.5 hr",
+          "entrance": "Hulls Cove",
+          "tip": "International gateway; great for East Coast road trips."
+        }
+      ],
+      "proTip": "Cadillac Mountain parking requires reservation. Book BGR rentals 3 months ahead in peak season."
+    },
+    "olympic": {
+      "portals": [
+        {
+          "type": "Primary Hub",
+          "airport": "SEA (Seattle)",
+          "driveTime": "2.5 hr",
+          "entrance": "Port Angeles",
+          "tip": "Top gateway; take Bainbridge ferry across the bay."
+        },
+        {
+          "type": "Major Hub",
+          "airport": "PDX (Portland)",
+          "driveTime": "3.5 hr",
+          "entrance": "Kalaloch / Quinault",
+          "tip": "Best for coastal rainforest and shoreline first."
+        }
+      ],
+      "proTip": "Park is huge and circular. SEA best for rentals; get SUV with toll transponder for ferry/bridge."
+    },
+    "mount-rainier": {
+      "portals": [
+        {
+          "type": "Primary Hub",
+          "airport": "SEA (Seattle)",
+          "driveTime": "2.0 hr",
+          "entrance": "Nisqually Entrance",
+          "tip": "Nearest major hub south of Seattle."
+        },
+        {
+          "type": "Regional Hub",
+          "airport": "YKM (Yakima)",
+          "driveTime": "1.5 hr",
+          "entrance": "Stevens Canyon",
+          "tip": "East-side access; avoids Paradise crowds."
+        }
+      ],
+      "proTip": "Peak (May\u2013Sep) requires timed entry. Steep elevation gain; rent mid-size SUV with power."
+    },
+    "north-cascades": {
+      "portals": [
+        {
+          "type": "Major Hub",
+          "airport": "SEA (Seattle)",
+          "driveTime": "2.5 hr",
+          "entrance": "Hwy 20 Entrance",
+          "tip": "Follow Hwy 20 into North Cascades."
+        }
+      ],
+      "proTip": "One of America's wildest parks. Hwy 20 closed winter. Rent AWD from SEA for gravel roads."
+    },
+    "redwood": {
+      "portals": [
+        {
+          "type": "Fastest",
+          "airport": "ACV (Arcata/Eureka)",
+          "driveTime": "0.5 hr",
+          "entrance": "Kuchel Center",
+          "tip": "Heart of redwood country; fewer flights."
+        },
+        {
+          "type": "Major Hub",
+          "airport": "SFO (San Francisco)",
+          "driveTime": "5.5 hr",
+          "entrance": "Kuchel Center",
+          "tip": "Classic Hwy 101 drive; stunning views."
+        }
+      ],
+      "proTip": "Giant trees and narrow roads; avoid long RVs. Compact or mid-size SUV preferred."
+    },
+    "pinnacles": {
+      "portals": [
+        {
+          "type": "Major Hub",
+          "airport": "SJC (San Jose)",
+          "driveTime": "1.5 hr",
+          "entrance": "East Entrance",
+          "tip": "Closest option from Bay Area."
+        },
+        {
+          "type": "Major Hub",
+          "airport": "SFO (San Francisco)",
+          "driveTime": "2.0 hr",
+          "entrance": "East Entrance",
+          "tip": "Main international gateway."
+        }
+      ],
+      "proTip": "\u26a0\ufe0f East and west entrances don't connect! Visitor center at East (Paicines). Check AC in summer."
+    },
+    "lassen-volcanic": {
+      "portals": [
+        {
+          "type": "Major Hub",
+          "airport": "SMF (Sacramento)",
+          "driveTime": "3.0 hr",
+          "entrance": "Kohm Yah-mah-nee",
+          "tip": "Most reliable NorCal hub."
+        },
+        {
+          "type": "Regional Hub",
+          "airport": "RDD (Redding)",
+          "driveTime": "1.0 hr",
+          "entrance": "Manzanita Lake",
+          "tip": "Nearest small-city airport."
+        }
+      ],
+      "proTip": "Long snow season (into Jun\u2013Jul). Rent high clearance; check road conditions before departure."
+    },
+    "channel-islands": {
+      "portals": [
+        {
+          "type": "Major Hub",
+          "airport": "LAX (Los Angeles)",
+          "driveTime": "1.5 hr",
+          "entrance": "Ventura Harbor",
+          "tip": "Transfer to Island Packers ferry at harbor."
+        }
+      ],
+      "proTip": "No cars on island; walk only. Park rental at free harbor lot."
+    },
+    "crater-lake": {
+      "portals": [
+        {
+          "type": "Major Hub",
+          "airport": "PDX (Portland)",
+          "driveTime": "4.5 hr",
+          "entrance": "North/South Entrance",
+          "tip": "Longer drive but best rental selection."
+        },
+        {
+          "type": "Regional Hub",
+          "airport": "MFR (Medford)",
+          "driveTime": "1.5 hr",
+          "entrance": "South Entrance",
+          "tip": "Nearest regional airport."
+        }
+      ],
+      "proTip": "North entrance closed winter. High elevation; rent SUV with chains or AWD."
+    },
+    "denali": {
+      "portals": [
+        {
+          "type": "Major Hub",
+          "airport": "ANC (Anchorage)",
+          "driveTime": "4.0 hr",
+          "entrance": "Main Entrance",
+          "tip": "Most flights; large rental center."
+        },
+        {
+          "type": "Fastest",
+          "airport": "FAI (Fairbanks)",
+          "driveTime": "2.0 hr",
+          "entrance": "Main Entrance",
+          "tip": "Closest airport; straight to Denali."
+        }
+      ],
+      "proTip": "Private vehicles only to Mile 15. Rent 4WD for Alaska weather and possible gravel."
+    },
+    "kenai-fjords": {
+      "portals": [
+        {
+          "type": "Major Hub",
+          "airport": "ANC (Anchorage)",
+          "driveTime": "2.5 hr",
+          "entrance": "Seward",
+          "tip": "Scenic drive on Seward Highway."
+        }
+      ],
+      "proTip": "Rent with sunroof. Drive to Seward, park at harbor, take cruise."
+    },
+    "glacier-bay": {
+      "portals": [
+        {
+          "type": "Exclusive Hub",
+          "airport": "JNU (Juneau)",
+          "driveTime": "N/A",
+          "entrance": "Bartlett Cove",
+          "tip": "No road access; fly or ferry in."
+        }
+      ],
+      "proTip": "Classic fly-in park. Stock up in Juneau. No car rental on island."
+    },
+    "katmai": {
+      "portals": [
+        {
+          "type": "Only Base",
+          "airport": "ANC (Anchorage)",
+          "driveTime": "Fly-in",
+          "entrance": "Brooks Camp",
+          "tip": "Two flights: ANC -> King Salmon -> Katmai."
+        }
+      ],
+      "proTip": "Bear paradise. No roads; travel by plane or foot. No rental needed."
+    },
+    "lake-clark": {
+      "portals": [
+        {
+          "type": "Only Base",
+          "airport": "ANC (Anchorage)",
+          "driveTime": "Fly-in",
+          "entrance": "Port Alsworth",
+          "tip": "Floatplane only."
+        }
+      ],
+      "proTip": "True wilderness. Several charter operators at ANC (e.g. Lake Clark Air)."
+    },
+    "gates-of-arctic": {
+      "portals": [
+        {
+          "type": "Expedition Base",
+          "airport": "FAI (Fairbanks)",
+          "driveTime": "N/A",
+          "entrance": "No Road Access",
+          "tip": "Charter to Bettles or Coldfoot."
+        }
+      ],
+      "proTip": "No roads or facilities. Hire a guide in Fairbanks."
+    },
+    "kobuk-valley": {
+      "portals": [
+        {
+          "type": "Expedition Base",
+          "airport": "FAI (Fairbanks)",
+          "driveTime": "N/A",
+          "entrance": "Kotzebue",
+          "tip": "Fly to Kotzebue, then small plane."
+        }
+      ],
+      "proTip": "Arctic sand dunes. Extremely remote; bring all survival gear."
+    },
+    "rocky-mountain": {
+      "portals": [
+        {
+          "type": "Primary Hub",
+          "airport": "DEN (Denver)",
+          "driveTime": "1.5 hr",
+          "entrance": "Beaver Meadows",
+          "tip": "Strongest hub; great SUV availability."
+        },
+        {
+          "type": "Regional Hub",
+          "airport": "COS (Colorado Springs)",
+          "driveTime": "2.5 hr",
+          "entrance": "Beaver Meadows",
+          "tip": "Avoid Denver traffic."
+        }
+      ],
+      "proTip": "Trail Ridge Road is high elevation. Rent AWD for sudden snow."
+    },
+    "glacier": {
+      "portals": [
+        {
+          "type": "Fastest",
+          "airport": "FCA (Kalispell)",
+          "driveTime": "45 min",
+          "entrance": "West Glacier",
+          "tip": "Fastest park access."
+        },
+        {
+          "type": "Major Hub",
+          "airport": "MSO (Missoula)",
+          "driveTime": "2.5 hr",
+          "entrance": "West Glacier",
+          "tip": "Budget option; scenic drive."
+        }
+      ],
+      "proTip": "Going-to-the-Sun Road requires advance reservation. Rent compact SUV for narrow, unguarded roads."
+    },
+    "death-valley": {
+      "portals": [
+        {
+          "type": "Primary Hub",
+          "airport": "LAS (Las Vegas)",
+          "driveTime": "2.0 hr",
+          "entrance": "Furnace Creek",
+          "tip": "Best airfare and rental rates."
+        },
+        {
+          "type": "Major Hub",
+          "airport": "LAX (Los Angeles)",
+          "driveTime": "4.5 hr",
+          "entrance": "Stovepipe Wells",
+          "tip": "Ideal for SoCal road trip."
+        }
+      ],
+      "proTip": "Extreme summer heat. No EVs in wilderness. Check tire pressure; bring extra water."
+    },
+    "everglades": {
+      "portals": [
+        {
+          "type": "Major Hub",
+          "airport": "MIA (Miami)",
+          "driveTime": "0.8 hr",
+          "entrance": "Ernest Coe",
+          "tip": "Nearest major gateway."
+        },
+        {
+          "type": "Major Hub",
+          "airport": "FLL (Ft. Lauderdale)",
+          "driveTime": "1.5 hr",
+          "entrance": "Shark Valley",
+          "tip": "Budget-friendly airfare."
+        }
+      ],
+      "proTip": "Three entrances are separate. Rent fuel-efficient; long drives and few gas stations."
+    },
+    "haleakala": {
+      "portals": [
+        {
+          "type": "Exclusive Hub",
+          "airport": "OGG (Maui)",
+          "driveTime": "1.0 hr",
+          "entrance": "Summit District",
+          "tip": "Only gateway to summit."
+        }
+      ],
+      "proTip": "Sunrise requires reservation. Dark roads at dawn; rent modern car with strong lights."
+    },
+    "wrangell-st-elias": {
+      "portals": [
+        {
+          "type": "Major Hub",
+          "airport": "ANC (Anchorage)",
+          "driveTime": "4.5 hr",
+          "entrance": "McCarthy Road",
+          "tip": "Only major city gateway."
+        }
+      ],
+      "proTip": "\u26a0\ufe0f McCarthy Road is gravel. Hertz/Avis often prohibit. Use local rental (e.g. Arctic Adventure Rentals)."
+    },
+    "badlands": {
+      "portals": [
+        {
+          "type": "Primary Hub",
+          "airport": "RAP (Rapid City)",
+          "driveTime": "1.0 hr",
+          "entrance": "Northeast Entrance",
+          "tip": "Nearest major airport."
+        },
+        {
+          "type": "RoadTrip Hub",
+          "airport": "DEN (Denver)",
+          "driveTime": "6.0 hr",
+          "entrance": "Interior Entrance",
+          "tip": "Pair with Mount Rushmore."
+        }
+      ],
+      "proTip": "Roads are smooth. Regular sedan fine. Summer afternoon thunderstorms common."
+    },
+    "theodore-roosevelt": {
+      "portals": [
+        {
+          "type": "Major Hub",
+          "airport": "BIS (Bismarck)",
+          "driveTime": "2.0 hr",
+          "entrance": "Medora (South Unit)",
+          "tip": "North Dakota main hub."
+        }
+      ],
+      "proTip": "Great for bison viewing. Good roads; rent SUV for better visibility."
+    },
+    "voyageurs": {
+      "portals": [
+        {
+          "type": "Major Hub",
+          "airport": "MSP (Minneapolis)",
+          "driveTime": "4.5 hr",
+          "entrance": "Rainy Lake",
+          "tip": "Minnesota northbound option."
+        }
+      ],
+      "proTip": "Water-based. Rent boat on arrival. Fuel-efficient car; gas stations sparse."
+    },
+    "isle-royale": {
+      "portals": [
+        {
+          "type": "Basecamp",
+          "airport": "CMX (Houghton)",
+          "driveTime": "N/A",
+          "entrance": "Ferry Terminal",
+          "tip": "6-hour ferry; open Apr\u2013Oct."
+        }
+      ],
+      "proTip": "Island adventure. Park at CMX harbor. No cars on island; hike or kayak."
+    },
+    "indiana-dunes": {
+      "portals": [
+        {
+          "type": "Major Hub",
+          "airport": "ORD (Chicago)",
+          "driveTime": "1.0 hr",
+          "entrance": "Visitor Center",
+          "tip": "Quick from Chicago."
+        }
+      ],
+      "proTip": "South Shore Line train available. Watch Chicago traffic if renting."
+    },
+    "wind-cave": {
+      "portals": [
+        {
+          "type": "Major Hub",
+          "airport": "RAP (Rapid City)",
+          "driveTime": "1.0 hr",
+          "entrance": "Visitor Center",
+          "tip": "Often paired with Badlands."
+        }
+      ],
+      "proTip": "Smooth roads. Cave tours require reservation. Regular sedan fine."
+    },
+    "american-samoa": {
+      "portals": [
+        {
+          "type": "Global Hub",
+          "airport": "HNL (Honolulu)",
+          "driveTime": "N/A",
+          "entrance": "Pago Pago",
+          "tip": "Connect via Hawaiian Airlines."
+        }
+      ],
+      "proTip": "South Pacific island. Limited rentals; book before arrival."
+    },
+    "grand-teton": {
+      "portals": [
+        {
+          "type": "Direct",
+          "airport": "JAC (Jackson)",
+          "driveTime": "15 min",
+          "entrance": "Moose Entrance",
+          "tip": "America's most scenic airport; direct to park."
+        },
+        {
+          "type": "Major Hub",
+          "airport": "SLC (Salt Lake City)",
+          "driveTime": "4.5 hr",
+          "entrance": "Moran Entrance",
+          "tip": "Ideal for long road trips."
+        }
+      ]
+    },
+    "shenandoah": {
+      "portals": [
+        {
+          "type": "Major Hub",
+          "airport": "IAD (Dulles)",
+          "driveTime": "1.5 hr",
+          "entrance": "Front Royal",
+          "tip": "East Coast gateway; straight to Skyline Drive."
+        },
+        {
+          "type": "Regional Hub",
+          "airport": "CHO (Charlottesville)",
+          "driveTime": "0.5 hr",
+          "entrance": "Rockfish Gap",
+          "tip": "Nearest regional airport."
+        }
+      ],
+      "proTip": "\u9650\u901f 35 \u54e9\u3002\u9069\u5408\u79df\u5e36\u5929\u7a97\u7684\u8212\u9069\u623f\u8eca\uff0c\u6162\u7bc0\u594f\u8cde\u6953\u3002"
+    },
+    "joshua-tree": {
+      "portals": [
+        {
+          "type": "Fastest",
+          "airport": "PSP (Palm Springs)",
+          "driveTime": "0.8 hr",
+          "entrance": "West Entrance",
+          "tip": "Nearest boutique airport."
+        },
+        {
+          "type": "Major Hub",
+          "airport": "LAX (Los Angeles)",
+          "driveTime": "2.5 hr",
+          "entrance": "North Entrance",
+          "tip": "Best rental options."
+        }
+      ]
+    },
+    "carlsbad-caverns": {
+      "portals": [
+        {
+          "type": "Major Hub",
+          "airport": "ELP (El Paso)",
+          "driveTime": "2.5 hr",
+          "entrance": "Main Entrance",
+          "tip": "Main gateway; pair with White Sands."
+        },
+        {
+          "type": "Regional",
+          "airport": "MAF (Midland)",
+          "driveTime": "3.0 hr",
+          "entrance": "Main Entrance",
+          "tip": "Texas oil country airport."
+        }
+      ],
+      "proTip": "Cave tours require advance booking. Roads are smooth; sedan fine."
+    },
+    "white-sands": {
+      "portals": [
+        {
+          "type": "Major Hub",
+          "airport": "ELP (El Paso)",
+          "driveTime": "1.5 hr",
+          "entrance": "Dunes Drive",
+          "tip": "Only gateway; good value."
+        },
+        {
+          "type": "Regional Hub",
+          "airport": "ABQ (Albuquerque)",
+          "driveTime": "3.5 hr",
+          "entrance": "Dunes Drive",
+          "tip": "Pair with Santa Fe."
+        }
+      ],
+      "proTip": "Check missile test road closures. Bright sand; rent SUV with tinted windows."
+    },
+    "mesa-verde": {
+      "portals": [
+        {
+          "type": "Fastest",
+          "airport": "DRO (Durango)",
+          "driveTime": "0.8 hr",
+          "entrance": "Main Entrance",
+          "tip": "Nearest regional airport."
+        },
+        {
+          "type": "Major Hub",
+          "airport": "ABQ (Albuquerque)",
+          "driveTime": "4.0 hr",
+          "entrance": "Main Entrance",
+          "tip": "Southwest Grand Circle hub."
+        }
+      ],
+      "proTip": "Cliff dwellings have steep roads; use engine braking. Rent powerful vehicle."
+    },
+    "black-canyon": {
+      "portals": [
+        {
+          "type": "Fastest",
+          "airport": "MTJ (Montrose)",
+          "driveTime": "25 min",
+          "entrance": "South Rim Entrance",
+          "tip": "Right at the gate; fastest access."
+        },
+        {
+          "type": "Major Hub",
+          "airport": "DEN (Denver)",
+          "driveTime": "5.0 hr",
+          "entrance": "South Rim Entrance",
+          "tip": "Classic road trip across Rockies."
+        }
+      ],
+      "proTip": "South Rim roads good; North Rim separate and closed winter."
+    },
+    "great-sand-dunes": {
+      "portals": [
+        {
+          "type": "Major Hub",
+          "airport": "DEN (Denver)",
+          "driveTime": "4.0 hr",
+          "entrance": "Main Entrance",
+          "tip": "Colorado loop essential."
+        },
+        {
+          "type": "Regional Hub",
+          "airport": "COS (Colorado Springs)",
+          "driveTime": "2.5 hr",
+          "entrance": "Main Entrance",
+          "tip": "Closer regional hub."
+        }
+      ],
+      "proTip": "Regular cars only to visitor center. Medano Pass requires true 4WD."
+    },
+    "guadalupe-mountains": {
+      "portals": [
+        {
+          "type": "Major Hub",
+          "airport": "ELP (El Paso)",
+          "driveTime": "2.0 hr",
+          "entrance": "Pine Springs",
+          "tip": "Only major hub."
+        }
+      ],
+      "proTip": "Texas' highest point. Windy; rent stable large SUV."
+    },
+    "mammoth-cave": {
+      "portals": [
+        {
+          "type": "Major Hub",
+          "airport": "BNA (Nashville)",
+          "driveTime": "1.5 hr",
+          "entrance": "Visitor Center",
+          "tip": "Smooth roads from Nashville."
+        },
+        {
+          "type": "Major Hub",
+          "airport": "SDF (Louisville)",
+          "driveTime": "1.5 hr",
+          "entrance": "Visitor Center",
+          "tip": "Bourbon Trail start."
+        }
+      ],
+      "proTip": "Cave tours require reservation. Smooth roads; sedan fine."
+    },
+    "hot-springs": {
+      "portals": [
+        {
+          "type": "Major Hub",
+          "airport": "LIT (Little Rock)",
+          "driveTime": "1.0 hr",
+          "entrance": "Bathhouse Row",
+          "tip": "Urban park; convenient access."
+        }
+      ],
+      "proTip": "Tight parking; rent mid or compact for city."
+    },
+    "cuyahoga-valley": {
+      "portals": [
+        {
+          "type": "Major Hub",
+          "airport": "CLE (Cleveland)",
+          "driveTime": "0.5 hr",
+          "entrance": "Boston Mill",
+          "tip": "South of city; quick from airport."
+        }
+      ],
+      "proTip": "Great for biking. Any car works; Cleveland transit available."
+    },
+    "new-river-gorge": {
+      "portals": [
+        {
+          "type": "Major Hub",
+          "airport": "CLT (Charlotte)",
+          "driveTime": "3.5 hr",
+          "entrance": "Canyon Rim",
+          "tip": "Main hub option."
+        },
+        {
+          "type": "Regional Hub",
+          "airport": "CRW (Charleston, WV)",
+          "driveTime": "1.0 hr",
+          "entrance": "Canyon Rim",
+          "tip": "Nearest WV airport."
+        }
+      ],
+      "proTip": "East Coast newcomer. Steep roads; rent powerful car."
+    },
+    "congaree": {
+      "portals": [
+        {
+          "type": "Major Hub",
+          "airport": "CLT (Charlotte)",
+          "driveTime": "1.5 hr",
+          "entrance": "Harry Hampton",
+          "tip": "Smoothest route."
+        }
+      ],
+      "proTip": "Heavy mosquitoes in summer. Good roads; family sedan or SUV fine."
+    },
+    "biscayne": {
+      "portals": [
+        {
+          "type": "Major Hub",
+          "airport": "MIA (Miami)",
+          "driveTime": "0.8 hr",
+          "entrance": "Convoy Point",
+          "tip": "Quick from Miami."
+        }
+      ],
+      "proTip": "Water park. Park at visitor center, take boat. Regular car fine."
+    },
+    "dry-tortugas": {
+      "portals": [
+        {
+          "type": "Only Base",
+          "airport": "EYW (Key West)",
+          "driveTime": "N/A",
+          "entrance": "Garden Key",
+          "tip": "Ferry or plane only; book months ahead."
+        }
+      ],
+      "proTip": "No cars on island. Park at Key West harbor. No transport needed on island."
+    },
+    "virgin-islands": {
+      "portals": [
+        {
+          "type": "Major Hub",
+          "airport": "STT (St. Thomas)",
+          "driveTime": "N/A",
+          "entrance": "Cruz Bay",
+          "tip": "Ferry to St. John."
+        }
+      ],
+      "proTip": "Left-side driving; steep hills. **Strongly recommend 4WD Jeep**; small cars struggle."
+    },
+    "petrified-forest": {
+      "portals": [
+        {
+          "type": "Major Hub",
+          "airport": "PHX (Phoenix)",
+          "driveTime": "3.5 hr",
+          "entrance": "North/South Entrance",
+          "tip": "Best route through Arizona desert."
+        },
+        {
+          "type": "Regional Hub",
+          "airport": "FLG (Flagstaff)",
+          "driveTime": "1.5 hr",
+          "entrance": "North Entrance",
+          "tip": "Nearest small airport."
+        }
+      ],
+      "proTip": "Classic drive-through park. Sedan comfortable."
+    },
+    "sequoia": {
+      "portals": [
+        {
+          "type": "Fastest",
+          "airport": "FAT (Fresno)",
+          "driveTime": "1.5 hr",
+          "entrance": "Ash Mountain",
+          "tip": "Shared with Kings Canyon; direct to giant sequoias."
+        },
+        {
+          "type": "Major Hub",
+          "airport": "LAX (Los Angeles)",
+          "driveTime": "4.5 hr",
+          "entrance": "Ash Mountain",
+          "tip": "Main option from SoCal."
+        },
+        {
+          "type": "Major Hub",
+          "airport": "SFO (San Francisco)",
+          "driveTime": "5.5 hr",
+          "entrance": "Ash Mountain",
+          "tip": "Bay Area drive to Yosemite."
+        }
+      ],
+      "proTip": "Connected to Kings Canyon. Some roads closed winter; rent AWD."
+    },
+    "kings-canyon": {
+      "portals": [
+        {
+          "type": "Fastest",
+          "airport": "FAT (Fresno)",
+          "driveTime": "1.5 hr",
+          "entrance": "Grant Grove",
+          "tip": "Shared with Sequoia."
+        },
+        {
+          "type": "Major Hub",
+          "airport": "LAX (Los Angeles)",
+          "driveTime": "4.5 hr",
+          "entrance": "Grant Grove",
+          "tip": "SoCal road trip essential."
+        },
+        {
+          "type": "Major Hub",
+          "airport": "SFO (San Francisco)",
+          "driveTime": "5.5 hr",
+          "entrance": "Grant Grove",
+          "tip": "Pair with Sequoia."
+        }
+      ],
+      "proTip": "Cedar Grove closed winter. Pair with Sequoia in same trip."
+    },
+    "saguaro": {
+      "portals": [
+        {
+          "type": "Fastest",
+          "airport": "TUS (Tucson)",
+          "driveTime": "0.5 hr",
+          "entrance": "Rincon Mountain / Tucson Mountain",
+          "tip": "Tucson area; east and west districts separate."
+        },
+        {
+          "type": "Major Hub",
+          "airport": "PHX (Phoenix)",
+          "driveTime": "2.0 hr",
+          "entrance": "Tucson Mountain",
+          "tip": "Arizona loop hub."
+        }
+      ],
+      "proTip": "East and west districts ~1 hr apart. Visit early or late in summer."
+    },
+    "arches": {
+      "portals": [
+        {
+          "type": "Fastest",
+          "airport": "CNY (Moab)",
+          "driveTime": "20 min",
+          "entrance": "Arches Entrance",
+          "tip": "Shared Moab base with Canyonlands."
+        },
+        {
+          "type": "Regional Hub",
+          "airport": "GJT (Grand Junction)",
+          "driveTime": "1.5 hr",
+          "entrance": "Arches Entrance",
+          "tip": "Solid Colorado border option."
+        },
+        {
+          "type": "Major Hub",
+          "airport": "SLC (Salt Lake City)",
+          "driveTime": "4.5 hr",
+          "entrance": "Arches Entrance",
+          "tip": "Utah Mighty 5 loop start."
+        }
+      ],
+      "proTip": "Delicate Arch is a hike. Pair with Canyonlands; rent 4WD in Moab for Maze."
+    },
+    "big-bend": {
+      "portals": [
+        {
+          "type": "Major Hub",
+          "airport": "ELP (El Paso)",
+          "driveTime": "4.5 hr",
+          "entrance": "Persimmon Gap / Panther Junction",
+          "tip": "Texas' most remote park; only major hub."
+        },
+        {
+          "type": "Regional",
+          "airport": "MAF (Midland)",
+          "driveTime": "5.0 hr",
+          "entrance": "Persimmon Gap",
+          "tip": "Texas oil country airport."
+        }
+      ],
+      "proTip": "No gas in park; fill up in Marathon or Terlingua. Rent SUV for gravel."
+    },
+    "great-basin": {
+      "portals": [
+        {
+          "type": "Major Hub",
+          "airport": "SLC (Salt Lake City)",
+          "driveTime": "4.5 hr",
+          "entrance": "Lehman Caves",
+          "tip": "Nevada's most remote; SLC is nearest hub."
+        },
+        {
+          "type": "Regional Hub",
+          "airport": "LAS (Las Vegas)",
+          "driveTime": "5.0 hr",
+          "entrance": "Lehman Caves",
+          "tip": "Pair with Zion/Bryce."
+        }
+      ],
+      "proTip": "High elevation; Wheeler Peak road closed winter. Rent AWD; check conditions."
+    },
+    "hawaii-volcanoes": {
+      "portals": [
+        {
+          "type": "Fastest",
+          "airport": "KOA (Kona)",
+          "driveTime": "1.5 hr",
+          "entrance": "Kilauea Visitor Center",
+          "tip": "Closest from Kona; through volcano area."
+        },
+        {
+          "type": "Major Hub",
+          "airport": "HNL (Honolulu)",
+          "driveTime": "N/A",
+          "entrance": "Kilauea Visitor Center",
+          "tip": "Inter-island flight to Kona or Hilo."
+        }
+      ],
+      "proTip": "Hilo closer but fewer flights. Check NPS for current volcano activity."
+    },
+    "gateway-arch": {
+      "portals": [
+        {
+          "type": "Major Hub",
+          "airport": "STL (St. Louis)",
+          "driveTime": "0.3 hr",
+          "entrance": "Gateway Arch",
+          "tip": "Urban park; quick from airport."
+        }
+      ],
+      "proTip": "Urban park. METRO light rail available. Watch parking fees."
+    }
+  }
+}

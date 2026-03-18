@@ -1,7 +1,8 @@
-// 与 Web 探索入口一致：分类列表
+// 与 Web 探索入口一致：分类列表；深色背景 + 亮邊質感
 import SwiftUI
 
 private let stateParksComingSoonGreen = Color(red: 0.2, green: 0.6, blue: 0.3)
+private let exploreDarkBackground = Color(hex: "1A3324")
 
 struct ExploreView: View {
     @State private var showStateParksComingSoon = false
@@ -14,40 +15,42 @@ struct ExploreView: View {
                         showStateParksComingSoon = true
                     } label: {
                         Label("State Parks", systemImage: "map.fill")
-                            .foregroundStyle(Color.hikbikPrimary)
+                            .foregroundStyle(.white)
                     }
-                    .listRowBackground(Color.hikbikCard)
+                    .listRowBackground(Color.white.opacity(0.06))
                     NavigationLink(value: ExploreDestination.nationalParks) {
                         Label("National Parks", systemImage: "mountain.2.fill")
-                            .foregroundStyle(Color.hikbikPrimary)
+                            .foregroundStyle(.white)
                     }
-                    .listRowBackground(Color.hikbikCard)
+                    .listRowBackground(Color.white.opacity(0.06))
                     NavigationLink(value: ExploreDestination.forests) {
                         Label("National Forests", systemImage: "tree.fill")
-                            .foregroundStyle(Color.hikbikPrimary)
+                            .foregroundStyle(.white)
                     }
-                    .listRowBackground(Color.hikbikCard)
+                    .listRowBackground(Color.white.opacity(0.06))
                     NavigationLink(value: ExploreDestination.grasslands) {
                         Label("National Grasslands", systemImage: "leaf.fill")
-                            .foregroundStyle(Color.hikbikPrimary)
+                            .foregroundStyle(.white)
                     }
-                    .listRowBackground(Color.hikbikCard)
+                    .listRowBackground(Color.white.opacity(0.06))
                     NavigationLink(value: ExploreDestination.recreation) {
                         Label("National Recreation", systemImage: "water.waves")
-                            .foregroundStyle(Color.hikbikPrimary)
+                            .foregroundStyle(.white)
                     }
-                    .listRowBackground(Color.hikbikCard)
+                    .listRowBackground(Color.white.opacity(0.06))
                 } header: {
                     Text("Explore")
                         .font(HikBikFont.headline())
-                        .foregroundStyle(Color.hikbikMutedForeground)
+                        .foregroundStyle(Color.white.opacity(0.9))
                 }
             }
             .listStyle(.insetGrouped)
             .scrollContentBackground(.hidden)
-            .background(Color.hikbikBackground)
+            .background(exploreDarkBackground.ignoresSafeArea())
             .navigationTitle("Explore")
             .navigationBarTitleDisplayMode(.large)
+            .toolbarBackground(.hidden, for: .navigationBar)
+            .toolbarColorScheme(.dark, for: .navigationBar)
             .navigationDestination(for: ExploreDestination.self) { dest in
                 exploreDestinationView(dest)
             }
@@ -68,7 +71,7 @@ struct ExploreView: View {
         case .forests: ForestsTab()
         case .grasslands: GrasslandsTab()
         case .recreation: RecreationTab()
-        case .favorites: FavoritesListView()
+        case .favorites: HomeFavoritesView()
         }
     }
 }

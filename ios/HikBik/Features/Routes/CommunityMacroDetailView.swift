@@ -80,6 +80,46 @@ final class CommentStore: ObservableObject {
     }
 }
 
+/// 全局評論存儲：按 postId 存儲評論，卡片與詳情頁評論數 = comments.count，新增評論即時 +1
+final class PostCommentStore: ObservableObject {
+    static let shared = PostCommentStore()
+    @Published private(set) var commentsByPostId: [String: [CommunityComment]] = [:]
+
+    func comments(for postId: String) -> [CommunityComment] {
+        commentsByPostId[postId] ?? []
+    }
+
+    func commentCount(for postId: String) -> Int {
+        comments(for: postId).count
+    }
+
+    func addComment(postId: String, authorName: String, text: String, date: Date = Date()) {
+        guard !postId.isEmpty else { return }
+        var list = commentsByPostId[postId] ?? []
+        list.append(CommunityComment(authorName: authorName, text: text, date: date))
+        commentsByPostId[postId] = list
+    }
+
+    func sortedComments(for postId: String) -> [CommunityComment] {
+        let list = comments(for: postId)
+        return list.sorted { c1, c2 in
+            if c1.likeCount != c2.likeCount { return c1.likeCount > c2.likeCount }
+            return c1.date > c2.date
+        }
+    }
+
+    func toggleCommentLike(postId: String, commentId: UUID) {
+        guard var list = commentsByPostId[postId],
+              let i = list.firstIndex(where: { $0.id == commentId }) else { return }
+        var c = list[i]
+        c.isLiked.toggle()
+        c.likeCount += c.isLiked ? 1 : -1
+        c.likeCount = max(0, c.likeCount)
+        list[i] = c
+        commentsByPostId[postId] = list
+    }
+}
+
 struct CommunityMacroDetailView: View {
     /// 僅接收一份行程數據（CommunityJourney 或經 CommunityJourney.from(MacroJourneyPost) 轉換）。
     let journey: CommunityJourney
@@ -97,8 +137,8 @@ struct CommunityMacroDetailView: View {
     @State private var isLoadingRoadRoutes = false
     /// 地圖視野：有道路段時為「所有 polyline 的 Union Bounding Box」，否則為 day 點範圍。
     @State private var mapCameraPosition: MapCameraPosition = .automatic
-    /// 評論區：半屏 sheet + CommentStore
-    @StateObject private var commentStore = CommentStore()
+    /// 評論區：使用全局 PostCommentStore，評論數 = comments.count
+    @EnvironmentObject private var postCommentStore: PostCommentStore
     @State private var showCommentSheet = false
     @State private var commentDraft = ""
     /// 打卡：記錄到 Completed Journeys
@@ -116,6 +156,8 @@ struct CommunityMacroDetailView: View {
     @State private var isGeneratingShareImage = false
     /// 已生成的海報圖，用於 ShareSheet
     @State private var generatedShareImage: UIImage?
+    /// 媒體池更新時強制刷新 Hero 輪播（訂閱 .postMediaDidUpdate）
+    @State private var mediaRefreshTrigger = UUID()
 
     init(journey: CommunityJourney, journeyId: String? = nil, coverImageData: Data? = nil) {
         self.journey = journey
@@ -169,6 +211,7 @@ struct CommunityMacroDetailView: View {
     var body: some View {
         GeometryReader { geometry in
             ScrollView(.vertical, showsIndicators: false) {
+                // 固定順序：標題/封面 -> 描述 -> 地圖 -> Itinerary（從任何入口進入一致）
                 VStack(alignment: .leading, spacing: 20) {
                     heroCard(topSafeInset: geometry.safeAreaInsets.top)
                         .background(
@@ -208,10 +251,15 @@ struct CommunityMacroDetailView: View {
             mapCameraPosition = .region(regionForCoordinates(routeCoordinates))
             fetchRoadRoutesIfNeeded()
             isLiked = currentUser.isLiked(postId: effectivePostId)
+            isFavorited = currentUser.isSaved(postId: effectivePostId)
             hasCheckedIn = currentUser.hasCompleted(journeyId: effectiveJourneyId)
             if let a = journey.author, socialManager.users[a.id] == nil {
                 socialManager.ensureUser(id: a.id, username: a.displayName, initialFollowersCount: 0)
             }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .postMediaDidUpdate)) { n in
+            guard (n.userInfo?["id"] as? String) == effectivePostId else { return }
+            mediaRefreshTrigger = UUID()
         }
         .sheet(isPresented: $showCommentSheet) {
             commentSheet
@@ -315,8 +363,9 @@ struct CommunityMacroDetailView: View {
 
         return VStack(spacing: 0) {
             ZStack(alignment: .bottomLeading) {
-                // 1. 背景圖 ZStack 最底層，衝進 Safe Area，禁止頂部黑邊
+                // 1. 背景圖 ZStack 最底層，衝進 Safe Area，禁止頂部黑邊（id 使媒體池更新時重繪）
                 coverImageForHero
+                    .id(mediaRefreshTrigger)
                     .scaleEffect(parallaxScale)
                     .frame(width: screenWidth, height: totalHeroHeight)
                     .clipped()
@@ -432,28 +481,33 @@ struct CommunityMacroDetailView: View {
         .frame(width: screenWidth)
     }
 
-    /// 封面：橫/豎/方照統一 .aspectRatio(contentMode: .fill) + .clipped() 中心裁切，填滿 Hero 橫向區域不變形。
+    /// 輪播數據源：journey.imageUrls 或 PostMediaStore 同步的媒體池；無則用單圖 cover
+    private var heroImageURLs: [String] {
+        if let urls = journey.imageUrls, !urls.isEmpty { return urls }
+        if let urls = PostMediaStore.shared.imageUrls(for: effectivePostId), !urls.isEmpty { return urls }
+        return [coverImageURL]
+    }
+
+    /// 封面：多圖用 MediaCarouselView，單圖用原有邏輯；統一 .fill + .clipped()
     private var coverImageForHero: some View {
         Group {
-            if let data = coverImageData, let uiImage = UIImage(data: data) {
+            if heroImageURLs.count > 1 {
+                MediaCarouselView(urls: heroImageURLs, cornerRadius: 0, fixedHeight: heroCardHeight + 20)
+                    .frame(height: heroCardHeight + 20)
+                    .clipped()
+            } else if let data = coverImageData, let uiImage = UIImage(data: data) {
                 Image(uiImage: uiImage)
                     .resizable()
                     .aspectRatio(contentMode: .fill)
                     .clipped()
-            } else if let u = URL(string: coverImageURL) {
+            } else if let first = heroImageURLs.first, let u = URL(string: first) {
                 AsyncImage(url: u) { phase in
                     switch phase {
                     case .success(let image):
-                        image
-                            .resizable()
-                            .aspectRatio(contentMode: .fill)
-                            .clipped()
-                    case .failure:
-                        DefaultCoverView()
-                    case .empty:
-                        ShimmerPlaceholder()
-                    @unknown default:
-                        EmptyView()
+                        image.resizable().aspectRatio(contentMode: .fill).clipped()
+                    case .failure: DefaultCoverView()
+                    case .empty: ShimmerPlaceholder()
+                    @unknown default: EmptyView()
                     }
                 }
             } else {
@@ -488,16 +542,20 @@ struct CommunityMacroDetailView: View {
         }()
         return Group {
             if !tags.isEmpty {
-                HStack(spacing: 8) {
-                    ForEach(tags.prefix(5), id: \.self) { tag in
-                        Text(tag.uppercased())
-                            .font(.system(size: 11, weight: .semibold))
-                            .foregroundStyle(.white)
-                            .lineLimit(1)
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 6)
-                            .background(.ultraThinMaterial, in: Capsule())
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 8) {
+                        ForEach(tags, id: \.self) { tag in
+                            Text(tag.uppercased())
+                                .font(.system(size: 11, weight: .semibold))
+                                .foregroundStyle(.white)
+                                .lineLimit(1)
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 6)
+                                .background(.ultraThinMaterial, in: Capsule())
+                                .fixedSize(horizontal: true, vertical: false)
+                        }
                     }
+                    .padding(.horizontal, 2)
                 }
                 .frame(maxWidth: screenWidth - heroContentHorizontalPadding * 2, alignment: .leading)
                 .fixedSize(horizontal: false, vertical: true)
@@ -577,9 +635,11 @@ struct CommunityMacroDetailView: View {
                             Text(tag.uppercased())
                                 .font(.system(size: 12, weight: .semibold))
                                 .foregroundStyle(.white)
+                                .lineLimit(1)
                                 .padding(.horizontal, 14)
                                 .padding(.vertical, 8)
                                 .background(.ultraThinMaterial, in: Capsule())
+                                .fixedSize(horizontal: true, vertical: false)
                         }
                     }
                     .padding(.horizontal, pad)
@@ -709,7 +769,7 @@ struct CommunityMacroDetailView: View {
         return MKCoordinateRegion(center: center, span: span)
     }
 
-    // MARK: - Timeline Section：半透明 + .ultraThinMaterial，白字；Amenity 圖標白
+    // MARK: - Timeline Section：半透明 + .ultraThinMaterial，白字；Amenity 圖標白；days 為空時仍顯示區塊標題與佔位，保證從任何入口進入順序一致
     private var timelineSection: some View {
         VStack(alignment: .leading, spacing: 20) {
             Text("Itinerary")
@@ -717,8 +777,19 @@ struct CommunityMacroDetailView: View {
                 .foregroundStyle(.white)
                 .padding(.horizontal, pad)
                 .padding(.top, 28)
-            ForEach(Array(journey.days.enumerated()), id: \.offset) { index, day in
-                dayBlock(day: day, index: index)
+            if journey.days.isEmpty {
+                Text("No itinerary data")
+                    .font(.system(size: 15))
+                    .foregroundStyle(textMuted)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, pad)
+                    .padding(.vertical, 20)
+                    .background(.black.opacity(0.2))
+                    .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
+            } else {
+                ForEach(Array(journey.days.enumerated()), id: \.offset) { index, day in
+                    dayBlock(day: day, index: index)
+                }
             }
         }
         .padding(.bottom, 24)
@@ -809,7 +880,7 @@ struct CommunityMacroDetailView: View {
         .padding(.horizontal, pad)
     }
 
-    /// 當日照片牆：橫向滾動 dayPhotos；若為空則用單張 photoURL 兼容
+    /// 當日照片牆：多圖用 MediaCarouselView 輪播，單圖靜態；無圖不顯示。支持 file:// 與 https。
     private func dayPhotosRow(day: CommunityJourneyDay) -> some View {
         let urls: [String] = {
             if let im = day.images, !im.isEmpty { return im }
@@ -818,31 +889,20 @@ struct CommunityMacroDetailView: View {
             return []
         }()
         guard !urls.isEmpty else { return AnyView(EmptyView()) }
+        let validUrls: [String] = urls.compactMap { s in
+            guard !s.isEmpty else { return nil }
+            if s.hasPrefix("/") { return URL(fileURLWithPath: s).absoluteString }
+            return s
+        }
+        guard !validUrls.isEmpty else { return AnyView(EmptyView()) }
         return AnyView(
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 12) {
-                    ForEach(Array(urls.enumerated()), id: \.offset) { _, urlString in
-                        let url = URL(string: urlString) ?? (urlString.hasPrefix("/") ? URL(fileURLWithPath: urlString) : nil)
-                        if let url = url, !urlString.isEmpty {
-                            AsyncImage(url: url) { phase in
-                                if let img = phase.image {
-                                    img.resizable().scaledToFill()
-                                        .frame(width: 200, height: 140)
-                                        .clipped()
-                                } else {
-                                    RoundedRectangle(cornerRadius: 12)
-                                        .fill(.black.opacity(0.3))
-                                        .frame(width: 200, height: 140)
-                                        .overlay(ProgressView().tint(.white))
-                                }
-                            }
-                            .clipShape(RoundedRectangle(cornerRadius: 12))
-                            .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(.white.opacity(0.2), lineWidth: 1))
-                        }
-                    }
-                }
-                .padding(.horizontal, pad)
-            }
+            MediaCarouselView(
+                urls: validUrls,
+                cornerRadius: 12,
+                aspectRatio: 200/140,
+                fixedHeight: 140
+            )
+            .padding(.horizontal, pad)
             .padding(.vertical, 4)
         )
     }
@@ -950,10 +1010,12 @@ struct CommunityMacroDetailView: View {
                 HStack(spacing: 6) {
                     Image(systemName: isLiked ? "heart.fill" : "heart")
                         .font(.system(size: 20))
+                        .scaleEffect(isLiked ? 1.2 : 1.0)
+                        .animation(.spring(response: 0.3, dampingFraction: 0.6), value: isLiked)
                     Text("\(likeCount)")
                         .font(.system(size: 16, weight: .semibold))
                 }
-                .foregroundStyle(isLiked ? accent : textMuted)
+                .foregroundStyle(isLiked ? Color.red : textMuted)
                 .frame(maxWidth: .infinity)
             }
             .buttonStyle(.plain)
@@ -964,7 +1026,7 @@ struct CommunityMacroDetailView: View {
                 HStack(spacing: 6) {
                     Image(systemName: "bubble.right")
                         .font(.system(size: 20))
-                    Text("\(journey.commentCount + commentStore.comments.count)")
+                    Text("\(journey.commentCount + postCommentStore.commentCount(for: effectivePostId))")
                         .font(.system(size: 16, weight: .semibold))
                 }
                 .foregroundStyle(textMuted)
@@ -973,7 +1035,9 @@ struct CommunityMacroDetailView: View {
             .buttonStyle(.plain)
 
             Button {
-                isFavorited.toggle()
+                UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                currentUser.toggleSave(postId: effectivePostId)
+                isFavorited = currentUser.isSaved(postId: effectivePostId)
             } label: {
                 HStack(spacing: 6) {
                     Image(systemName: isFavorited ? "bookmark.fill" : "bookmark")
@@ -981,7 +1045,7 @@ struct CommunityMacroDetailView: View {
                     Text("Save")
                         .font(.system(size: 16, weight: .semibold))
                 }
-                .foregroundStyle(isFavorited ? accent : textMuted)
+                .foregroundStyle(isFavorited ? Color.yellow : textMuted)
                 .frame(maxWidth: .infinity)
             }
             .buttonStyle(.plain)
@@ -1072,10 +1136,10 @@ struct CommunityMacroDetailView: View {
             ZStack(alignment: .bottom) {
                 ScrollView {
                     LazyVStack(alignment: .leading, spacing: 0) {
-                        ForEach(commentStore.sortedComments) { c in
+                        ForEach(postCommentStore.sortedComments(for: effectivePostId)) { c in
                             CommentRowView(comment: c, accent: accent, onLike: {
                                 UIImpactFeedbackGenerator(style: .light).impactOccurred()
-                                commentStore.toggleCommentLike(id: c.id)
+                                postCommentStore.toggleCommentLike(postId: effectivePostId, commentId: c.id)
                             })
                             .padding(.horizontal, pad)
                             .padding(.vertical, 12)
@@ -1094,7 +1158,7 @@ struct CommunityMacroDetailView: View {
                     onSubmit: {
                         let text = commentDraft.trimmingCharacters(in: .whitespaces)
                         guard !text.isEmpty else { return }
-                        commentStore.addComment(authorName: currentUser.displayName, text: text, date: Date())
+                        postCommentStore.addComment(postId: effectivePostId, authorName: currentUser.displayName, text: text, date: Date())
                         commentDraft = ""
                     }
                 )

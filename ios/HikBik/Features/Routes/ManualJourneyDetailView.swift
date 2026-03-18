@@ -60,10 +60,20 @@ enum LandManagementTheme {
 struct ManualJourneyDetailView: View {
     @StateObject private var viewModel: RouteDetailViewModel
     @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject private var currentUser: CurrentUser
 
     @State private var toastMessage: String? = nil
     @State private var showReviewsSheet = false
     @State private var showNavigationView = false
+    @State private var showCommentsSheet = false
+
+    /// 與 Profile Saved/Liked 同步的 Track ID（track_routeID）
+    private var trackId: String { "track_\(viewModel.effectiveRouteID)" }
+    private var isLiked: Bool { currentUser.isLiked(postId: trackId) }
+    private var isSaved: Bool { currentUser.isSaved(postId: trackId) }
+    /// 即時跳變：詳情頁點贊後 likeCount 立即 +1/-1，與 Community/Profile 同步（CurrentUser 已發送 .socialStatusChanged）
+    private var likesCount: Int { (journey.reviewCount ?? 0) + (currentUser.isLiked(postId: trackId) ? 1 : 0) }
+    private var commentsCount: Int { journey.reviewCount ?? 0 }
 
     init(journey: ManualJourney) {
         _viewModel = StateObject(wrappedValue: RouteDetailViewModel(journey: journey))
@@ -217,11 +227,13 @@ struct ManualJourneyDetailView: View {
 
     private var favoriteButton: some View {
         Button {
-            viewModel.toggleFavorite()
+            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+            currentUser.toggleLike(postId: trackId)
+            viewModel.setFavoriteFromCurrentUser(currentUser.isLiked(postId: trackId))
         } label: {
-            Image(systemName: viewModel.isFavorite ? "heart.fill" : "heart")
+            Image(systemName: isLiked ? "heart.fill" : "heart")
                 .font(.system(size: 16))
-                .foregroundStyle(viewModel.isFavorite ? accentColor : .white)
+                .foregroundStyle(isLiked ? accentColor : .white)
                 .frame(width: 40, height: 40)
                 .background(.ultraThinMaterial, in: Circle())
         }
@@ -237,6 +249,7 @@ struct ManualJourneyDetailView: View {
                     sheetHeroBlock
                     sheetTitleBlock
                     sheetSocialHeaderBlock
+                    sheetInteractionBar
                     sheetSwipeHint
                     sheetStatsCapsule
                     sheetCategorySpecificBlock
@@ -264,6 +277,7 @@ struct ManualJourneyDetailView: View {
         .scrollContentBackground(.hidden)
         .overlay(toastOverlay)
         .sheet(isPresented: $showReviewsSheet) { sheetReviewsContent }
+        .sheet(isPresented: $showCommentsSheet) { sheetCommentsContent }
         }
     }
 
@@ -291,7 +305,7 @@ struct ManualJourneyDetailView: View {
         }
     }
 
-    /// 頂部封面圖：依 Sheet 檔位展開/淡出（全開展開，收縮時優雅縮放隱藏）
+    /// 頂部封面圖：與 Grand Journey 一致，優先 PostMediaStore(trackId) 再 journey.heroImages/heroImage；多圖用 MediaCarouselView，單圖靜態；依 Sheet 檔位展開/淡出
     @ViewBuilder
     private var sheetHeroBlock: some View {
         let heroHeight: CGFloat = {
@@ -303,29 +317,42 @@ struct ManualJourneyDetailView: View {
         }()
         let heroOpacity: Double = viewModel.sheetDetent == .large ? 1 : (viewModel.sheetDetent == .medium ? 0.7 : 0.4)
         let heroScale: CGFloat = viewModel.sheetDetent == .large ? 1 : (viewModel.sheetDetent == .medium ? 0.98 : 0.96)
-        if let urlString = journey.heroImage, let url = URL(string: urlString), !urlString.isEmpty {
-            AsyncImage(url: url) { phase in
-                switch phase {
-                case .success(let image):
-                    image
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                case .failure:
-                    Rectangle().fill(Color.white.opacity(0.08))
-                case .empty:
-                    Rectangle().fill(Color.white.opacity(0.06))
-                @unknown default:
-                    Rectangle().fill(Color.white.opacity(0.06))
-                }
-            }
-            .frame(height: heroHeight)
-            .frame(maxWidth: .infinity)
-            .clipped()
-            .clipShape(RoundedRectangle(cornerRadius: 16))
-            .opacity(heroOpacity)
-            .scaleEffect(heroScale)
-            .animation(.easeInOut(duration: 0.3), value: viewModel.sheetDetent)
+        let urls: [String] = {
+            if let stored = PostMediaStore.shared.imageUrls(for: trackId), !stored.isEmpty { return stored }
+            if let h = journey.heroImages, !h.isEmpty { return h }
+            if let single = journey.heroImage, !single.isEmpty { return [single] }
+            return []
+        }()
+        if !urls.isEmpty {
+            MediaCarouselView(urls: urls, cornerRadius: 16, aspectRatio: 16/10, fixedHeight: heroHeight)
+                .frame(height: heroHeight)
+                .frame(maxWidth: .infinity)
+                .clipped()
+                .clipShape(RoundedRectangle(cornerRadius: 16))
+                .opacity(heroOpacity)
+                .scaleEffect(heroScale)
+                .animation(.easeInOut(duration: 0.3), value: viewModel.sheetDetent)
         }
+    }
+
+    private func heroAsyncImage(urlString: String) -> some View {
+        Group {
+            if let url = URL(string: urlString), !urlString.isEmpty {
+                AsyncImage(url: url) { phase in
+                    switch phase {
+                    case .success(let image):
+                        image.resizable().aspectRatio(contentMode: .fill)
+                    case .failure: Rectangle().fill(Color.white.opacity(0.08))
+                    case .empty: Rectangle().fill(Color.white.opacity(0.06))
+                    @unknown default: Rectangle().fill(Color.white.opacity(0.06))
+                    }
+                }
+            } else {
+                Rectangle().fill(Color.white.opacity(0.06))
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .clipped()
     }
 
     /// Author header: avatar + name; tap navigates to UserProfileView
@@ -406,14 +433,25 @@ struct ManualJourneyDetailView: View {
                         .clipShape(Capsule())
                 }
             }
-            if let cat = journey.category {
-                Text(cat.rawValue)
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundStyle(.white)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 6)
-                    .background(accentColor)
-                    .clipShape(Capsule())
+            HStack(spacing: 8) {
+                if let tier = journey.trackTier {
+                    Text(tier == .nature ? "🌲 Nature" : "🏙️ Urban")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 6)
+                        .background(tier == .nature ? Color(hex: "16A34A") : Color(hex: "2563EB"))
+                        .clipShape(Capsule())
+                }
+                if let catDisplay = journey.displayCategory, !catDisplay.isEmpty {
+                    Text(catDisplay)
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 6)
+                        .background(accentColor)
+                        .clipShape(Capsule())
+                }
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -524,6 +562,30 @@ struct ManualJourneyDetailView: View {
         }
     }
 
+    private var sheetCommentsContent: some View {
+        NavigationStack {
+            VStack(spacing: 16) {
+                Text("\(commentsCount) comments")
+                    .font(.system(size: 14))
+                    .foregroundStyle(.secondary)
+                Text("View and add comments — coming soon")
+                    .font(.system(size: 13))
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal)
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .padding()
+            .navigationTitle("Comments")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Done") { showCommentsSheet = false }
+                }
+            }
+        }
+    }
+
     private var fireRiskGaugeView: some View {
         HStack(spacing: 8) {
             Image(systemName: "flame.fill")
@@ -547,6 +609,74 @@ struct ManualJourneyDetailView: View {
         .padding(.horizontal, 12)
         .padding(.vertical, 8)
         .background(RoundedRectangle(cornerRadius: 10).fill(Color.white.opacity(0.06)))
+    }
+
+    // MARK: - 交互工具欄（Like / Comment / Save，與 CurrentUser 雙向同步）
+    private var sheetInteractionBar: some View {
+        HStack(spacing: 0) {
+            Button {
+                UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                currentUser.toggleLike(postId: trackId)
+                viewModel.setFavoriteFromCurrentUser(currentUser.isLiked(postId: trackId))
+            } label: {
+                HStack(spacing: 6) {
+                    Image(systemName: isLiked ? "heart.fill" : "heart")
+                        .font(.system(size: 18))
+                        .foregroundStyle(isLiked ? accentColor : .white)
+                    Text("\(likesCount)")
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundStyle(.white)
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 14)
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+
+            Button {
+                UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                showCommentsSheet = true
+            } label: {
+                HStack(spacing: 6) {
+                    Image(systemName: "bubble.right")
+                        .font(.system(size: 18))
+                        .foregroundStyle(.white)
+                    Text("\(commentsCount)")
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundStyle(.white)
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 14)
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+
+            Button {
+                UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                let wasSaved = isSaved
+                if wasSaved {
+                    currentUser.toggleSave(postId: trackId)
+                    SocialDataManager.shared.removeTrackJourney(id: trackId)
+                    toastMessage = "Removed from Saved"
+                } else {
+                    currentUser.toggleSave(postId: trackId)
+                    if let data = try? JSONEncoder().encode(journey) {
+                        SocialDataManager.shared.saveTrackJourney(id: trackId, journeyData: data)
+                    }
+                    toastMessage = "Saved to Profile"
+                }
+            } label: {
+                Image(systemName: isSaved ? "bookmark.fill" : "bookmark")
+                    .font(.system(size: 18))
+                    .foregroundStyle(isSaved ? accentColor : .white)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 14)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+        }
+        .background(Color.white.opacity(0.06))
+        .clipShape(RoundedRectangle(cornerRadius: 12))
     }
 
     /// 收縮時提示（輔助文字 → .secondary）
@@ -804,7 +934,7 @@ struct ManualJourneyDetailView: View {
                     .foregroundStyle(Color.secondary)
                     .frame(width: 70, alignment: .leading)
             }
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: 6) {
                 Text(node.title)
                     .font(.system(size: 16, weight: .bold))
                     .foregroundStyle(.white)
@@ -817,6 +947,52 @@ struct ManualJourneyDetailView: View {
                         .font(.system(size: 12, weight: .medium))
                         .foregroundStyle(Color.secondary)
                 }
+                if let elev = node.elevation, !elev.isEmpty {
+                    HStack(spacing: 4) {
+                        Image(systemName: "arrow.up.right")
+                            .font(.system(size: 10))
+                            .foregroundStyle(accentColor)
+                        Text(elev)
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundStyle(Color.secondary)
+                    }
+                }
+                if node.hasWater || node.hasFuel || node.signalStrength > 0 {
+                    HStack(spacing: 8) {
+                        if node.hasWater {
+                            Image(systemName: "drop.fill")
+                                .font(.system(size: 12))
+                                .foregroundStyle(Color(hex: "3B82F6"))
+                        }
+                        if node.hasFuel {
+                            Image(systemName: "fuelpump.fill")
+                                .font(.system(size: 12))
+                                .foregroundStyle(Color(hex: "F59E0B"))
+                        }
+                        if node.signalStrength > 0 {
+                            HStack(spacing: 2) {
+                                Image(systemName: "antenna.radiowaves.left.and.right")
+                                    .font(.system(size: 12))
+                                    .foregroundStyle(ManualJourneyColors.textMuted)
+                                Text("\(node.signalStrength)/5")
+                                    .font(.system(size: 11, weight: .medium))
+                                    .foregroundStyle(Color.secondary)
+                            }
+                        }
+                    }
+                }
+                if let urls = node.imageUrls, !urls.isEmpty {
+                    viewPointPhotoBlock(urls: urls)
+                } else if node.photoCount > 0 {
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(Color.white.opacity(0.08))
+                        .frame(height: 120)
+                        .overlay(
+                            Image(systemName: "photo.fill")
+                                .font(.system(size: 24))
+                                .foregroundStyle(ManualJourneyColors.textMuted.opacity(0.8))
+                        )
+                }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
         }
@@ -825,13 +1001,52 @@ struct ManualJourneyDetailView: View {
         .padding(.bottom, isLast ? 0 : 4)
         .contentShape(Rectangle())
         .onTapGesture {
-                        viewModel.selectedViewPointIndex = index
+            viewModel.selectedViewPointIndex = index
+        }
+    }
+
+    /// ViewPoint 專屬照片：從 imageUrls 加載，fill + 圓角 12
+    private func viewPointPhotoBlock(urls: [String]) -> some View {
+        Group {
+            if urls.count == 1, let first = urls.first, let url = URL(string: first) {
+                AsyncImage(url: url) { phase in
+                    switch phase {
+                    case .success(let img): img.resizable().aspectRatio(contentMode: .fill)
+                    case .failure, .empty: Rectangle().fill(Color.white.opacity(0.08))
+                    @unknown default: Rectangle().fill(Color.white.opacity(0.08))
+                    }
+                }
+                .frame(height: 120)
+                .clipped()
+                .clipShape(RoundedRectangle(cornerRadius: 12))
+            } else {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 8) {
+                        ForEach(urls.indices, id: \.self) { i in
+                            if let u = URL(string: urls[i]) {
+                                AsyncImage(url: u) { phase in
+                                    switch phase {
+                                    case .success(let img): img.resizable().aspectRatio(contentMode: .fill)
+                                    case .failure, .empty: Rectangle().fill(Color.white.opacity(0.08))
+                                    @unknown default: Rectangle().fill(Color.white.opacity(0.08))
+                                    }
+                                }
+                                .frame(width: 120, height: 120)
+                                .clipped()
+                                .clipShape(RoundedRectangle(cornerRadius: 12))
+                            }
+                        }
+                    }
+                }
+                .frame(height: 120)
+            }
         }
     }
 
     private func activityIcon(for activity: ViewPointActivityType) -> String {
         switch activity {
         case .hiking: return "figure.hiking"
+        case .biking: return "bicycle"
         case .climbing: return "figure.climbing"
         case .summit: return "mountain.2.fill"
         case .mtb: return "bicycle"

@@ -63,4 +63,24 @@ final class SocialDataManager {
         setLiked(routeID: routeID, !current)
         return !current
     }
+
+    // MARK: - Saved Track Journey（Profile Saved 顯示 TRACK 卡片並可再次打開詳情）
+    private func trackJourneyKey(_ id: String) -> String { "SocialDataManager_trackJourney_\(id)" }
+
+    func saveTrackJourney(id: String, journeyData: Data?) {
+        guard !id.isEmpty else { return }
+        if let data = journeyData {
+            UserDefaults.standard.set(data, forKey: trackJourneyKey(id))
+        } else {
+            UserDefaults.standard.removeObject(forKey: trackJourneyKey(id))
+        }
+    }
+
+    func getTrackJourneyData(id: String) -> Data? {
+        UserDefaults.standard.data(forKey: trackJourneyKey(id))
+    }
+
+    func removeTrackJourney(id: String) {
+        UserDefaults.standard.removeObject(forKey: trackJourneyKey(id))
+    }
 }

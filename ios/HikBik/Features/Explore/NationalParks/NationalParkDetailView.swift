@@ -85,7 +85,7 @@ struct NationalParkDetailView: View {
         }
         .ignoresSafeArea(.all)
         .sheet(isPresented: $showDetailSheet) {
-            ParkDetailSheetContent(park: park, parkDetail: parkDetail, selectedFacilityForMap: $selectedFacilityForMap, themeColor: parkThemeColor)
+            ParkDetailSheetContent(park: park, parkDetail: parkDetail, selectedFacilityForMap: $selectedFacilityForMap, isFavorite: $isFavorite, themeColor: parkThemeColor)
                 .presentationDetents(
                     [.height(200), .fraction(0.6), .large], // 鎖定三段：200pt / 60% / large，收納時不侷促
                     selection: $selectedDetent
@@ -117,7 +117,7 @@ struct NationalParkDetailView: View {
                 }
             }
         }
-        .onAppear { isFavorite = FavoritesStore.contains(favId) }
+        .onAppear { isFavorite = FavoritesManager.shared.contains(id: favId) }
         .task {
             guard let code = park.parkCode else { return }
             do {
@@ -163,8 +163,23 @@ struct NationalParkDetailView: View {
                 HStack {
                     Spacer()
                     Button {
-                        if isFavorite { FavoritesStore.remove(favId) } else { FavoritesStore.add(favId) }
-                        isFavorite.toggle()
+                        if isFavorite {
+                            FavoritesManager.shared.remove(favId)
+                            isFavorite = false
+                        } else {
+                            let coord = coordinate ?? CLLocationCoordinate2D(latitude: 0, longitude: 0)
+                            let dest = SavedDestination(
+                                id: favId,
+                                name: park.name,
+                                category: .park,
+                                agency: "National Park Service",
+                                imageUrl: heroImageUrl,
+                                latitude: coord.latitude,
+                                longitude: coord.longitude
+                            )
+                            FavoritesManager.shared.save(dest)
+                            isFavorite = true
+                        }
                     } label: {
                         HStack(spacing: 6) {
                             Image(systemName: isFavorite ? "heart.fill" : "heart")
@@ -806,7 +821,7 @@ struct NationalParkDetailView: View {
                 }
             }
 
-            if park.entrance != nil || (park.feesDetail != nil && !park.feesDetail!.isEmpty) {
+            if park.entrance != nil || (park.feesDetail.map { !$0.isEmpty } ?? false) {
                 VStack(alignment: .leading, spacing: HikBikSpacing.sm) {
                     Label("Fees & Passes", systemImage: "dollarsign")
                         .font(HikBikFont.headline())

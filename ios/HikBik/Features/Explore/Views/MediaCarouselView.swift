@@ -2,8 +2,7 @@
 //  MediaCarouselView.swift
 //  HikBik
 //
-//  分頁滑動相冊：接收 [URL]，圓角 + 底部漸層以襯托標題。
-//  若無圖則使用專案預設背景圖（Placeholder）顯示一頁。
+//  智能輪播：0 張占位、1 張靜態（省電無手勢）、多張 TabView 輪播。支持 [String] / [URL]。
 //
 
 import SwiftUI
@@ -12,66 +11,119 @@ struct MediaCarouselView: View {
     let imageURLs: [URL]
     var cornerRadius: CGFloat = 16
     var aspectRatio: CGFloat = 16/10
+    var fixedHeight: CGFloat? = 200
+    /// 自動輪播間隔（秒），0 表示不自動輪播
+    var autoPlayInterval: TimeInterval = 3.5
 
-    /// 使用 urls 參數名稱，方便 View 層調用 MediaCarouselView(urls: viewModel.images)
-    init(urls: [URL], cornerRadius: CGFloat = 16, aspectRatio: CGFloat = 16/10) {
+    @State private var currentPageIndex: Int = 0
+    @State private var autoPlayTimer: Timer?
+
+    /// [String] URL 數組，供 MacroDetail / DetailedTrackCard 共用
+    init(urls: [String], cornerRadius: CGFloat = 16, aspectRatio: CGFloat = 16/10, fixedHeight: CGFloat? = 200, autoPlayInterval: TimeInterval = 3.5) {
+        self.imageURLs = urls.compactMap { URL(string: $0) }
+        self.cornerRadius = cornerRadius
+        self.aspectRatio = aspectRatio
+        self.fixedHeight = fixedHeight
+        self.autoPlayInterval = autoPlayInterval
+    }
+
+    init(urls: [URL], cornerRadius: CGFloat = 16, aspectRatio: CGFloat = 16/10, fixedHeight: CGFloat? = 200, autoPlayInterval: TimeInterval = 3.5) {
         self.imageURLs = urls
         self.cornerRadius = cornerRadius
         self.aspectRatio = aspectRatio
+        self.fixedHeight = fixedHeight
+        self.autoPlayInterval = autoPlayInterval
     }
 
-    init(imageURLs: [URL], cornerRadius: CGFloat = 16, aspectRatio: CGFloat = 16/10) {
+    init(imageURLs: [URL], cornerRadius: CGFloat = 16, aspectRatio: CGFloat = 16/10, fixedHeight: CGFloat? = 200, autoPlayInterval: TimeInterval = 3.5) {
         self.imageURLs = imageURLs
         self.cornerRadius = cornerRadius
         self.aspectRatio = aspectRatio
+        self.fixedHeight = fixedHeight
+        self.autoPlayInterval = autoPlayInterval
     }
 
-    /// 有 API/本地圖用原列表；沒圖時用本地佔位（不請求 Unsplash，避免載入失敗）
     private var effectiveURLs: [URL] { imageURLs }
+    private var height: CGFloat { fixedHeight ?? 200 }
 
     var body: some View {
         Group {
             if effectiveURLs.isEmpty {
                 localPlaceholderCard
+            } else if effectiveURLs.count == 1 {
+                singleImageCard(effectiveURLs[0])
             } else {
-                TabView {
-                    ForEach(Array(effectiveURLs.enumerated()), id: \.offset) { _, url in
+                carouselTabView
+            }
+        }
+        .frame(height: height)
+    }
+
+    /// 單張：靜態顯示，無 TabView 與手勢，省電省資源
+    private func singleImageCard(_ url: URL) -> some View {
+        ZStack(alignment: .bottom) {
+            AsyncImage(url: url) { phase in
+                switch phase {
+                case .empty: ProgressView().frame(maxWidth: .infinity, maxHeight: .infinity)
+                case .success(let image): image.resizable().scaledToFill()
+                case .failure: imageLoadFailurePlaceholder(url: url)
+                @unknown default: imageLoadFailurePlaceholder(url: url)
+                }
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .frame(height: height)
+            .clipped()
+            .contentShape(Rectangle())
+            LinearGradient(colors: [.clear, .black.opacity(0.7)], startPoint: .center, endPoint: .bottom)
+                .frame(height: 80)
+        }
+        .clipShape(RoundedRectangle(cornerRadius: cornerRadius))
+    }
+
+    /// 多張：TabView 輪播 + 頁指示器 + 可選自動輪播
+    private var carouselTabView: some View {
+        let count = effectiveURLs.count
+        return TabView(selection: $currentPageIndex) {
+            ForEach(Array(effectiveURLs.enumerated()), id: \.offset) { index, url in
                 ZStack(alignment: .bottom) {
                     AsyncImage(url: url) { phase in
                         switch phase {
-                        case .success(let image):
-                            image
-                                .resizable()
-                                .scaledToFill()
-                        case .failure:
-                            imageLoadFailurePlaceholder(url: url)
-                        @unknown default:
-                            imageLoadFailurePlaceholder(url: url)
+                        case .empty: ProgressView().frame(maxWidth: .infinity, maxHeight: .infinity)
+                        case .success(let image): image.resizable().scaledToFill()
+                        case .failure: imageLoadFailurePlaceholder(url: url)
+                        @unknown default: imageLoadFailurePlaceholder(url: url)
                         }
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .frame(height: 200)
+                    .frame(height: height)
                     .clipped()
                     .contentShape(Rectangle())
-                    LinearGradient(
-                        colors: [.clear, .black.opacity(0.7)],
-                        startPoint: .center,
-                        endPoint: .bottom
-                    )
-                    .frame(height: 80)
+                    LinearGradient(colors: [.clear, .black.opacity(0.7)], startPoint: .center, endPoint: .bottom)
+                        .frame(height: 80)
                 }
                 .clipShape(RoundedRectangle(cornerRadius: cornerRadius))
-                    }
-                }
-                .tabViewStyle(.page(indexDisplayMode: effectiveURLs.count > 1 ? .automatic : .never))
-                .frame(height: 200)
-                .clipShape(RoundedRectangle(cornerRadius: cornerRadius))
+                .tag(index)
             }
         }
-        .frame(height: 200)
+        .tabViewStyle(.page(indexDisplayMode: .automatic))
+        .frame(height: height)
+        .clipShape(RoundedRectangle(cornerRadius: cornerRadius))
+        .onAppear {
+            guard count > 1, autoPlayInterval > 0 else { return }
+            autoPlayTimer = Timer.scheduledTimer(withTimeInterval: autoPlayInterval, repeats: true) { _ in
+                DispatchQueue.main.async {
+                    currentPageIndex = (currentPageIndex + 1) % count
+                }
+            }
+            RunLoop.main.add(autoPlayTimer!, forMode: .common)
+        }
+        .onDisappear {
+            autoPlayTimer?.invalidate()
+            autoPlayTimer = nil
+        }
     }
 
-    /// 無圖時顯示的本地佔位（不發網路請求，不再出現 Unsplash 失敗）
+    /// 無圖時顯示的本地佔位（不發網路請求）
     private var localPlaceholderCard: some View {
         RoundedRectangle(cornerRadius: cornerRadius)
             .fill(Color.primary.opacity(0.12))
@@ -84,7 +136,7 @@ struct MediaCarouselView: View {
                 }
                 .foregroundStyle(.secondary)
             )
-            .frame(height: 200)
+            .frame(height: height)
     }
 
     /// 單張載入失敗時的備選視圖，並在控制台打印便於診斷

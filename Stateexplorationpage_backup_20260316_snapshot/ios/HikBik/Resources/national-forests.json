@@ -1,0 +1,3528 @@
+[
+  {
+    "id": "allegheny",
+    "name": "Allegheny National Forest",
+    "state": "Pennsylvania",
+    "region": "Northeast",
+    "description": "The Allegheny National Forest is a National Forest in Northwestern Pennsylvania, about 100 miles northeast of Pittsburgh. The forest covers 513,175 acres of land. Within the forest is Kinzua Dam, which impounds the Allegheny River to form Allegheny Reservoir.",
+    "established": "September 24, 1923",
+    "acres": 513655,
+    "activities": [
+      "Skiing",
+      "Hiking",
+      "Camping",
+      "Fishing"
+    ],
+    "coordinates": {
+      "latitude": 41.65306,
+      "longitude": -79.03472
+    },
+    "websiteUrl": "https://www.fs.usda.gov/allegheny",
+    "bestTime": [
+      "Summer",
+      "Fall",
+      "Winter"
+    ],
+    "difficulty": "Easy to Moderate",
+    "crowdLevel": "Moderate",
+    "nearestCity": "Pittsburgh"
+  },
+  {
+    "id": "angeles",
+    "name": "Angeles National Forest",
+    "state": "California",
+    "region": "California",
+    "description": "The Angeles National Forest of the United States Forest Service is located in the San Gabriel Mountains and Sierra Pelona Mountains, primarily within Los Angeles County in Southern California. The forest was established in 1908 and covers 661,565 acres.",
+    "established": "July 1, 1908",
+    "acres": 661565,
+    "activities": [
+      "Hiking",
+      "Camping",
+      "Mountain Biking",
+      "Rock Climbing"
+    ],
+    "coordinates": {
+      "latitude": 34.333,
+      "longitude": -118.133
+    },
+    "websiteUrl": "https://www.fs.usda.gov/angeles",
+    "bestTime": [
+      "Spring",
+      "Fall",
+      "Winter"
+    ],
+    "difficulty": "Moderate to Strenuous",
+    "crowdLevel": "High",
+    "nearestCity": "Los Angeles"
+  },
+  {
+    "id": "angelina",
+    "name": "Angelina National Forest",
+    "state": "Texas",
+    "region": "Great Plains",
+    "description": "Angelina National Forest is a United States national forest, one of four located in the piney woods region of Texas. The 153,180-acre Angelina National Forest is located in East Texas near Sam Rayburn Reservoir.",
+    "established": "October 13, 1936",
+    "acres": 154140,
+    "activities": [
+      "Hiking",
+      "Camping",
+      "Fishing",
+      "Boating"
+    ],
+    "coordinates": {
+      "latitude": 31.26861,
+      "longitude": -94.41194
+    },
+    "websiteUrl": "https://www.fs.usda.gov/texas",
+    "bestTime": [
+      "Spring",
+      "Fall"
+    ],
+    "difficulty": "Easy to Moderate",
+    "crowdLevel": "Moderate"
+  },
+  {
+    "id": "apache-sitgreaves",
+    "name": "Apache–Sitgreaves National Forest",
+    "state": "Arizona",
+    "states": [
+      "Arizona",
+      "New Mexico"
+    ],
+    "region": "Southwest",
+    "description": "The Apache–Sitgreaves National Forests is a 2.76-million-acre United States national forest which runs along the Mogollon Rim and the White Mountains in east-central Arizona and into New Mexico.",
+    "established": "1908",
+    "acres": 2626306,
+    "activities": [
+      "Hiking",
+      "Wildlife Watching",
+      "Camping",
+      "Fishing"
+    ],
+    "coordinates": {
+      "latitude": 33.633,
+      "longitude": -109.283
+    },
+    "websiteUrl": "https://www.fs.usda.gov/asnf",
+    "bestTime": [
+      "Summer",
+      "Fall"
+    ],
+    "difficulty": "Moderate",
+    "crowdLevel": "Moderate"
+  },
+  {
+    "id": "apalachicola",
+    "name": "Apalachicola National Forest",
+    "state": "Florida",
+    "region": "Southeast",
+    "description": "The Apalachicola National Forest is the largest U.S. National Forest in the state of Florida. It encompasses 635,019 acres and is the only national forest located in the Florida Panhandle.",
+    "established": "1936",
+    "acres": 576119,
+    "activities": [
+      "Hiking",
+      "Fishing",
+      "Boating",
+      "Swimming",
+      "Hunting",
+      "Mountain Biking",
+      "Horseback Riding"
+    ],
+    "coordinates": {
+      "latitude": 30.23611,
+      "longitude": -84.66556
+    },
+    "websiteUrl": "https://www.fs.usda.gov/apalachicola",
+    "bestTime": [
+      "Spring",
+      "Fall",
+      "Winter"
+    ],
+    "difficulty": "Easy",
+    "crowdLevel": "Low to Moderate"
+  },
+  {
+    "id": "arapaho",
+    "name": "Arapaho National Forest",
+    "state": "Colorado",
+    "region": "Rocky Mountains",
+    "description": "Arapaho National Forest is a National Forest located in north-central Colorado. The forest is located in the Rocky Mountains, straddling the continental divide in the Front Range west of Denver.",
+    "established": "July 1, 1908",
+    "acres": 720418,
+    "activities": [
+      "Hiking",
+      "Wildlife Watching",
+      "Camping",
+      "Fishing",
+      "Skiing"
+    ],
+    "coordinates": {
+      "latitude": 39.588611,
+      "longitude": -105.642778
+    },
+    "websiteUrl": "https://www.fs.usda.gov/arp",
+    "bestTime": [
+      "Summer",
+      "Winter"
+    ],
+    "difficulty": "Moderate to Strenuous",
+    "crowdLevel": "High"
+  },
+  {
+    "id": "ashley",
+    "name": "Ashley National Forest",
+    "state": "Utah",
+    "states": [
+      "Utah",
+      "Wyoming"
+    ],
+    "region": "Southwest",
+    "description": "Ashley National Forest is a national forest located in northeastern Utah and southwestern Wyoming. The forest contains the Flaming Gorge National Recreation Area and the Uinta Mountains, which contains the highest mountain peak in Utah (Kings Peak).",
+    "established": "July 1, 1908",
+    "acres": 1378424,
+    "visitors": "1.4M annually",
+    "activities": [
+      "Hiking",
+      "Camping",
+      "Fishing",
+      "Boating"
+    ],
+    "coordinates": {
+      "latitude": 40.333,
+      "longitude": -110.333
+    },
+    "websiteUrl": "https://www.fs.usda.gov/ashley",
+    "bestTime": [
+      "Summer",
+      "Fall"
+    ],
+    "difficulty": "Moderate to Strenuous",
+    "crowdLevel": "Moderate"
+  },
+  {
+    "id": "beaverhead-deerlodge",
+    "name": "Beaverhead–Deerlodge National Forest",
+    "state": "Montana",
+    "region": "Rocky Mountains",
+    "description": "The Beaverhead–Deerlodge National Forest is the largest of the National Forests in Montana. Covering 3.36 million acres, the forest stretches across eight counties in the southwestern area of the state.",
+    "established": "1905",
+    "acres": 3362638,
+    "activities": [
+      "Hiking",
+      "Boating",
+      "Snowmobiling",
+      "Fishing",
+      "Camping"
+    ],
+    "coordinates": {
+      "latitude": 46.133,
+      "longitude": -112.833
+    },
+    "websiteUrl": "https://www.fs.usda.gov/bdnf",
+    "bestTime": [
+      "Summer",
+      "Fall"
+    ],
+    "difficulty": "Moderate to Strenuous",
+    "crowdLevel": "Moderate"
+  },
+  {
+    "id": "bienville",
+    "name": "Bienville National Forest",
+    "state": "Mississippi",
+    "region": "Southeast",
+    "description": "Bienville National Forest is a United States National Forest in central Mississippi, named for Jean-Baptiste Le Moyne de Bienville. It lies in parts of Scott, Smith, Jasper, and Newton counties and has an area of 178,541 acres.",
+    "established": "June 15, 1936",
+    "acres": 180251,
+    "activities": [
+      "Camping",
+      "Hiking",
+      "Fishing",
+      "Boating",
+      "Wildlife Watching"
+    ],
+    "coordinates": {
+      "latitude": 32.294,
+      "longitude": -89.503
+    },
+    "websiteUrl": "https://www.fs.usda.gov/mississippi",
+    "bestTime": [
+      "Spring",
+      "Fall"
+    ],
+    "difficulty": "Easy to Moderate",
+    "crowdLevel": "Low"
+  },
+  {
+    "id": "bighorn",
+    "name": "Bighorn National Forest",
+    "state": "Wyoming",
+    "region": "Rocky Mountains",
+    "description": "The Bighorn National Forest is a U.S. National Forest located in northern Wyoming. At 1,105,311 acres it is one of the oldest government-protected forest lands in the U.S.",
+    "established": "February 22, 1897",
+    "acres": 1105311,
+    "activities": [
+      "Hiking",
+      "Horseback Riding",
+      "Camping",
+      "Fishing"
+    ],
+    "coordinates": {
+      "latitude": 44.533,
+      "longitude": -107.35
+    },
+    "websiteUrl": "https://www.fs.usda.gov/bighorn",
+    "bestTime": [
+      "Summer",
+      "Fall"
+    ],
+    "difficulty": "Moderate to Strenuous",
+    "crowdLevel": "Moderate"
+  },
+  {
+    "id": "bitterroot",
+    "name": "Bitterroot National Forest",
+    "state": "Montana",
+    "states": [
+      "Idaho",
+      "Montana"
+    ],
+    "region": "Rocky Mountains",
+    "description": "Bitterroot National Forest comprises 1.587 million acres in west-central Montana and eastern Idaho. The forest is located in the Bitterroot and Sapphire Mountains with elevations ranging from 2,200 feet to 10,157 feet at Trapper Peak.",
+    "established": "1898",
+    "acres": 1594579,
+    "activities": [
+      "Hunting",
+      "Mountain Biking",
+      "Horseback Riding",
+      "Hiking",
+      "Camping"
+    ],
+    "coordinates": {
+      "latitude": 46.23278,
+      "longitude": -113.96361
+    },
+    "websiteUrl": "https://www.fs.usda.gov/bitterroot",
+    "bestTime": [
+      "Summer",
+      "Fall"
+    ],
+    "difficulty": "Moderate to Strenuous",
+    "crowdLevel": "Moderate"
+  },
+  {
+    "id": "black-hills",
+    "name": "Black Hills National Forest",
+    "state": "South Dakota",
+    "states": [
+      "South Dakota",
+      "Wyoming"
+    ],
+    "region": "Great Plains",
+    "description": "Black Hills National Forest is located in southwestern South Dakota and northeastern Wyoming. The forest has an area of over 1.25 million acres and includes Black Elk Peak, the tallest mountain in South Dakota.",
+    "established": "February 22, 1897",
+    "acres": 1250866,
+    "activities": [
+      "Fishing",
+      "Hiking",
+      "Camping",
+      "Mountain Biking"
+    ],
+    "coordinates": {
+      "latitude": 43.93639,
+      "longitude": -103.72778
+    },
+    "websiteUrl": "https://www.fs.usda.gov/blackhills",
+    "bestTime": [
+      "Summer",
+      "Fall"
+    ],
+    "difficulty": "Moderate",
+    "crowdLevel": "High"
+  },
+  {
+    "id": "boise",
+    "name": "Boise National Forest",
+    "state": "Idaho",
+    "region": "Pacific Northwest",
+    "description": "Boise National Forest covers 2,203,703 acres of Idaho. The forest contains 9,600 miles of streams and rivers and 15,400 acres of lakes and reservoirs. It is home to 75 percent of the known populations of Sacajawea's bitterroot.",
+    "established": "July 1, 1908",
+    "acres": 2648273,
+    "visitors": "1.18M annually",
+    "activities": [
+      "Hiking",
+      "Boating",
+      "Wildlife Watching",
+      "Mountain Biking",
+      "Horseback Riding"
+    ],
+    "coordinates": {
+      "latitude": 43.8125,
+      "longitude": -115.5625
+    },
+    "websiteUrl": "https://www.fs.usda.gov/boise",
+    "bestTime": [
+      "Summer",
+      "Fall"
+    ],
+    "difficulty": "Moderate",
+    "crowdLevel": "Moderate"
+  },
+  {
+    "id": "bridger-teton",
+    "name": "Bridger–Teton National Forest",
+    "state": "Wyoming",
+    "region": "Rocky Mountains",
+    "description": "Bridger–Teton National Forest is located in western Wyoming. The forests cover 3.4 million acres, making it the third largest National Forest outside Alaska. The forest stretches from Yellowstone National Park along the eastern boundary of Grand Teton National Park.",
+    "established": "July 1, 1908",
+    "acres": 3383302,
+    "activities": [
+      "Hiking",
+      "Camping",
+      "Fishing",
+      "Wildlife Watching",
+      "Horseback Riding"
+    ],
+    "coordinates": {
+      "latitude": 43.43,
+      "longitude": -110.725
+    },
+    "websiteUrl": "https://www.fs.usda.gov/btnf",
+    "bestTime": [
+      "Summer",
+      "Fall"
+    ],
+    "difficulty": "Moderate to Strenuous",
+    "crowdLevel": "Moderate"
+  },
+  {
+    "id": "caribou-targhee",
+    "name": "Caribou–Targhee National Forest",
+    "state": "Idaho",
+    "states": [
+      "Idaho",
+      "Wyoming"
+    ],
+    "region": "Rocky Mountains",
+    "description": "Caribou–Targhee National Forest is located in the states of Idaho and Wyoming, with a small section in Utah. The forest is broken into several separate sections and extends over 2.63 million acres. Most of the forest is a part of the Greater Yellowstone Ecosystem.",
+    "established": "1903",
+    "acres": 2624739,
+    "activities": [
+      "Hiking",
+      "Camping",
+      "Fishing",
+      "Wildlife Watching"
+    ],
+    "coordinates": {
+      "latitude": 42.78333,
+      "longitude": -111.55
+    },
+    "websiteUrl": "https://www.fs.usda.gov/ctnf",
+    "bestTime": [
+      "Summer",
+      "Fall"
+    ],
+    "difficulty": "Moderate",
+    "crowdLevel": "Moderate"
+  },
+  {
+    "id": "carson",
+    "name": "Carson National Forest",
+    "state": "New Mexico",
+    "region": "Southwest",
+    "description": "Carson National Forest is a national forest in northern New Mexico. It encompasses 6,070 square kilometers (1.5 million acres) and is administered by the United States Forest Service.",
+    "established": "July 1, 1908",
+    "acres": 1486372,
+    "activities": [
+      "Hiking",
+      "Camping",
+      "Fishing",
+      "Hunting"
+    ],
+    "coordinates": {
+      "latitude": 36.517222,
+      "longitude": -106.066944
+    },
+    "websiteUrl": "https://www.fs.usda.gov/carson",
+    "bestTime": [
+      "Summer",
+      "Fall"
+    ],
+    "difficulty": "Moderate",
+    "crowdLevel": "Moderate"
+  },
+  {
+    "id": "chattahoochee-oconee",
+    "name": "Chattahoochee–Oconee National Forest",
+    "state": "Georgia",
+    "region": "Southeast",
+    "description": "The Chattahoochee–Oconee National Forest in northern Georgia comprises two United States National Forests. The combined total area is 867,265 acres. The forest contains several wilderness areas and major mountain peaks.",
+    "established": "July 9, 1936",
+    "acres": 866763,
+    "activities": [
+      "Hiking",
+      "Camping",
+      "Fishing",
+      "Wildlife Watching"
+    ],
+    "coordinates": {
+      "latitude": 34.763611,
+      "longitude": -84.115556
+    },
+    "websiteUrl": "https://www.fs.usda.gov/conf",
+    "bestTime": [
+      "Spring",
+      "Fall"
+    ],
+    "difficulty": "Moderate",
+    "crowdLevel": "Moderate"
+  },
+  {
+    "id": "chequamegon-nicolet",
+    "name": "Chequamegon–Nicolet National Forest",
+    "state": "Wisconsin",
+    "region": "Great Lakes",
+    "description": "The Chequamegon–Nicolet National Forest is a 1,530,647-acre U.S. National Forest in northern Wisconsin. The forest includes several wilderness areas and is known for its North Woods ecoregion.",
+    "established": "1933",
+    "acres": 1523704,
+    "activities": [
+      "Hiking",
+      "Fishing",
+      "Camping",
+      "Wildlife Watching"
+    ],
+    "coordinates": {
+      "latitude": 45.7,
+      "longitude": -90.5
+    },
+    "websiteUrl": "https://www.fs.usda.gov/cnnf",
+    "bestTime": [
+      "Summer",
+      "Fall"
+    ],
+    "difficulty": "Easy to Moderate",
+    "crowdLevel": "Moderate"
+  },
+  {
+    "id": "cherokee",
+    "name": "Cherokee National Forest",
+    "state": "Tennessee",
+    "states": [
+      "North Carolina",
+      "Tennessee"
+    ],
+    "region": "Southeast",
+    "description": "The Cherokee National Forest is a United States National Forest located in the U.S. states of Tennessee and North Carolina. The forest was created on June 14, 1920 and encompasses an estimated area of 655,598 acres.",
+    "established": "June 14, 1920",
+    "acres": 656394,
+    "visitors": "2.875M annually",
+    "activities": [
+      "Hiking",
+      "Camping",
+      "Fishing",
+      "Wildlife Watching"
+    ],
+    "coordinates": {
+      "latitude": 36.483,
+      "longitude": -82.083
+    },
+    "websiteUrl": "https://www.fs.usda.gov/cherokee",
+    "bestTime": [
+      "Spring",
+      "Summer",
+      "Fall"
+    ],
+    "difficulty": "Moderate",
+    "crowdLevel": "High"
+  },
+  {
+    "id": "chippewa",
+    "name": "Chippewa National Forest",
+    "state": "Minnesota",
+    "region": "Great Lakes",
+    "description": "Chippewa National Forest is a national forest located in north central Minnesota, in the counties of Itasca, Cass and Beltrami. The forest was established in 1908.",
+    "established": "1908",
+    "acres": 671952,
+    "activities": [
+      "Hiking",
+      "Fishing",
+      "Boating",
+      "Wildlife Watching"
+    ],
+    "coordinates": {
+      "latitude": 47.34056,
+      "longitude": -94.20667
+    },
+    "websiteUrl": "https://www.fs.usda.gov/chippewa",
+    "bestTime": [
+      "Summer",
+      "Fall"
+    ],
+    "difficulty": "Easy to Moderate",
+    "crowdLevel": "Moderate"
+  },
+  {
+    "id": "chugach",
+    "name": "Chugach National Forest",
+    "state": "Alaska",
+    "region": "Alaska",
+    "description": "The Chugach National Forest is a 6,908,540-acre United States National Forest in south central Alaska. Covering portions of Prince William Sound, the Kenai Peninsula and the Copper River Delta, it was formed in 1907.",
+    "established": "July 23, 1907",
+    "acres": 5419095,
+    "activities": [
+      "Hiking",
+      "Wildlife Watching",
+      "Fishing"
+    ],
+    "coordinates": {
+      "latitude": 60.4614912,
+      "longitude": -149.1259814
+    },
+    "websiteUrl": "https://www.fs.usda.gov/chugach",
+    "bestTime": [
+      "Summer"
+    ],
+    "difficulty": "Moderate to Strenuous",
+    "crowdLevel": "Moderate"
+  },
+  {
+    "id": "cibola",
+    "name": "Cibola National Forest",
+    "state": "New Mexico",
+    "region": "Southwest",
+    "description": "The Cibola National Forest is a 1,633,783 acre United States National Forest in New Mexico. The name Cibola is thought to be the original Zuni Indian name for their pueblos or tribal lands.",
+    "established": "December 3, 1931",
+    "acres": 1616435,
+    "activities": [
+      "Hiking",
+      "Camping",
+      "Wildlife Watching"
+    ],
+    "coordinates": {
+      "latitude": 34.297,
+      "longitude": -107.413
+    },
+    "websiteUrl": "https://www.fs.usda.gov/cibola",
+    "bestTime": [
+      "Spring",
+      "Fall"
+    ],
+    "difficulty": "Moderate",
+    "crowdLevel": "Low to Moderate"
+  },
+  {
+    "id": "clearwater",
+    "name": "Clearwater National Forest",
+    "state": "Idaho",
+    "region": "Pacific Northwest",
+    "description": "Clearwater National Forest with headquarters on the Nez Perce Reservation at Kamiah is located in North Central Idaho. The forest is bounded on the north by the Idaho Panhandle National Forest.",
+    "established": "July 1, 1908",
+    "acres": 1682068,
+    "activities": [
+      "Fishing",
+      "Hiking",
+      "Wildlife Watching"
+    ],
+    "coordinates": {
+      "latitude": 46.55111,
+      "longitude": -115.16028
+    },
+    "websiteUrl": "https://www.fs.usda.gov/nezperceclearwater",
+    "bestTime": [
+      "Summer",
+      "Fall"
+    ],
+    "difficulty": "Moderate",
+    "crowdLevel": "Low"
+  },
+  {
+    "id": "cleveland",
+    "name": "Cleveland National Forest",
+    "state": "California",
+    "region": "California",
+    "description": "Cleveland National Forest is a U.S. national forest in Southern California that encompasses 460,000 acres of inland montane regions. It is the southernmost U.S. National Forest of California.",
+    "established": "1908",
+    "acres": 425580,
+    "activities": [
+      "Wildlife Watching",
+      "Hiking",
+      "Camping"
+    ],
+    "coordinates": {
+      "latitude": 33.3,
+      "longitude": -116.8
+    },
+    "websiteUrl": "https://www.fs.usda.gov/cleveland",
+    "bestTime": [
+      "Spring",
+      "Fall",
+      "Winter"
+    ],
+    "difficulty": "Moderate",
+    "crowdLevel": "Moderate"
+  },
+  {
+    "id": "coconino",
+    "name": "Coconino National Forest",
+    "state": "Arizona",
+    "region": "Southwest",
+    "description": "The Coconino National Forest is a 1.856-million acre United States National Forest located in northern Arizona in the vicinity of Flagstaff, with elevations ranging from 2,600 ft to 12,633 ft at Humphrey's Peak.",
+    "established": "July 2, 1908",
+    "acres": 1852201,
+    "visitors": "1.89M annually",
+    "activities": [
+      "Hiking",
+      "Camping",
+      "Wildlife Watching"
+    ],
+    "coordinates": {
+      "latitude": 34.7575,
+      "longitude": -111.76444
+    },
+    "websiteUrl": "https://www.fs.usda.gov/coconino",
+    "bestTime": [
+      "Summer",
+      "Fall"
+    ],
+    "difficulty": "Moderate",
+    "crowdLevel": "High"
+  },
+  {
+    "id": "colville",
+    "name": "Colville National Forest",
+    "state": "Washington",
+    "region": "Pacific Northwest",
+    "description": "The Colville National Forest is a U.S. National Forest located in northeastern Washington state. The forest covers more than 950,000 acres and borders Canada.",
+    "established": "March 1, 1907",
+    "acres": 954668,
+    "activities": [
+      "Wildlife Watching",
+      "Hiking",
+      "Camping"
+    ],
+    "coordinates": {
+      "latitude": 48.688,
+      "longitude": -117.625
+    },
+    "websiteUrl": "https://www.fs.usda.gov/colville",
+    "bestTime": [
+      "Summer",
+      "Fall"
+    ],
+    "difficulty": "Moderate",
+    "crowdLevel": "Low"
+  },
+  {
+    "id": "conecuh",
+    "name": "Conecuh National Forest",
+    "state": "Alabama",
+    "region": "Southeast",
+    "description": "The Conecuh National Forest in southern Alabama covers 83,000 acres, along the Alabama-Florida line. The forest has a distinct southern flavor of mist-laden hardwood swamps and southern coastal plain pine forest.",
+    "established": "July 17, 1936",
+    "acres": 83983,
+    "activities": [
+      "Hiking",
+      "Camping",
+      "Wildlife Watching"
+    ],
+    "coordinates": {
+      "latitude": 31.09833,
+      "longitude": -86.63833
+    },
+    "websiteUrl": "https://www.fs.usda.gov/alabama",
+    "bestTime": [
+      "Spring",
+      "Fall"
+    ],
+    "difficulty": "Easy",
+    "crowdLevel": "Low"
+  },
+  {
+    "id": "coronado",
+    "name": "Coronado National Forest",
+    "state": "Arizona",
+    "states": [
+      "Arizona",
+      "New Mexico"
+    ],
+    "region": "Southwest",
+    "description": "The Coronado National Forest is a United States National Forest that includes an area of about 1.78 million acres spread throughout mountain ranges in southeastern Arizona and southwestern New Mexico.",
+    "established": "April 11, 1902",
+    "acres": 1718945,
+    "activities": [
+      "Hiking",
+      "Camping",
+      "Wildlife Watching"
+    ],
+    "coordinates": {
+      "latitude": 31.99639,
+      "longitude": -110.30889
+    },
+    "websiteUrl": "https://www.fs.usda.gov/coronado",
+    "bestTime": [
+      "Spring",
+      "Fall"
+    ],
+    "difficulty": "Moderate",
+    "crowdLevel": "Moderate"
+  },
+  {
+    "id": "croatan",
+    "name": "Croatan National Forest",
+    "state": "North Carolina",
+    "region": "Southeast",
+    "description": "The Croatan National Forest is a U.S. national forest, established on July 29, 1936, and is located on the Atlantic coast of North Carolina. The forest is managed together with the other three North Carolina National Forests.",
+    "established": "July 29, 1936",
+    "acres": 161325,
+    "activities": [
+      "Hiking",
+      "Camping",
+      "Fishing"
+    ],
+    "coordinates": {
+      "latitude": 34.914441,
+      "longitude": -77.056446
+    },
+    "websiteUrl": "https://www.fs.usda.gov/nfsnc",
+    "bestTime": [
+      "Spring",
+      "Fall"
+    ],
+    "difficulty": "Easy",
+    "crowdLevel": "Low"
+  },
+  {
+    "id": "custer",
+    "name": "Custer National Forest",
+    "state": "Montana",
+    "states": [
+      "Montana",
+      "South Dakota"
+    ],
+    "region": "Rocky Mountains",
+    "description": "Custer National Forest is located primarily in the south central part of Montana but also has separate sections in northwestern South Dakota. With a total area of 1,188,130 acres, the forest comprises over 10 separate sections.",
+    "established": "July 1, 1908",
+    "acres": 1189465,
+    "activities": [
+      "Hiking",
+      "Camping",
+      "Wildlife Watching"
+    ],
+    "coordinates": {
+      "latitude": 45.333,
+      "longitude": -107.667
+    },
+    "websiteUrl": "https://www.fs.usda.gov/custergallatin",
+    "bestTime": [
+      "Summer",
+      "Fall"
+    ],
+    "difficulty": "Moderate",
+    "crowdLevel": "Low"
+  },
+  {
+    "id": "daniel-boone",
+    "name": "Daniel Boone National Forest",
+    "state": "Kentucky",
+    "region": "Southeast",
+    "description": "The Daniel Boone National Forest is a national forest in Kentucky. Established in 1937, it includes 708,000 acres of federally owned land. The forest is named after the explorer Daniel Boone.",
+    "established": "February 23, 1937",
+    "acres": 564168,
+    "visitors": "2.507M annually",
+    "activities": [
+      "Hiking",
+      "Camping",
+      "Fishing"
+    ],
+    "coordinates": {
+      "latitude": 37.28806,
+      "longitude": -83.87528
+    },
+    "websiteUrl": "https://www.fs.usda.gov/dbnf",
+    "bestTime": [
+      "Spring",
+      "Summer",
+      "Fall"
+    ],
+    "difficulty": "Moderate",
+    "crowdLevel": "High"
+  },
+  {
+    "id": "davy-crockett",
+    "name": "Davy Crockett National Forest",
+    "state": "Texas",
+    "region": "Great Plains",
+    "description": "Davy Crockett National Forest is in southeast Texas between the towns of Lufkin and Crockett. The forest covers a total of 160,647 acres in Houston and Trinity counties.",
+    "established": "October 13, 1936",
+    "acres": 161140,
+    "activities": [
+      "Hiking",
+      "Camping",
+      "Fishing",
+      "Boating"
+    ],
+    "coordinates": {
+      "latitude": 31.33333,
+      "longitude": -95.08333
+    },
+    "websiteUrl": "https://www.fs.usda.gov/texas",
+    "bestTime": [
+      "Spring",
+      "Fall"
+    ],
+    "difficulty": "Easy",
+    "crowdLevel": "Low"
+  },
+  {
+    "id": "delta",
+    "name": "Delta National Forest",
+    "state": "Mississippi",
+    "region": "Southeast",
+    "description": "Delta National Forest is a U.S. National Forest in western Mississippi, located in Sharkey County. It is the smallest national forest and the only bottomland hardwood forest in the National Forest system.",
+    "established": "January 12, 1961",
+    "acres": 62109,
+    "activities": [
+      "Wildlife Watching",
+      "Hunting"
+    ],
+    "coordinates": {
+      "latitude": 32.767,
+      "longitude": -90.783
+    },
+    "websiteUrl": "https://www.fs.usda.gov/mississippi",
+    "bestTime": [
+      "Spring",
+      "Fall"
+    ],
+    "difficulty": "Easy",
+    "crowdLevel": "Low"
+  },
+  {
+    "id": "deschutes",
+    "name": "Deschutes National Forest",
+    "state": "Oregon",
+    "region": "Pacific Northwest",
+    "description": "The Deschutes National Forest is a United States national forest located in Central Oregon. The forest encompasses almost 1.6 million acres along the east side of the Cascade Range.",
+    "established": "July 1, 1908",
+    "acres": 1612218,
+    "visitors": "3.162M annually",
+    "activities": [
+      "Hiking",
+      "Camping",
+      "Fishing",
+      "Skiing"
+    ],
+    "coordinates": {
+      "latitude": 44.0,
+      "longitude": -121.5
+    },
+    "websiteUrl": "https://www.fs.usda.gov/deschutes",
+    "bestTime": [
+      "Summer",
+      "Fall",
+      "Winter"
+    ],
+    "difficulty": "Moderate",
+    "crowdLevel": "High"
+  },
+  {
+    "id": "desoto",
+    "name": "De Soto National Forest",
+    "state": "Mississippi",
+    "region": "Southeast",
+    "description": "De Soto National Forest, named for 16th-century Spanish conquistador Hernando de Soto, is 518,587 acres of pine forests in southern Mississippi. It is one of the most important protected areas for the biological diversity of the Gulf Coast ecoregion.",
+    "established": "June 15, 1936",
+    "acres": 532100,
+    "activities": [
+      "Camping",
+      "Hiking",
+      "Fishing",
+      "Boating",
+      "Hunting",
+      "Photography"
+    ],
+    "coordinates": {
+      "latitude": 31.067,
+      "longitude": -88.983
+    },
+    "websiteUrl": "https://www.fs.usda.gov/mississippi",
+    "bestTime": [
+      "Spring",
+      "Fall"
+    ],
+    "difficulty": "Easy to Moderate",
+    "crowdLevel": "Moderate"
+  },
+  {
+    "id": "dixie",
+    "name": "Dixie National Forest",
+    "state": "Utah",
+    "region": "Southwest",
+    "description": "Dixie National Forest is a United States national forest in Utah with headquarters in Cedar City. It occupies almost two million acres and stretches for about 170 miles across southern Utah.",
+    "established": "September 25, 1905",
+    "acres": 1885655,
+    "visitors": "700000 annually",
+    "activities": [
+      "Hiking",
+      "Camping",
+      "Wildlife Watching"
+    ],
+    "coordinates": {
+      "latitude": 38.033,
+      "longitude": -111.633
+    },
+    "websiteUrl": "https://www.fs.usda.gov/dixie",
+    "bestTime": [
+      "Summer",
+      "Fall"
+    ],
+    "difficulty": "Moderate",
+    "crowdLevel": "Moderate"
+  },
+  {
+    "id": "eldorado",
+    "name": "Eldorado National Forest",
+    "state": "California",
+    "region": "California",
+    "description": "Eldorado National Forest is a U.S. National Forest located in the central Sierra Nevada mountain range, in eastern California.",
+    "established": "July 28, 1910",
+    "acres": 695098,
+    "activities": [
+      "Hiking",
+      "Camping",
+      "Fishing",
+      "Skiing"
+    ],
+    "coordinates": {
+      "latitude": 38.75,
+      "longitude": -120.333
+    },
+    "websiteUrl": "https://www.fs.usda.gov/eldorado",
+    "bestTime": [
+      "Summer",
+      "Fall"
+    ],
+    "difficulty": "Moderate",
+    "crowdLevel": "Moderate"
+  },
+  {
+    "id": "el-yunque",
+    "name": "El Yunque National Forest",
+    "state": "Puerto Rico",
+    "region": "Other",
+    "description": "El Yunque National Forest, formerly known as the Caribbean National Forest, is a forest located in northeastern Puerto Rico. It is the only tropical rainforest in the United States National Forest System.",
+    "established": "January 17, 1903",
+    "acres": 28683,
+    "activities": [
+      "Hiking",
+      "Wildlife Watching"
+    ],
+    "coordinates": {
+      "latitude": 18.317,
+      "longitude": -65.783
+    },
+    "websiteUrl": "https://www.fs.usda.gov/elyunque",
+    "bestTime": [
+      "Winter",
+      "Spring"
+    ],
+    "difficulty": "Moderate",
+    "crowdLevel": "High"
+  },
+  {
+    "id": "finger-lakes",
+    "name": "Finger Lakes National Forest",
+    "state": "New York",
+    "region": "Northeast",
+    "description": "The Finger Lakes National Forest is a United States National Forest that encompasses 16,259 acres of Seneca and Schuyler counties, nestled between Seneca Lake and Cayuga Lake in the Finger Lakes Region.",
+    "established": "1985",
+    "acres": 16352,
+    "activities": [
+      "Hiking",
+      "Wildlife Watching",
+      "Camping"
+    ],
+    "coordinates": {
+      "latitude": 42.510556,
+      "longitude": -76.789722
+    },
+    "websiteUrl": "https://www.fs.usda.gov/gmfl",
+    "bestTime": [
+      "Summer",
+      "Fall"
+    ],
+    "difficulty": "Easy",
+    "crowdLevel": "Low"
+  },
+  {
+    "id": "fishlake",
+    "name": "Fishlake National Forest",
+    "state": "Utah",
+    "region": "Southwest",
+    "description": "Fishlake National Forest is a U.S. national forest located in south central Utah. The namesake for the forest is Fish Lake, the largest freshwater mountain lake in the state.",
+    "established": "July 1, 1908",
+    "acres": 1452969,
+    "visitors": "500000 annually",
+    "activities": [
+      "Fishing",
+      "Hiking",
+      "Camping"
+    ],
+    "coordinates": {
+      "latitude": 38.70833,
+      "longitude": -111.95917
+    },
+    "websiteUrl": "https://www.fs.usda.gov/fishlake",
+    "bestTime": [
+      "Summer",
+      "Fall"
+    ],
+    "difficulty": "Moderate",
+    "crowdLevel": "Moderate"
+  },
+  {
+    "id": "flathead",
+    "name": "Flathead National Forest",
+    "state": "Montana",
+    "region": "Rocky Mountains",
+    "description": "The Flathead National Forest is a national forest in the western part of Montana. The forest covers 2,404,935 acres of which about 1 million acres is designated wilderness.",
+    "established": "February 22, 1897",
+    "acres": 2413573,
+    "activities": [
+      "Hiking",
+      "Camping",
+      "Wildlife Watching",
+      "Fishing"
+    ],
+    "coordinates": {
+      "latitude": 48.033,
+      "longitude": -113.8
+    },
+    "websiteUrl": "https://www.fs.usda.gov/flathead",
+    "bestTime": [
+      "Summer",
+      "Fall"
+    ],
+    "difficulty": "Moderate",
+    "crowdLevel": "Moderate"
+  },
+  {
+    "id": "francis-marion",
+    "name": "Francis Marion National Forest",
+    "state": "South Carolina",
+    "region": "Southeast",
+    "description": "The Francis Marion National Forest is located north of Charleston, South Carolina. It is named for revolutionary war hero Francis Marion. The forest covers 263,904 acres.",
+    "established": "July 10, 1936",
+    "acres": 258673,
+    "activities": [
+      "Camping",
+      "Hiking",
+      "Boating",
+      "Wildlife Watching",
+      "Mountain Biking",
+      "Horseback Riding"
+    ],
+    "coordinates": {
+      "latitude": 33.166667,
+      "longitude": -79.666667
+    },
+    "websiteUrl": "https://www.fs.usda.gov/scnfs",
+    "bestTime": [
+      "Spring",
+      "Fall"
+    ],
+    "difficulty": "Easy",
+    "crowdLevel": "Moderate"
+  },
+  {
+    "id": "fremont-winema",
+    "name": "Fremont–Winema National Forest",
+    "state": "Oregon",
+    "region": "Pacific Northwest",
+    "description": "The Fremont–Winema National Forest is a United States National Forest formed from the 2002 merger of the Fremont and Winema National Forests. They cover territory in southern Oregon.",
+    "established": "2002",
+    "acres": 2253796,
+    "activities": [
+      "Hiking",
+      "Camping",
+      "Fishing",
+      "Wildlife Watching"
+    ],
+    "coordinates": {
+      "latitude": 42.6,
+      "longitude": -121.2
+    },
+    "websiteUrl": "https://www.fs.usda.gov/fremont-winema",
+    "bestTime": [
+      "Summer",
+      "Fall"
+    ],
+    "difficulty": "Moderate",
+    "crowdLevel": "Low"
+  },
+  {
+    "id": "gallatin",
+    "name": "Gallatin National Forest",
+    "state": "Montana",
+    "region": "Rocky Mountains",
+    "description": "The Gallatin National Forest is a United States national forest located in South-West Montana. Most of the Custer-Gallatin goes along the state's southern border.",
+    "established": "February 10, 1899",
+    "acres": 1849701,
+    "activities": [
+      "Hiking",
+      "Camping",
+      "Wildlife Watching"
+    ],
+    "coordinates": {
+      "latitude": 45.2725,
+      "longitude": -110.36833
+    },
+    "websiteUrl": "https://www.fs.usda.gov/custergallatin",
+    "bestTime": [
+      "Summer",
+      "Fall"
+    ],
+    "difficulty": "Moderate to Strenuous",
+    "crowdLevel": "Moderate"
+  },
+  {
+    "id": "george-washington-jefferson",
+    "name": "George Washington and Jefferson National Forest",
+    "state": "Virginia",
+    "states": [
+      "Kentucky",
+      "Virginia",
+      "West Virginia"
+    ],
+    "region": "Southeast",
+    "description": "The George Washington and Jefferson National Forests is an administrative entity combining two U.S. National Forests into one of the largest areas of public land in the Eastern United States. The forests cover 1.8 million acres.",
+    "established": "1995",
+    "acres": 1792209,
+    "activities": [
+      "Hiking",
+      "Camping",
+      "Fishing"
+    ],
+    "coordinates": {
+      "latitude": 38.5,
+      "longitude": -79.0
+    },
+    "websiteUrl": "https://www.fs.usda.gov/gwj",
+    "bestTime": [
+      "Spring",
+      "Summer",
+      "Fall"
+    ],
+    "difficulty": "Moderate",
+    "crowdLevel": "Moderate"
+  },
+  {
+    "id": "gifford-pinchot",
+    "name": "Gifford Pinchot National Forest",
+    "state": "Washington",
+    "region": "Pacific Northwest",
+    "description": "Gifford Pinchot National Forest is a national forest located in southern Washington. With an area of 1.32 million acres, it includes the 110,000-acre Mount St. Helens National Volcanic Monument.",
+    "established": "July 1, 1908",
+    "acres": 1312274,
+    "visitors": "1.8M annually",
+    "activities": [
+      "Hiking",
+      "Camping",
+      "Wildlife Watching"
+    ],
+    "coordinates": {
+      "latitude": 46.167,
+      "longitude": -121.817
+    },
+    "websiteUrl": "https://www.fs.usda.gov/giffordpinchot",
+    "bestTime": [
+      "Summer",
+      "Fall"
+    ],
+    "difficulty": "Moderate",
+    "crowdLevel": "High"
+  },
+  {
+    "id": "gila",
+    "name": "Gila National Forest",
+    "state": "New Mexico",
+    "region": "Southwest",
+    "description": "The Gila National Forest is a United States national forest in New Mexico. Established in 1905, it now covers approximately 2,710,659 acres, making it the sixth largest national forest in the continental United States.",
+    "established": "July 21, 1905",
+    "acres": 2658321,
+    "activities": [
+      "Hiking",
+      "Camping",
+      "Wildlife Watching"
+    ],
+    "coordinates": {
+      "latitude": 33.47,
+      "longitude": -108.53
+    },
+    "websiteUrl": "https://www.fs.usda.gov/gila",
+    "bestTime": [
+      "Spring",
+      "Fall"
+    ],
+    "difficulty": "Moderate to Strenuous",
+    "crowdLevel": "Low"
+  },
+  {
+    "id": "grand-mesa",
+    "name": "Grand Mesa National Forest",
+    "state": "Colorado",
+    "region": "Rocky Mountains",
+    "description": "The Grand Mesa National Forest is a U.S. national forest in Western Colorado. It borders the White River National Forest to the north and the Gunnison National Forest to the east.",
+    "established": "December 24, 1892",
+    "acres": 345939,
+    "activities": [
+      "Hiking",
+      "Camping",
+      "Fishing"
+    ],
+    "coordinates": {
+      "latitude": 39.0668,
+      "longitude": -107.8834
+    },
+    "websiteUrl": "https://www.fs.usda.gov/gmug",
+    "bestTime": [
+      "Summer",
+      "Fall"
+    ],
+    "difficulty": "Moderate",
+    "crowdLevel": "Moderate"
+  },
+  {
+    "id": "green-mountain",
+    "name": "Green Mountain National Forest",
+    "state": "Vermont",
+    "region": "Northeast",
+    "description": "Green Mountain National Forest is a national forest located in Vermont. Established in 1932, the forest is named for the Green Mountains which are part of the Appalachian Mountains.",
+    "established": "April 25, 1932",
+    "acres": 408419,
+    "activities": [
+      "Hiking",
+      "Wildlife Watching",
+      "Horseback Riding",
+      "Skiing",
+      "Snowmobiling"
+    ],
+    "coordinates": {
+      "latitude": 43.95,
+      "longitude": -73.067
+    },
+    "websiteUrl": "https://www.fs.usda.gov/gmfl",
+    "bestTime": [
+      "Summer",
+      "Fall",
+      "Winter"
+    ],
+    "difficulty": "Moderate",
+    "crowdLevel": "Moderate"
+  },
+  {
+    "id": "gunnison",
+    "name": "Gunnison National Forest",
+    "state": "Colorado",
+    "region": "Rocky Mountains",
+    "description": "The Gunnison National Forest is a U.S. national forest covering 1,672,136 acres in Western Colorado. The forest was created by Theodore Roosevelt on June 13, 1905 as the Cochetopa Forest Reserve.",
+    "established": "June 13, 1905",
+    "acres": 1666514,
+    "activities": [
+      "Hiking",
+      "Camping",
+      "Fishing"
+    ],
+    "coordinates": {
+      "latitude": 38.703237,
+      "longitude": -107.2167
+    },
+    "websiteUrl": "https://www.fs.usda.gov/gmug",
+    "bestTime": [
+      "Summer",
+      "Fall"
+    ],
+    "difficulty": "Moderate to Strenuous",
+    "crowdLevel": "Moderate"
+  },
+  {
+    "id": "helena",
+    "name": "Helena National Forest",
+    "state": "Montana",
+    "region": "Rocky Mountains",
+    "description": "Helena-Lewis and Clark National Forest is located in west-central Montana. Spanning 2.8-million acres, it is one of the oldest forest preserves in the U.S.",
+    "established": "February 22, 1897",
+    "acres": 982385,
+    "activities": [
+      "Hunting",
+      "Hiking",
+      "Camping"
+    ],
+    "coordinates": {
+      "latitude": 47.183,
+      "longitude": -111.45
+    },
+    "websiteUrl": "https://www.fs.usda.gov/hlcnf",
+    "bestTime": [
+      "Summer",
+      "Fall"
+    ],
+    "difficulty": "Moderate",
+    "crowdLevel": "Moderate"
+  },
+  {
+    "id": "hiawatha",
+    "name": "Hiawatha National Forest",
+    "state": "Michigan",
+    "region": "Great Lakes",
+    "description": "Hiawatha National Forest is a 894,836-acre National Forest in the Upper Peninsula of the state of Michigan. The forest is physically divided into two subunits, commonly called the Eastside and Westside.",
+    "established": "January 16, 1931",
+    "acres": 898475,
+    "activities": [
+      "Hiking",
+      "Camping",
+      "Fishing"
+    ],
+    "coordinates": {
+      "latitude": 46.133,
+      "longitude": -86.667
+    },
+    "websiteUrl": "https://www.fs.usda.gov/hiawatha",
+    "bestTime": [
+      "Summer",
+      "Fall"
+    ],
+    "difficulty": "Easy to Moderate",
+    "crowdLevel": "Moderate"
+  },
+  {
+    "id": "holly-springs",
+    "name": "Holly Springs National Forest",
+    "state": "Mississippi",
+    "region": "Southeast",
+    "description": "The Holly Springs National Forest was established by the United States Forest Service on June 15, 1936. The Holly Springs Ranger District controls 155,661 acres.",
+    "established": "June 15, 1936",
+    "acres": 156243,
+    "activities": [
+      "Hiking",
+      "Camping",
+      "Hunting"
+    ],
+    "coordinates": {
+      "latitude": 34.73333,
+      "longitude": -89.13333
+    },
+    "websiteUrl": "https://www.fs.usda.gov/mississippi",
+    "bestTime": [
+      "Spring",
+      "Fall"
+    ],
+    "difficulty": "Easy",
+    "crowdLevel": "Low"
+  },
+  {
+    "id": "homochitto",
+    "name": "Homochitto National Forest",
+    "state": "Mississippi",
+    "region": "Southeast",
+    "description": "Homochitto National Forest is a U.S. National Forest in southwestern Mississippi comprising 191,839 acres. The forest was established in 1936.",
+    "established": "July 20, 1936",
+    "acres": 192237,
+    "activities": [
+      "Hiking",
+      "Camping",
+      "Hunting"
+    ],
+    "coordinates": {
+      "latitude": 31.503056,
+      "longitude": -90.998611
+    },
+    "websiteUrl": "https://www.fs.usda.gov/mississippi",
+    "bestTime": [
+      "Spring",
+      "Fall"
+    ],
+    "difficulty": "Easy to Moderate",
+    "crowdLevel": "Low"
+  },
+  {
+    "id": "hoosier",
+    "name": "Hoosier National Forest",
+    "state": "Indiana",
+    "region": "Midwest",
+    "description": "The Hoosier National Forest is a property managed by the United States Forest Service in the hills of southern Indiana. It has a total area of 204,303 acres.",
+    "established": "October 1, 1961",
+    "acres": 203627,
+    "activities": [
+      "Hiking",
+      "Camping",
+      "Fishing"
+    ],
+    "coordinates": {
+      "latitude": 38.4775,
+      "longitude": -86.525
+    },
+    "websiteUrl": "https://www.fs.usda.gov/hoosier",
+    "bestTime": [
+      "Spring",
+      "Summer",
+      "Fall"
+    ],
+    "difficulty": "Easy to Moderate",
+    "crowdLevel": "Moderate"
+  },
+  {
+    "id": "humboldt-toiyabe",
+    "name": "Humboldt–Toiyabe National Forest",
+    "state": "Nevada",
+    "states": [
+      "California",
+      "Nevada"
+    ],
+    "region": "Southwest",
+    "description": "The Humboldt–Toiyabe National Forest is the principal U.S. National Forest in Nevada. With an area of 6,289,821 acres, it is the largest U.S. National Forest outside of Alaska.",
+    "established": "July 1, 1908",
+    "acres": 6290945,
+    "activities": [
+      "Hiking",
+      "Camping",
+      "Wildlife Watching"
+    ],
+    "coordinates": {
+      "latitude": 39.254041,
+      "longitude": -117.127767
+    },
+    "websiteUrl": "https://www.fs.usda.gov/htnf",
+    "bestTime": [
+      "Summer",
+      "Fall"
+    ],
+    "difficulty": "Moderate",
+    "crowdLevel": "Low"
+  },
+  {
+    "id": "huron-manistee",
+    "name": "Huron–Manistee National Forest",
+    "state": "Michigan",
+    "region": "Great Lakes",
+    "description": "The Huron–Manistee National Forests comprise 978,906 acres of public lands extending across the northern lower peninsula of Michigan.",
+    "established": "1909",
+    "acres": 975130,
+    "activities": [
+      "Fishing",
+      "Wildlife Watching",
+      "Hiking",
+      "Camping"
+    ],
+    "coordinates": {
+      "latitude": 44.57,
+      "longitude": -83.99
+    },
+    "websiteUrl": "https://www.fs.usda.gov/hmnf",
+    "bestTime": [
+      "Summer",
+      "Fall"
+    ],
+    "difficulty": "Easy to Moderate",
+    "crowdLevel": "Moderate"
+  },
+  {
+    "id": "idaho-panhandle",
+    "name": "Idaho Panhandle National Forest",
+    "state": "Idaho",
+    "states": [
+      "Idaho",
+      "Montana",
+      "Washington"
+    ],
+    "region": "Pacific Northwest",
+    "description": "The Idaho Panhandle National Forests are a jointly administered set of three national forests located mostly in Idaho. The IPNF consists of more than 2.5 million acres of public lands in the panhandle of north Idaho.",
+    "established": "1912",
+    "acres": 3074438,
+    "activities": [
+      "Hiking",
+      "Camping",
+      "Fishing"
+    ],
+    "coordinates": {
+      "latitude": 47.717,
+      "longitude": -116.217
+    },
+    "websiteUrl": "https://www.fs.usda.gov/ipnf",
+    "bestTime": [
+      "Summer",
+      "Fall"
+    ],
+    "difficulty": "Moderate",
+    "crowdLevel": "Moderate"
+  },
+  {
+    "id": "inyo",
+    "name": "Inyo National Forest",
+    "state": "California",
+    "states": [
+      "California",
+      "Nevada"
+    ],
+    "region": "California",
+    "description": "Inyo National Forest is a United States National Forest covering parts of the eastern Sierra Nevada of California and the White Mountains of California and Nevada, including Mount Whitney, the highest point in the contiguous United States.",
+    "established": "May 25, 1907",
+    "acres": 1957264,
+    "activities": [
+      "Hiking",
+      "Camping",
+      "Wildlife Watching"
+    ],
+    "coordinates": {
+      "latitude": 37.833,
+      "longitude": -118.9917
+    },
+    "websiteUrl": "https://www.fs.usda.gov/inyo",
+    "bestTime": [
+      "Summer",
+      "Fall"
+    ],
+    "difficulty": "Moderate to Strenuous",
+    "crowdLevel": "High"
+  },
+  {
+    "id": "kaibab",
+    "name": "Kaibab National Forest",
+    "state": "Arizona",
+    "region": "Southwest",
+    "description": "Kaibab National Forest borders both the north and south rims of the Grand Canyon, in north-central Arizona. Its 1.6 million acres is divided into three sections.",
+    "established": "1909",
+    "acres": 1561060,
+    "activities": [
+      "Hiking",
+      "Camping",
+      "Wildlife Watching"
+    ],
+    "coordinates": {
+      "latitude": 36.4125,
+      "longitude": -112.135
+    },
+    "websiteUrl": "https://www.fs.usda.gov/kaibab",
+    "bestTime": [
+      "Summer",
+      "Fall"
+    ],
+    "difficulty": "Moderate",
+    "crowdLevel": "Moderate"
+  },
+  {
+    "id": "kisatchie",
+    "name": "Kisatchie National Forest",
+    "state": "Louisiana",
+    "region": "Southeast",
+    "description": "Kisatchie National Forest, the only National forest in Louisiana, is located in the forested piney hills and hardwood bottoms of seven central and northern parishes. It covers about 604,000 acres.",
+    "established": "June 10, 1930",
+    "acres": 607540,
+    "activities": [
+      "Camping",
+      "Hiking",
+      "Fishing",
+      "Boating",
+      "Swimming",
+      "Hunting",
+      "Mountain Biking",
+      "Horseback Riding",
+      "Photography"
+    ],
+    "coordinates": {
+      "latitude": 31.491638,
+      "longitude": -93.192375
+    },
+    "websiteUrl": "https://www.fs.usda.gov/kisatchie",
+    "bestTime": [
+      "Spring",
+      "Fall"
+    ],
+    "difficulty": "Easy to Moderate",
+    "crowdLevel": "Moderate"
+  },
+  {
+    "id": "klamath",
+    "name": "Klamath National Forest",
+    "state": "California",
+    "states": [
+      "California",
+      "Oregon"
+    ],
+    "region": "California",
+    "description": "Klamath National Forest is a 1,737,774-acre national forest, in the Klamath Mountains and Cascade Range, located in Siskiyou County in northern California.",
+    "established": "May 6, 1905",
+    "acres": 1672442,
+    "activities": [
+      "Skiing",
+      "Hiking",
+      "Camping"
+    ],
+    "coordinates": {
+      "latitude": 41.50028,
+      "longitude": -123.33333
+    },
+    "websiteUrl": "https://www.fs.usda.gov/klamath",
+    "bestTime": [
+      "Summer",
+      "Fall",
+      "Winter"
+    ],
+    "difficulty": "Moderate",
+    "crowdLevel": "Low"
+  },
+  {
+    "id": "kootenai",
+    "name": "Kootenai National Forest",
+    "state": "Montana",
+    "states": [
+      "Idaho",
+      "Montana"
+    ],
+    "region": "Rocky Mountains",
+    "description": "The Kootenai National Forest is a national forest located in the far northwestern section of Montana and the northeasternmost lands in the Idaho panhandle. The forest covers 2.2 million acres.",
+    "established": "1907",
+    "acres": 1810361,
+    "activities": [
+      "Hiking",
+      "Fishing",
+      "Camping"
+    ],
+    "coordinates": {
+      "latitude": 48.183,
+      "longitude": -115.467
+    },
+    "websiteUrl": "https://www.fs.usda.gov/kootenai",
+    "bestTime": [
+      "Summer",
+      "Fall"
+    ],
+    "difficulty": "Moderate",
+    "crowdLevel": "Low"
+  },
+  {
+    "id": "lassen",
+    "name": "Lassen National Forest",
+    "state": "California",
+    "region": "California",
+    "description": "Lassen National Forest is a United States national forest of 1,700 square miles in northeastern California. It is named after pioneer Peter Lassen.",
+    "established": "June 2, 1905",
+    "acres": 1066027,
+    "activities": [
+      "Hiking",
+      "Camping",
+      "Fishing"
+    ],
+    "coordinates": {
+      "latitude": 40.50028,
+      "longitude": -121.00028
+    },
+    "websiteUrl": "https://www.fs.usda.gov/lassen",
+    "bestTime": [
+      "Summer",
+      "Fall"
+    ],
+    "difficulty": "Moderate",
+    "crowdLevel": "Moderate"
+  },
+  {
+    "id": "lewis-clark",
+    "name": "Lewis and Clark National Forest",
+    "state": "Montana",
+    "region": "Rocky Mountains",
+    "description": "Helena-Lewis and Clark National Forest is located in west-central Montana. Spanning 2.8-million acres, it is one of the oldest forest preserves in the U.S.",
+    "established": "February 22, 1897",
+    "acres": 1871490,
+    "activities": [
+      "Hunting",
+      "Hiking",
+      "Camping"
+    ],
+    "coordinates": {
+      "latitude": 47.183,
+      "longitude": -111.45
+    },
+    "websiteUrl": "https://www.fs.usda.gov/hlcnf",
+    "bestTime": [
+      "Summer",
+      "Fall"
+    ],
+    "difficulty": "Moderate",
+    "crowdLevel": "Moderate"
+  },
+  {
+    "id": "lincoln",
+    "name": "Lincoln National Forest",
+    "state": "New Mexico",
+    "region": "Southwest",
+    "description": "Lincoln National Forest is a unit of the U.S. Forest Service located in southern New Mexico. The Lincoln National Forest covers an extensive 1.1 million acres in southeastern New Mexico.",
+    "established": "July 26, 1902",
+    "acres": 1095470,
+    "activities": [
+      "Hiking",
+      "Camping",
+      "Wildlife Watching"
+    ],
+    "coordinates": {
+      "latitude": 32.834,
+      "longitude": -105.697
+    },
+    "websiteUrl": "https://www.fs.usda.gov/lincoln",
+    "bestTime": [
+      "Spring",
+      "Fall"
+    ],
+    "difficulty": "Moderate",
+    "crowdLevel": "Moderate"
+  },
+  {
+    "id": "lolo",
+    "name": "Lolo National Forest",
+    "state": "Montana",
+    "region": "Rocky Mountains",
+    "description": "Lolo National Forest is a national forest located in western Montana. The forest spans 2 million acres and includes four wilderness areas.",
+    "established": "September 20, 1906",
+    "acres": 2237961,
+    "activities": [
+      "Hiking",
+      "Fishing",
+      "Camping"
+    ],
+    "coordinates": {
+      "latitude": 47.15,
+      "longitude": -114.45
+    },
+    "websiteUrl": "https://www.fs.usda.gov/lolo",
+    "bestTime": [
+      "Summer",
+      "Fall"
+    ],
+    "difficulty": "Moderate",
+    "crowdLevel": "Moderate"
+  },
+  {
+    "id": "los-padres",
+    "name": "Los Padres National Forest",
+    "state": "California",
+    "region": "California",
+    "description": "Los Padres National Forest is a United States national forest in southern and central California. The forest includes most of the mountainous land along the California coast from Ventura to Monterey.",
+    "established": "December 1936",
+    "acres": 1772237,
+    "activities": [
+      "Hiking",
+      "Camping",
+      "Wildlife Watching"
+    ],
+    "coordinates": {
+      "latitude": 34.667,
+      "longitude": -119.75
+    },
+    "websiteUrl": "https://www.fs.usda.gov/lpnf",
+    "bestTime": [
+      "Spring",
+      "Fall"
+    ],
+    "difficulty": "Moderate",
+    "crowdLevel": "Moderate"
+  },
+  {
+    "id": "malheur",
+    "name": "Malheur National Forest",
+    "state": "Oregon",
+    "region": "Pacific Northwest",
+    "description": "The Malheur National Forest is a National Forest in the U.S. state of Oregon. It contains more than 1.4 million acres in the Blue Mountains of eastern Oregon.",
+    "established": "July 1, 1908",
+    "acres": 1480818,
+    "visitors": "242000 annually",
+    "activities": [
+      "Hiking",
+      "Camping",
+      "Fishing"
+    ],
+    "coordinates": {
+      "latitude": 44.2832129,
+      "longitude": -118.7843893
+    },
+    "websiteUrl": "https://www.fs.usda.gov/malheur",
+    "bestTime": [
+      "Summer",
+      "Fall"
+    ],
+    "difficulty": "Moderate",
+    "crowdLevel": "Low"
+  },
+  {
+    "id": "manti-la-sal",
+    "name": "Manti–La Sal National Forest",
+    "state": "Utah",
+    "states": [
+      "Colorado",
+      "Utah"
+    ],
+    "region": "Southwest",
+    "description": "The Manti–La Sal National Forest covers more than 1.2 million acres and is located in the central and southeastern parts of Utah. The La Sal Mountains are the second highest mountain range in Utah.",
+    "established": "August 28, 1950",
+    "acres": 1269984,
+    "visitors": "900000 annually",
+    "activities": [
+      "Hiking",
+      "Camping",
+      "Wildlife Watching"
+    ],
+    "coordinates": {
+      "latitude": 39.283,
+      "longitude": -111.425
+    },
+    "websiteUrl": "https://www.fs.usda.gov/mantilasal",
+    "bestTime": [
+      "Summer",
+      "Fall"
+    ],
+    "difficulty": "Moderate",
+    "crowdLevel": "Moderate"
+  },
+  {
+    "id": "mark-twain",
+    "name": "Mark Twain National Forest",
+    "state": "Missouri",
+    "region": "Midwest",
+    "description": "Mark Twain National Forest is a U.S. National Forest located in the southern half of Missouri. It was established in 1939 and is named for author Mark Twain. The forest covers 3,068,800 acres.",
+    "established": "September 23, 1939",
+    "acres": 1504881,
+    "activities": [
+      "Hiking",
+      "Camping",
+      "Fishing"
+    ],
+    "coordinates": {
+      "latitude": 37.637,
+      "longitude": -91.09
+    },
+    "websiteUrl": "https://www.fs.usda.gov/mtnf",
+    "bestTime": [
+      "Spring",
+      "Fall"
+    ],
+    "difficulty": "Moderate",
+    "crowdLevel": "Moderate"
+  },
+  {
+    "id": "medicine-bow-routt",
+    "name": "Medicine Bow–Routt National Forest",
+    "state": "Wyoming",
+    "states": [
+      "Colorado",
+      "Wyoming"
+    ],
+    "region": "Rocky Mountains",
+    "description": "Medicine Bow–Routt National Forest is a U.S. Forest Service managed area extending over 2,222,313 acres in Wyoming and Colorado. The forests were administratively combined in 1995.",
+    "established": "May 22, 1902",
+    "acres": 2210327,
+    "activities": [
+      "Boating",
+      "Skiing",
+      "Hiking",
+      "Camping"
+    ],
+    "coordinates": {
+      "latitude": 41.583,
+      "longitude": -106.217
+    },
+    "websiteUrl": "https://www.fs.usda.gov/mbr",
+    "bestTime": [
+      "Summer",
+      "Winter"
+    ],
+    "difficulty": "Moderate",
+    "crowdLevel": "Moderate"
+  },
+  {
+    "id": "mendocino",
+    "name": "Mendocino National Forest",
+    "state": "California",
+    "region": "California",
+    "description": "The Mendocino National Forest is located in the Coastal Mountain Range in northwestern California and comprises 913,306 acres. It is the only national forest in California without a major paved road entering it.",
+    "established": "1907",
+    "acres": 915532,
+    "activities": [
+      "Camping",
+      "Hiking",
+      "Fishing",
+      "Boating",
+      "Hunting",
+      "Mountain Biking",
+      "Photography"
+    ],
+    "coordinates": {
+      "latitude": 39.5625,
+      "longitude": -122.8125
+    },
+    "websiteUrl": "https://www.fs.usda.gov/mendocino",
+    "bestTime": [
+      "Spring",
+      "Fall"
+    ],
+    "difficulty": "Moderate",
+    "crowdLevel": "Low"
+  },
+  {
+    "id": "modoc",
+    "name": "Modoc National Forest",
+    "state": "California",
+    "region": "California",
+    "description": "Modoc National Forest is a United States national forest in northeastern California covering 1,680,405 acres.",
+    "established": "1908",
+    "acres": 1680405,
+    "activities": [
+      "Hiking",
+      "Camping",
+      "Fishing"
+    ],
+    "coordinates": {
+      "latitude": 41.50361,
+      "longitude": -120.94389
+    },
+    "websiteUrl": "https://www.fs.usda.gov/modoc",
+    "bestTime": [
+      "Summer",
+      "Fall"
+    ],
+    "difficulty": "Moderate",
+    "crowdLevel": "Low"
+  },
+  {
+    "id": "monongahela",
+    "name": "Monongahela National Forest",
+    "state": "West Virginia",
+    "states": [
+      "Virginia",
+      "West Virginia"
+    ],
+    "region": "Southeast",
+    "description": "The Monongahela National Forest is a national forest located in the Allegheny Mountains of eastern West Virginia. It protects over 921,000 acres of federally managed land.",
+    "established": "April 28, 1920",
+    "acres": 920583,
+    "activities": [
+      "Hiking",
+      "Camping",
+      "Fishing"
+    ],
+    "coordinates": {
+      "latitude": 38.92917,
+      "longitude": -79.84778
+    },
+    "websiteUrl": "https://www.fs.usda.gov/mnf",
+    "bestTime": [
+      "Spring",
+      "Summer",
+      "Fall"
+    ],
+    "difficulty": "Moderate",
+    "crowdLevel": "Moderate"
+  },
+  {
+    "id": "mount-baker-snoqualmie",
+    "name": "Mount Baker–Snoqualmie National Forest",
+    "state": "Washington",
+    "region": "Pacific Northwest",
+    "description": "The Mount Baker–Snoqualmie National Forest extends more than 140 miles along the western slopes of the Cascade Range from the Canada–US border to the northern boundary of Mount Rainier National Park.",
+    "established": "1974",
+    "acres": 2562955,
+    "activities": [
+      "Hiking",
+      "Skiing",
+      "Camping",
+      "Mountain Climbing"
+    ],
+    "coordinates": {
+      "latitude": 47.766,
+      "longitude": -121.378
+    },
+    "websiteUrl": "https://www.fs.usda.gov/mbs",
+    "bestTime": [
+      "Summer",
+      "Winter"
+    ],
+    "difficulty": "Moderate to Strenuous",
+    "crowdLevel": "High"
+  },
+  {
+    "id": "mount-hood",
+    "name": "Mount Hood National Forest",
+    "state": "Oregon",
+    "region": "Pacific Northwest",
+    "description": "The Mount Hood National Forest is a U.S. National Forest in Oregon, located 62 miles east of Portland. The Forest extends south from the Columbia River Gorge and is named after Mount Hood, a stratovolcano and the highest mountain in the state.",
+    "established": "July 1, 1908",
+    "acres": 1069427,
+    "visitors": "4M+ annually",
+    "activities": [
+      "Skiing",
+      "Hiking",
+      "Mountain Biking",
+      "Camping",
+      "Fishing"
+    ],
+    "coordinates": {
+      "latitude": 45.37056,
+      "longitude": -121.70389
+    },
+    "websiteUrl": "https://www.fs.usda.gov/mthood",
+    "bestTime": [
+      "Summer",
+      "Winter"
+    ],
+    "difficulty": "Moderate",
+    "crowdLevel": "Very High"
+  },
+  {
+    "id": "nantahala",
+    "name": "Nantahala National Forest",
+    "state": "North Carolina",
+    "region": "Southeast",
+    "description": "The Nantahala National Forest is the largest of the four national forests in North Carolina. The Nantahala is the second wettest region in the Continental US and is part of the Appalachian temperate rainforest.",
+    "established": "February 6, 1907",
+    "acres": 532300,
+    "activities": [
+      "Hiking",
+      "Camping",
+      "Fishing"
+    ],
+    "coordinates": {
+      "latitude": 35.233842,
+      "longitude": -83.559265
+    },
+    "websiteUrl": "https://www.fs.usda.gov/nfsnc",
+    "bestTime": [
+      "Spring",
+      "Summer",
+      "Fall"
+    ],
+    "difficulty": "Moderate",
+    "crowdLevel": "Moderate"
+  },
+  {
+    "id": "nebraska",
+    "name": "Nebraska National Forest",
+    "state": "Nebraska",
+    "region": "Great Plains",
+    "description": "The Nebraska National Forest is a United States national forest located in western Nebraska, with a total area of 141,864 acres.",
+    "established": "July 1, 1908",
+    "acres": 140813,
+    "activities": [
+      "Hiking",
+      "Camping",
+      "Wildlife Watching"
+    ],
+    "coordinates": {
+      "latitude": 42.74611,
+      "longitude": -102.90194
+    },
+    "websiteUrl": "https://www.fs.usda.gov/nebraska",
+    "bestTime": [
+      "Spring",
+      "Fall"
+    ],
+    "difficulty": "Easy",
+    "crowdLevel": "Low"
+  },
+  {
+    "id": "nez-perce",
+    "name": "Nez Perce National Forest",
+    "state": "Idaho",
+    "region": "Pacific Northwest",
+    "description": "The Nez Perce National Forest is a 4,000,000-acre United States National Forest located in west-central Idaho. The mountains provide wildlife habitat for timber wolf, moose, black bear, elk, and many other species.",
+    "established": "July 1, 1908",
+    "acres": 2223586,
+    "activities": [
+      "Fishing",
+      "Wildlife Watching",
+      "Hiking"
+    ],
+    "coordinates": {
+      "latitude": 45.45,
+      "longitude": -115.917
+    },
+    "websiteUrl": "https://www.fs.usda.gov/nezperceclearwater",
+    "bestTime": [
+      "Summer",
+      "Fall"
+    ],
+    "difficulty": "Moderate",
+    "crowdLevel": "Low"
+  },
+  {
+    "id": "ocala",
+    "name": "Ocala National Forest",
+    "state": "Florida",
+    "region": "Southeast",
+    "description": "The Ocala National Forest is the second largest nationally protected forest in Florida. It covers 607 square miles. Established in 1908, it is the oldest national forest east of the Mississippi River.",
+    "established": "1908",
+    "acres": 384693,
+    "activities": [
+      "Hiking",
+      "Camping",
+      "Fishing",
+      "Boating"
+    ],
+    "coordinates": {
+      "latitude": 29.17361,
+      "longitude": -81.82167
+    },
+    "websiteUrl": "https://www.fs.usda.gov/ocala",
+    "bestTime": [
+      "Fall",
+      "Winter",
+      "Spring"
+    ],
+    "difficulty": "Easy",
+    "crowdLevel": "Moderate"
+  },
+  {
+    "id": "ochoco",
+    "name": "Ochoco National Forest",
+    "state": "Oregon",
+    "region": "Pacific Northwest",
+    "description": "The Ochoco National Forest is located in the Ochoco Mountains in Central Oregon, north and east of the city of Prineville. It encompasses 850,000 acres of rimrock, canyons, dense pine forests, and high desert terrain.",
+    "established": "July 1, 1911",
+    "acres": 854817,
+    "visitors": "575000 annually",
+    "activities": [
+      "Hiking",
+      "Camping",
+      "Fishing"
+    ],
+    "coordinates": {
+      "latitude": 44.37639,
+      "longitude": -120.11667
+    },
+    "websiteUrl": "https://www.fs.usda.gov/ochoco",
+    "bestTime": [
+      "Summer",
+      "Fall"
+    ],
+    "difficulty": "Moderate",
+    "crowdLevel": "Low"
+  },
+  {
+    "id": "okanogan",
+    "name": "Okanogan National Forest",
+    "state": "Washington",
+    "region": "Pacific Northwest",
+    "description": "The Okanogan–Wenatchee National Forest is a U.S. National Forest located in Okanogan County in north-central Washington. The 1,499,013-acre forest is the second-largest national forest that is contained entirely within one county.",
+    "established": "July 1, 1911",
+    "acres": 4255572,
+    "visitors": "397000 annually",
+    "activities": [
+      "Hiking",
+      "Camping",
+      "Fishing"
+    ],
+    "coordinates": {
+      "latitude": 48.5517,
+      "longitude": -120.385
+    },
+    "websiteUrl": "https://www.fs.usda.gov/okawen",
+    "bestTime": [
+      "Summer",
+      "Fall"
+    ],
+    "difficulty": "Moderate",
+    "crowdLevel": "Moderate"
+  },
+  {
+    "id": "olympic",
+    "name": "Olympic National Forest",
+    "state": "Washington",
+    "region": "Pacific Northwest",
+    "description": "Olympic National Forest is a U.S. National Forest located in Washington. With an area of 628,115 acres, it nearly surrounds Olympic National Park and the Olympic Mountain range.",
+    "established": "February 22, 1897",
+    "acres": 631808,
+    "activities": [
+      "Hiking",
+      "Camping",
+      "Fishing"
+    ],
+    "coordinates": {
+      "latitude": 47.809972,
+      "longitude": -123.066722
+    },
+    "websiteUrl": "https://www.fs.usda.gov/olympic",
+    "bestTime": [
+      "Summer",
+      "Fall"
+    ],
+    "difficulty": "Moderate",
+    "crowdLevel": "Moderate"
+  },
+  {
+    "id": "osceola",
+    "name": "Osceola National Forest",
+    "state": "Florida",
+    "region": "Southeast",
+    "description": "Osceola National Forest is a National Forest located in northeast Florida. It is named in honor of the noted Seminole warrior, Osceola. The forest covers approximately 200,000 acres.",
+    "established": "July 10, 1931",
+    "acres": 160192,
+    "activities": [
+      "Hiking",
+      "Camping",
+      "Fishing"
+    ],
+    "coordinates": {
+      "latitude": 30.29056,
+      "longitude": -82.32167
+    },
+    "websiteUrl": "https://www.fs.usda.gov/florida",
+    "bestTime": [
+      "Fall",
+      "Winter",
+      "Spring"
+    ],
+    "difficulty": "Easy",
+    "crowdLevel": "Low"
+  },
+  {
+    "id": "ottawa",
+    "name": "Ottawa National Forest",
+    "state": "Michigan",
+    "region": "Great Lakes",
+    "description": "The Ottawa National Forest is a national forest that covers 993,010 acres in the Upper Peninsula of Michigan. The forest includes much of Gogebic and Ontonagon counties.",
+    "established": "January 27, 1931",
+    "acres": 990961,
+    "activities": [
+      "Hiking",
+      "Camping",
+      "Fishing"
+    ],
+    "coordinates": {
+      "latitude": 46.23,
+      "longitude": -88.95
+    },
+    "websiteUrl": "https://www.fs.usda.gov/ottawa",
+    "bestTime": [
+      "Summer",
+      "Fall"
+    ],
+    "difficulty": "Moderate",
+    "crowdLevel": "Low"
+  },
+  {
+    "id": "ouachita",
+    "name": "Ouachita National Forest",
+    "state": "Arkansas",
+    "states": [
+      "Arkansas",
+      "Oklahoma"
+    ],
+    "region": "Southeast",
+    "description": "The Ouachita National Forest is a vast congressionally-designated National Forest that lies in the western portion of Arkansas and portions of extreme-eastern Oklahoma.",
+    "established": "December 18, 1907",
+    "acres": 1785468,
+    "activities": [
+      "Hiking",
+      "Camping",
+      "Fishing"
+    ],
+    "coordinates": {
+      "latitude": 34.5,
+      "longitude": -94.25
+    },
+    "websiteUrl": "https://www.fs.usda.gov/ouachita",
+    "bestTime": [
+      "Spring",
+      "Fall"
+    ],
+    "difficulty": "Moderate",
+    "crowdLevel": "Moderate"
+  },
+  {
+    "id": "ozark-st-francis",
+    "name": "Ozark–St. Francis National Forest",
+    "state": "Arkansas",
+    "region": "Southeast",
+    "description": "The Ozark – St. Francis National Forest is a United States National Forest located in Arkansas. It is composed of two separate forests: Ozark National Forest in the Ozark Mountains; and St. Francis National Forest on Crowley's Ridge.",
+    "established": "March 6, 1908",
+    "acres": 1153374,
+    "activities": [
+      "Hiking",
+      "Camping",
+      "Fishing"
+    ],
+    "coordinates": {
+      "latitude": 35.275,
+      "longitude": -94.47556
+    },
+    "websiteUrl": "https://www.fs.usda.gov/osfnf",
+    "bestTime": [
+      "Spring",
+      "Fall"
+    ],
+    "difficulty": "Moderate",
+    "crowdLevel": "Moderate"
+  },
+  {
+    "id": "payette",
+    "name": "Payette National Forest",
+    "state": "Idaho",
+    "region": "Pacific Northwest",
+    "description": "The Payette National Forest is a U.S. National Forest located in central western Idaho. The land area consists of approximately 2.3 million acres of federally managed lands.",
+    "established": "April 1, 1944",
+    "acres": 2326779,
+    "activities": [
+      "Fishing",
+      "Hiking",
+      "Camping"
+    ],
+    "coordinates": {
+      "latitude": 44.91083,
+      "longitude": -116.10306
+    },
+    "websiteUrl": "https://www.fs.usda.gov/payette",
+    "bestTime": [
+      "Summer",
+      "Fall"
+    ],
+    "difficulty": "Moderate",
+    "crowdLevel": "Moderate"
+  },
+  {
+    "id": "pike",
+    "name": "Pike National Forest",
+    "state": "Colorado",
+    "region": "Rocky Mountains",
+    "description": "The Pike National Forest is located in the Front Range of Colorado, west of Colorado Springs including Pikes Peak. The forest encompasses 1,106,604 acres.",
+    "established": "February 1892",
+    "acres": 1096146,
+    "activities": [
+      "Hiking",
+      "Camping",
+      "Fishing"
+    ],
+    "coordinates": {
+      "latitude": 39.183,
+      "longitude": -105.317
+    },
+    "websiteUrl": "https://www.fs.usda.gov/psicc",
+    "bestTime": [
+      "Summer",
+      "Fall"
+    ],
+    "difficulty": "Moderate",
+    "crowdLevel": "High"
+  },
+  {
+    "id": "pisgah",
+    "name": "Pisgah National Forest",
+    "state": "North Carolina",
+    "region": "Southeast",
+    "description": "Pisgah National Forest is a National Forest in the Appalachian Mountains of western North Carolina. It is administered by the United States Forest Service. The forest encompasses over 500,000 acres.",
+    "established": "October 17, 1916",
+    "acres": 509283,
+    "activities": [
+      "Hiking",
+      "Camping",
+      "Fishing"
+    ],
+    "coordinates": {
+      "latitude": 35.36,
+      "longitude": -82.793
+    },
+    "websiteUrl": "https://www.fs.usda.gov/nfsnc",
+    "bestTime": [
+      "Spring",
+      "Summer",
+      "Fall"
+    ],
+    "difficulty": "Moderate",
+    "crowdLevel": "High"
+  },
+  {
+    "id": "plumas",
+    "name": "Plumas National Forest",
+    "state": "California",
+    "region": "California",
+    "description": "Plumas National Forest is a 1,146,000-acre United States national forest located in northern California at the northern terminus of the Sierra Nevada mountain range.",
+    "established": "1907",
+    "acres": 1189554,
+    "activities": [
+      "Hiking",
+      "Camping",
+      "Fishing"
+    ],
+    "coordinates": {
+      "latitude": 40.00028,
+      "longitude": -120.66806
+    },
+    "websiteUrl": "https://www.fs.usda.gov/plumas",
+    "bestTime": [
+      "Summer",
+      "Fall"
+    ],
+    "difficulty": "Moderate",
+    "crowdLevel": "Moderate"
+  },
+  {
+    "id": "prescott",
+    "name": "Prescott National Forest",
+    "state": "Arizona",
+    "region": "Southwest",
+    "description": "The Prescott National Forest is a 1.25 million-acre United States National Forest located in north central Arizona in the vicinity of Prescott.",
+    "established": "1908",
+    "acres": 1257005,
+    "activities": [
+      "Hiking",
+      "Camping",
+      "Wildlife Watching"
+    ],
+    "coordinates": {
+      "latitude": 34.617,
+      "longitude": -112.617
+    },
+    "websiteUrl": "https://www.fs.usda.gov/prescott",
+    "bestTime": [
+      "Spring",
+      "Fall"
+    ],
+    "difficulty": "Moderate",
+    "crowdLevel": "Moderate"
+  },
+  {
+    "id": "rio-grande",
+    "name": "Rio Grande National Forest",
+    "state": "Colorado",
+    "region": "Rocky Mountains",
+    "description": "Rio Grande National Forest is a 1.86 million-acre U.S. national forest located in southwestern Colorado. The Rio Grande rises in the forest, and the Continental Divide runs along most of its western border.",
+    "established": "July 1, 1908",
+    "acres": 1837661,
+    "activities": [
+      "Hiking",
+      "Camping",
+      "Fishing"
+    ],
+    "coordinates": {
+      "latitude": 37.74,
+      "longitude": -106.8352
+    },
+    "websiteUrl": "https://www.fs.usda.gov/riogrande",
+    "bestTime": [
+      "Summer",
+      "Fall"
+    ],
+    "difficulty": "Moderate to Strenuous",
+    "crowdLevel": "Moderate"
+  },
+  {
+    "id": "rogue-river-siskiyou",
+    "name": "Rogue River–Siskiyou National Forest",
+    "state": "Oregon",
+    "states": [
+      "California",
+      "Oregon"
+    ],
+    "region": "Pacific Northwest",
+    "description": "The Rogue River–Siskiyou National Forest ranges from the crest of the Cascade Range west into the Siskiyou Mountains, covering almost 1.8 million acres.",
+    "established": "2004",
+    "acres": 1718893,
+    "visitors": "915000 annually",
+    "activities": [
+      "Skiing",
+      "Hiking",
+      "Camping"
+    ],
+    "coordinates": {
+      "latitude": 42.0625,
+      "longitude": -123.9375
+    },
+    "websiteUrl": "https://www.fs.usda.gov/rogue-siskiyou",
+    "bestTime": [
+      "Summer",
+      "Fall",
+      "Winter"
+    ],
+    "difficulty": "Moderate",
+    "crowdLevel": "Moderate"
+  },
+  {
+    "id": "roosevelt",
+    "name": "Roosevelt National Forest",
+    "state": "Colorado",
+    "region": "Rocky Mountains",
+    "description": "The Roosevelt National Forest is a national forest located in north central Colorado. It is contiguous with the Colorado State Forest as well as the Arapaho National Forest and the Routt National Forest.",
+    "established": "May 22, 1902",
+    "acres": 814090,
+    "activities": [
+      "Hiking",
+      "Camping",
+      "Fishing"
+    ],
+    "coordinates": {
+      "latitude": 40.709,
+      "longitude": -105.581
+    },
+    "websiteUrl": "https://www.fs.usda.gov/arp",
+    "bestTime": [
+      "Summer",
+      "Fall"
+    ],
+    "difficulty": "Moderate",
+    "crowdLevel": "High"
+  },
+  {
+    "id": "sabine",
+    "name": "Sabine National Forest",
+    "state": "Texas",
+    "region": "Great Plains",
+    "description": "Sabine National Forest is located in East Texas near the Texas-Louisiana border. The forest covers a total of 160,873 acres and is notable for extensive forests of American beech and other hardwood trees.",
+    "established": "October 13, 1936",
+    "acres": 161088,
+    "activities": [
+      "Camping",
+      "Hiking",
+      "Wildlife Watching",
+      "Mountain Biking",
+      "Horseback Riding"
+    ],
+    "coordinates": {
+      "latitude": 31.34083,
+      "longitude": -93.84222
+    },
+    "websiteUrl": "https://www.fs.usda.gov/texas",
+    "bestTime": [
+      "Spring",
+      "Fall"
+    ],
+    "difficulty": "Easy to Moderate",
+    "crowdLevel": "Low"
+  },
+  {
+    "id": "salmon-challis",
+    "name": "Salmon–Challis National Forest",
+    "state": "Idaho",
+    "region": "Pacific Northwest",
+    "description": "Salmon–Challis National Forest is located in east central sections of Idaho. At 4,235,940 acres it is one of the largest national forests in the lower 48 states.",
+    "established": "July 1, 1908",
+    "acres": 4226973,
+    "activities": [
+      "Hiking",
+      "Camping",
+      "Fishing"
+    ],
+    "coordinates": {
+      "latitude": 45.28167,
+      "longitude": -114.19583
+    },
+    "websiteUrl": "https://www.fs.usda.gov/scnf",
+    "bestTime": [
+      "Summer",
+      "Fall"
+    ],
+    "difficulty": "Moderate to Strenuous",
+    "crowdLevel": "Low"
+  },
+  {
+    "id": "sam-houston",
+    "name": "Sam Houston National Forest",
+    "state": "Texas",
+    "region": "Great Plains",
+    "description": "The Sam Houston National Forest, one of four national forests in Texas, is located 50 miles north of Houston. The forest covers approximately 163,000 acres.",
+    "established": "October 13, 1936",
+    "acres": 163264,
+    "activities": [
+      "Hiking",
+      "Camping",
+      "Fishing"
+    ],
+    "coordinates": {
+      "latitude": 30.58444,
+      "longitude": -95.1325
+    },
+    "websiteUrl": "https://www.fs.usda.gov/texas",
+    "bestTime": [
+      "Spring",
+      "Fall"
+    ],
+    "difficulty": "Easy",
+    "crowdLevel": "Moderate"
+  },
+  {
+    "id": "samuel-mckelvie",
+    "name": "Samuel R. McKelvie National Forest",
+    "state": "Nebraska",
+    "region": "Great Plains",
+    "description": "The Samuel R. McKelvie National Forest is a United States national forest in the north-central Sandhills region of Nebraska. The national forest covers 116,079 acres.",
+    "established": "October 15, 1971",
+    "acres": 115847,
+    "activities": [
+      "Hiking",
+      "Wildlife Watching"
+    ],
+    "coordinates": {
+      "latitude": 42.7,
+      "longitude": -101.033
+    },
+    "websiteUrl": "https://www.fs.usda.gov/nebraska",
+    "bestTime": [
+      "Spring",
+      "Fall"
+    ],
+    "difficulty": "Easy",
+    "crowdLevel": "Low"
+  },
+  {
+    "id": "san-bernardino",
+    "name": "San Bernardino National Forest",
+    "state": "California",
+    "region": "California",
+    "description": "The San Bernardino National Forest is a United States national forest in Southern California encompassing 823,816 acres. The forest includes seven wilderness areas.",
+    "established": "1907",
+    "acres": 678980,
+    "activities": [
+      "Hiking",
+      "Skiing",
+      "Camping"
+    ],
+    "coordinates": {
+      "latitude": 34.13333,
+      "longitude": -117.01
+    },
+    "websiteUrl": "https://www.fs.usda.gov/sbnf",
+    "bestTime": [
+      "Summer",
+      "Winter"
+    ],
+    "difficulty": "Moderate",
+    "crowdLevel": "High"
+  },
+  {
+    "id": "san-isabel",
+    "name": "San Isabel National Forest",
+    "state": "Colorado",
+    "region": "Rocky Mountains",
+    "description": "San Isabel National Forest is located in central Colorado. The forest contains 19 of the state's 53 fourteeners, peaks over 14,000 feet high, including Mount Elbert, the highest point in Colorado.",
+    "established": "April 11, 1902",
+    "acres": 1108639,
+    "activities": [
+      "Hiking",
+      "Camping",
+      "Fishing"
+    ],
+    "coordinates": {
+      "latitude": 38.043948,
+      "longitude": -105.108776
+    },
+    "websiteUrl": "https://www.fs.usda.gov/psicc",
+    "bestTime": [
+      "Summer",
+      "Fall"
+    ],
+    "difficulty": "Moderate to Strenuous",
+    "crowdLevel": "High"
+  },
+  {
+    "id": "san-juan",
+    "name": "San Juan National Forest",
+    "state": "Colorado",
+    "region": "Rocky Mountains",
+    "description": "The San Juan National Forest is a U.S. national forest covering over 1,878,846 acres in western Colorado. The forest covers most of the southern portion of the San Juan Mountains west of the Continental Divide.",
+    "established": "June 3, 1905",
+    "acres": 1864595,
+    "activities": [
+      "Hiking",
+      "Camping",
+      "Wildlife Watching"
+    ],
+    "coordinates": {
+      "latitude": 37.5553,
+      "longitude": -107.6716
+    },
+    "websiteUrl": "https://www.fs.usda.gov/sanjuan",
+    "bestTime": [
+      "Summer",
+      "Fall"
+    ],
+    "difficulty": "Moderate to Strenuous",
+    "crowdLevel": "Moderate"
+  },
+  {
+    "id": "santa-fe",
+    "name": "Santa Fe National Forest",
+    "state": "New Mexico",
+    "region": "Southwest",
+    "description": "The Santa Fe National Forest is a protected national forest in northern New Mexico. It was established in 1915 and covers 1,558,452 acres.",
+    "established": "July 1, 1915",
+    "acres": 1544748,
+    "activities": [
+      "Hiking",
+      "Camping",
+      "Wildlife Watching"
+    ],
+    "coordinates": {
+      "latitude": 35.7,
+      "longitude": -106.2
+    },
+    "websiteUrl": "https://www.fs.usda.gov/santafe",
+    "bestTime": [
+      "Summer",
+      "Fall"
+    ],
+    "difficulty": "Moderate",
+    "crowdLevel": "Moderate"
+  },
+  {
+    "id": "sawtooth",
+    "name": "Sawtooth National Forest",
+    "state": "Idaho",
+    "states": [
+      "Idaho",
+      "Utah"
+    ],
+    "region": "Pacific Northwest",
+    "description": "Sawtooth National Forest covers 2,110,408 acres in Idaho and Utah. Established in 1905, it includes the Sawtooth National Recreation Area and several wilderness areas.",
+    "established": "May 29, 1905",
+    "acres": 1802133,
+    "visitors": "1,188,600 annually",
+    "activities": [
+      "Hiking",
+      "Boating",
+      "Hunting",
+      "Mountain Biking",
+      "Skiing"
+    ],
+    "coordinates": {
+      "latitude": 43.733,
+      "longitude": -114.667
+    },
+    "websiteUrl": "https://www.fs.usda.gov/sawtooth",
+    "bestTime": [
+      "Summer",
+      "Fall",
+      "Winter"
+    ],
+    "difficulty": "Moderate",
+    "crowdLevel": "Moderate"
+  },
+  {
+    "id": "sequoia",
+    "name": "Sequoia National Forest",
+    "state": "California",
+    "region": "California",
+    "description": "Sequoia National Forest is a U.S. national forest located in the southern Sierra Nevada mountains of California. It is named for the majestic Giant Sequoia trees which populate 38 distinct groves within its boundaries.",
+    "established": "1908",
+    "acres": 1139240,
+    "activities": [
+      "Hiking",
+      "Camping",
+      "Wildlife Watching"
+    ],
+    "coordinates": {
+      "latitude": 36.04,
+      "longitude": -118.50444
+    },
+    "websiteUrl": "https://www.fs.usda.gov/sequoia",
+    "bestTime": [
+      "Summer",
+      "Fall"
+    ],
+    "difficulty": "Moderate",
+    "crowdLevel": "Moderate"
+  },
+  {
+    "id": "shasta-trinity",
+    "name": "Shasta–Trinity National Forest",
+    "state": "California",
+    "region": "California",
+    "description": "The Shasta–Trinity National Forest is a federally designated forest in northern California. It is the largest National Forest in California and is managed by the U.S. Forest Service. The 2,210,485 acre forest encompasses five wilderness areas.",
+    "established": "1954",
+    "acres": 2229286,
+    "activities": [
+      "Camping",
+      "Hiking",
+      "Fishing",
+      "Boating",
+      "Hunting",
+      "Horseback Riding",
+      "Skiing",
+      "Snowmobiling",
+      "Rock Climbing"
+    ],
+    "coordinates": {
+      "latitude": 40.73528,
+      "longitude": -122.94194
+    },
+    "websiteUrl": "https://www.fs.usda.gov/stnf",
+    "bestTime": [
+      "Summer",
+      "Fall",
+      "Winter"
+    ],
+    "difficulty": "Moderate",
+    "crowdLevel": "Moderate"
+  },
+  {
+    "id": "shawnee",
+    "name": "Shawnee National Forest",
+    "state": "Illinois",
+    "region": "Midwest",
+    "description": "The Shawnee National Forest is a United States National Forest located in the Shawnee Hills of Southern Illinois. It consists of approximately 498,615 acres of federally managed lands.",
+    "established": "August 1933",
+    "acres": 273482,
+    "activities": [
+      "Hiking",
+      "Camping",
+      "Fishing"
+    ],
+    "coordinates": {
+      "latitude": 37.5,
+      "longitude": -88.667
+    },
+    "websiteUrl": "https://www.fs.usda.gov/shawnee",
+    "bestTime": [
+      "Spring",
+      "Fall"
+    ],
+    "difficulty": "Moderate",
+    "crowdLevel": "Moderate"
+  },
+  {
+    "id": "shoshone",
+    "name": "Shoshone National Forest",
+    "state": "Wyoming",
+    "region": "Rocky Mountains",
+    "description": "Shoshone National Forest is the first federally protected National Forest in the United States and covers nearly 2,500,000 acres in Wyoming. It is part of the Greater Yellowstone Ecosystem.",
+    "established": "March 3, 1891",
+    "acres": 2439093,
+    "activities": [
+      "Hiking",
+      "Fishing",
+      "Camping"
+    ],
+    "coordinates": {
+      "latitude": 44.46333,
+      "longitude": -109.61528
+    },
+    "websiteUrl": "https://www.fs.usda.gov/shoshone",
+    "bestTime": [
+      "Summer",
+      "Fall"
+    ],
+    "difficulty": "Moderate to Strenuous",
+    "crowdLevel": "Moderate"
+  },
+  {
+    "id": "sierra",
+    "name": "Sierra National Forest",
+    "state": "California",
+    "region": "California",
+    "description": "Sierra National Forest is a U.S. national forest located on the western slope of the central Sierra Nevada in California. The forest is known for its mountain scenery and beautiful lakes.",
+    "established": "1893",
+    "acres": 1311231,
+    "activities": [
+      "Hiking",
+      "Camping",
+      "Fishing"
+    ],
+    "coordinates": {
+      "latitude": 37.417,
+      "longitude": -119.167
+    },
+    "websiteUrl": "https://www.fs.usda.gov/sierra",
+    "bestTime": [
+      "Summer",
+      "Fall"
+    ],
+    "difficulty": "Moderate",
+    "crowdLevel": "Moderate",
+    "nearestCity": "Fresno",
+    "photos": [
+      "https://images.unsplash.com/photo-1592155011109-fb9c91539204?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxTaWVycmElMjBOZXZhZGElMjBjYW1waW5nfGVufDF8fHx8MTc2ODgxNDc4MXww&ixlib=rb-4.1.0&q=80&w=1080",
+      "https://images.unsplash.com/photo-1630886213725-36f755884ada?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxDYWxpZm9ybmlhJTIwZm9yZXN0JTIwaGlraW5nJTIwdHJhaWx8ZW58MXx8fHwxNzY4ODE0NzgwfDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "https://images.unsplash.com/photo-1730658679727-ce12c0adc4ef?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxzZXF1b2lhJTIwZm9yZXN0JTIwZ2lhbnQlMjB0cmVlc3xlbnwxfHx8fDE3Njg4MTQ4NTN8MA&ixlib=rb-4.1.0&q=80&w=1080"
+    ]
+  },
+  {
+    "id": "siuslaw",
+    "name": "Siuslaw National Forest",
+    "state": "Oregon",
+    "region": "Pacific Northwest",
+    "description": "The Siuslaw National Forest is a national forest in western Oregon. Established in 1908, the Siuslaw is made up of a wide variety of ecosystems, ranging from coastal forests to sand dunes.",
+    "established": "July 1, 1908",
+    "acres": 630291,
+    "visitors": "1,017,000 annually",
+    "activities": [
+      "Hiking",
+      "Camping",
+      "Fishing"
+    ],
+    "coordinates": {
+      "latitude": 44.33333,
+      "longitude": -123.91667
+    },
+    "websiteUrl": "https://www.fs.usda.gov/siuslaw",
+    "bestTime": [
+      "Summer",
+      "Fall"
+    ],
+    "difficulty": "Easy to Moderate",
+    "crowdLevel": "Moderate"
+  },
+  {
+    "id": "six-rivers",
+    "name": "Six Rivers National Forest",
+    "state": "California",
+    "region": "California",
+    "description": "The Six Rivers National Forest is a U.S. National Forest located in the northwestern corner of California, covering approximately 1 million acres.",
+    "established": "1947",
+    "acres": 977090,
+    "activities": [
+      "Hiking",
+      "Camping",
+      "Fishing"
+    ],
+    "coordinates": {
+      "latitude": 41.77778,
+      "longitude": -124.01667
+    },
+    "websiteUrl": "https://www.fs.usda.gov/srnf",
+    "bestTime": [
+      "Summer",
+      "Fall"
+    ],
+    "difficulty": "Moderate",
+    "crowdLevel": "Low"
+  },
+  {
+    "id": "stanislaus",
+    "name": "Stanislaus National Forest",
+    "state": "California",
+    "region": "California",
+    "description": "Stanislaus National Forest is a U.S. national forest which manages 898,099 acres of land in four counties in the Sierra Nevada in Northern California. It was established on February 22, 1897.",
+    "established": "February 22, 1897",
+    "acres": 899427,
+    "activities": [
+      "Hiking",
+      "Camping",
+      "Fishing"
+    ],
+    "coordinates": {
+      "latitude": 38.25,
+      "longitude": -120.0
+    },
+    "websiteUrl": "https://www.fs.usda.gov/stanislaus",
+    "bestTime": [
+      "Summer",
+      "Fall"
+    ],
+    "difficulty": "Moderate",
+    "crowdLevel": "Moderate"
+  },
+  {
+    "id": "sumter",
+    "name": "Sumter National Forest",
+    "state": "South Carolina",
+    "region": "Southeast",
+    "description": "The Sumter National Forest is one of two forests in South Carolina managed by the United States Forest Service. The Sumter National Forest consists of 370,442 acres divided into 3 distinct sections.",
+    "established": "July 13, 1936",
+    "acres": 372778,
+    "activities": [
+      "Hiking",
+      "Camping",
+      "Fishing"
+    ],
+    "coordinates": {
+      "latitude": 34.5683,
+      "longitude": -81.5919
+    },
+    "websiteUrl": "https://www.fs.usda.gov/scnfs",
+    "bestTime": [
+      "Spring",
+      "Fall"
+    ],
+    "difficulty": "Moderate",
+    "crowdLevel": "Low"
+  },
+  {
+    "id": "superior",
+    "name": "Superior National Forest",
+    "state": "Minnesota",
+    "region": "Great Lakes",
+    "description": "The Superior National Forest is located in the Arrowhead Region of Minnesota. The forest comprises over 3,900,000 acres of woods and waters. Slightly over a quarter of the forest is set aside as the Boundary Waters Canoe Area.",
+    "established": "February 13, 1909",
+    "acres": 2093590,
+    "activities": [
+      "Camping",
+      "Fishing",
+      "Boating",
+      "Hiking"
+    ],
+    "coordinates": {
+      "latitude": 47.7,
+      "longitude": -91.1
+    },
+    "websiteUrl": "https://www.fs.usda.gov/superior",
+    "bestTime": [
+      "Summer",
+      "Fall"
+    ],
+    "difficulty": "Moderate",
+    "crowdLevel": "Moderate"
+  },
+  {
+    "id": "tahoe",
+    "name": "Tahoe National Forest",
+    "state": "California",
+    "region": "California",
+    "description": "Tahoe National Forest is a United States National Forest located in California, northwest of Lake Tahoe. It includes the 8,587-foot peak of Sierra Buttes. The forest covers 871,495 acres.",
+    "established": "1905",
+    "acres": 872981,
+    "activities": [
+      "Hiking",
+      "Camping",
+      "Fishing"
+    ],
+    "coordinates": {
+      "latitude": 39.5625,
+      "longitude": -120.5625
+    },
+    "websiteUrl": "https://www.fs.usda.gov/tahoe",
+    "bestTime": [
+      "Summer",
+      "Fall"
+    ],
+    "difficulty": "Moderate",
+    "crowdLevel": "High"
+  },
+  {
+    "id": "talladega",
+    "name": "Talladega National Forest",
+    "state": "Alabama",
+    "region": "Southeast",
+    "description": "The Talladega National Forest is located in Alabama and covers 392,567 acres at the southern edge of the Appalachian Mountains. The forest is home to several threatened and endangered species.",
+    "established": "July 17, 1936",
+    "acres": 393006,
+    "activities": [
+      "Hiking",
+      "Camping",
+      "Wildlife Watching"
+    ],
+    "coordinates": {
+      "latitude": 33.19611,
+      "longitude": -86.4625
+    },
+    "websiteUrl": "https://www.fs.usda.gov/alabama",
+    "bestTime": [
+      "Spring",
+      "Fall"
+    ],
+    "difficulty": "Moderate",
+    "crowdLevel": "Moderate"
+  },
+  {
+    "id": "tombigbee",
+    "name": "Tombigbee National Forest",
+    "state": "Mississippi",
+    "region": "Southeast",
+    "description": "Tombigbee National Forest is a U.S. National Forest in eastern and northeastern Mississippi. It is divided geographically into two non-contiguous sections with a total area of 67,005 acres.",
+    "established": "November 27, 1959",
+    "acres": 67468,
+    "activities": [
+      "Hiking",
+      "Camping",
+      "Wildlife Watching"
+    ],
+    "coordinates": {
+      "latitude": 33.992323,
+      "longitude": -88.917482
+    },
+    "websiteUrl": "https://www.fs.usda.gov/mississippi",
+    "bestTime": [
+      "Spring",
+      "Fall"
+    ],
+    "difficulty": "Easy",
+    "crowdLevel": "Low"
+  },
+  {
+    "id": "tongass",
+    "name": "Tongass National Forest",
+    "state": "Alaska",
+    "region": "Alaska",
+    "description": "The Tongass National Forest in Southeast Alaska is the largest U.S. National Forest at 16.7 million acres. Most of its area is temperate rain forest and is remote enough to be home to many species of endangered and rare flora and fauna.",
+    "established": "10 September 1907",
+    "acres": 16748360,
+    "visitors": "1,881,000 annually",
+    "activities": [
+      "Hiking",
+      "Wildlife Watching",
+      "Fishing"
+    ],
+    "coordinates": {
+      "latitude": 57.329642,
+      "longitude": -135.973898
+    },
+    "websiteUrl": "https://www.fs.usda.gov/tongass",
+    "bestTime": [
+      "Summer"
+    ],
+    "difficulty": "Moderate to Strenuous",
+    "crowdLevel": "Low"
+  },
+  {
+    "id": "tonto",
+    "name": "Tonto National Forest",
+    "state": "Arizona",
+    "region": "Southwest",
+    "description": "The Tonto National Forest, encompassing 2,873,200 acres, is the largest of the six national forests in Arizona. The forest has diverse scenery, with elevations ranging from 1,400 feet in the Sonoran Desert to 7,400 feet.",
+    "established": "1905",
+    "acres": 2866663,
+    "visitors": "5,922,000 annually",
+    "activities": [
+      "Hiking",
+      "Camping",
+      "Wildlife Watching"
+    ],
+    "coordinates": {
+      "latitude": 33.8,
+      "longitude": -111.3
+    },
+    "websiteUrl": "https://www.fs.usda.gov/tonto",
+    "bestTime": [
+      "Spring",
+      "Fall",
+      "Winter"
+    ],
+    "difficulty": "Moderate",
+    "crowdLevel": "Very High"
+  },
+  {
+    "id": "tuskegee",
+    "name": "Tuskegee National Forest",
+    "state": "Alabama",
+    "region": "Southeast",
+    "description": "The Tuskegee National Forest is a U.S. National Forest located in Macon County, Alabama, just north of Tuskegee. It is the smallest national forest in the U.S. at only 11,349 acres.",
+    "established": "November 27, 1959",
+    "acres": 11349,
+    "activities": [
+      "Hiking",
+      "Camping"
+    ],
+    "coordinates": {
+      "latitude": 32.47639,
+      "longitude": -85.60722
+    },
+    "websiteUrl": "https://www.fs.usda.gov/alabama",
+    "bestTime": [
+      "Spring",
+      "Fall"
+    ],
+    "difficulty": "Easy",
+    "crowdLevel": "Low"
+  },
+  {
+    "id": "uinta-wasatch-cache",
+    "name": "Uinta–Wasatch–Cache National Forest",
+    "state": "Utah",
+    "states": [
+      "Idaho",
+      "Utah",
+      "Wyoming"
+    ],
+    "region": "Southwest",
+    "description": "Wasatch–Cache National Forest is a United States national forest located primarily in northern Utah. The forest boundaries include 1,607,177 acres of land. With the newly included Uinta National Forest, the forest expands to 2,487,896 acres.",
+    "established": "August 16, 1906",
+    "acres": 2492404,
+    "activities": [
+      "Hunting",
+      "Hiking",
+      "Camping",
+      "Skiing"
+    ],
+    "coordinates": {
+      "latitude": 41.65,
+      "longitude": -112.015
+    },
+    "websiteUrl": "https://www.fs.usda.gov/uwcnf",
+    "bestTime": [
+      "Summer",
+      "Fall",
+      "Winter"
+    ],
+    "difficulty": "Moderate",
+    "crowdLevel": "High"
+  },
+  {
+    "id": "umatilla",
+    "name": "Umatilla National Forest",
+    "state": "Oregon",
+    "states": [
+      "Oregon",
+      "Washington"
+    ],
+    "region": "Pacific Northwest",
+    "description": "The Umatilla National Forest, in the Blue Mountains of northeast Oregon and southeast Washington, covers an area of 1.4 million acres.",
+    "established": "July 1, 1908",
+    "acres": 1405898,
+    "visitors": "703,000 annually",
+    "activities": [
+      "Hiking",
+      "Camping",
+      "Fishing"
+    ],
+    "coordinates": {
+      "latitude": 45.63333,
+      "longitude": -118.18333
+    },
+    "websiteUrl": "https://www.fs.usda.gov/umatilla",
+    "bestTime": [
+      "Summer",
+      "Fall"
+    ],
+    "difficulty": "Moderate",
+    "crowdLevel": "Moderate"
+  },
+  {
+    "id": "umpqua",
+    "name": "Umpqua National Forest",
+    "state": "Oregon",
+    "region": "Pacific Northwest",
+    "description": "Umpqua National Forest, in southern Oregon's Cascade Range, covers an area of 983,129 acres and borders the Crater Lake National Park in Southern Oregon.",
+    "established": "July 2, 1907",
+    "acres": 986120,
+    "visitors": "799,000 annually",
+    "activities": [
+      "Hiking",
+      "Camping",
+      "Fishing"
+    ],
+    "coordinates": {
+      "latitude": 43.2225,
+      "longitude": -122.25417
+    },
+    "websiteUrl": "https://www.fs.usda.gov/umpqua",
+    "bestTime": [
+      "Summer",
+      "Fall"
+    ],
+    "difficulty": "Moderate",
+    "crowdLevel": "Moderate"
+  },
+  {
+    "id": "uncompahgre",
+    "name": "Uncompahgre National Forest",
+    "state": "Colorado",
+    "region": "Rocky Mountains",
+    "description": "Uncompahgre National Forest is a U.S. National Forest covering 955,229 acres in western Colorado. The forest contains three alpine wilderness areas.",
+    "established": "June 14, 1905",
+    "acres": 951767,
+    "activities": [
+      "Hiking",
+      "Camping",
+      "Wildlife Watching"
+    ],
+    "coordinates": {
+      "latitude": 37.983,
+      "longitude": -107.782
+    },
+    "websiteUrl": "https://www.fs.usda.gov/gmug",
+    "bestTime": [
+      "Summer",
+      "Fall"
+    ],
+    "difficulty": "Moderate to Strenuous",
+    "crowdLevel": "Moderate"
+  },
+  {
+    "id": "uwharrie",
+    "name": "Uwharrie National Forest",
+    "state": "North Carolina",
+    "region": "Southeast",
+    "description": "Uwharrie National Forest is a federally designated national forest region located primarily in Montgomery County, but also extending into Randolph and Davidson counties in south central North Carolina with a total area of 50,645 acres.",
+    "established": "January 12, 1961",
+    "acres": 51218,
+    "activities": [
+      "Camping",
+      "Hiking",
+      "Fishing",
+      "Boating",
+      "Mountain Biking",
+      "Horseback Riding"
+    ],
+    "coordinates": {
+      "latitude": 35.3663062,
+      "longitude": -79.964034
+    },
+    "websiteUrl": "https://www.fs.usda.gov/nfsnc",
+    "bestTime": [
+      "Spring",
+      "Fall"
+    ],
+    "difficulty": "Easy to Moderate",
+    "crowdLevel": "Low"
+  },
+  {
+    "id": "wallowa-whitman",
+    "name": "Wallowa-Whitman National Forest",
+    "state": "Oregon",
+    "states": [
+      "Idaho",
+      "Oregon"
+    ],
+    "region": "Pacific Northwest",
+    "description": "The Wallowa–Whitman National Forest is a United States National Forest in the U.S. states of Oregon and Idaho. Formed upon the merger of the Wallowa and Whitman national forests in 1954, it covers over 2.2 million acres.",
+    "established": "May 6, 1905",
+    "acres": 2261480,
+    "visitors": "505,000 annually",
+    "activities": [
+      "Hiking",
+      "Camping",
+      "Fishing"
+    ],
+    "coordinates": {
+      "latitude": 45.33333,
+      "longitude": -117.00139
+    },
+    "websiteUrl": "https://www.fs.usda.gov/wallowa-whitman",
+    "bestTime": [
+      "Summer",
+      "Fall"
+    ],
+    "difficulty": "Moderate",
+    "crowdLevel": "Low"
+  },
+  {
+    "id": "wayne",
+    "name": "Wayne National Forest",
+    "state": "Ohio",
+    "region": "Midwest",
+    "description": "The Wayne National Forest is located in the Appalachian part of Ohio. It is the first and only national forest in Ohio, covering 243,180 acres.",
+    "established": "December 1992",
+    "acres": 243180,
+    "activities": [
+      "Hiking",
+      "Camping"
+    ],
+    "coordinates": {
+      "latitude": 39.5,
+      "longitude": -82.0
+    },
+    "websiteUrl": "https://www.fs.usda.gov/wayne",
+    "bestTime": [
+      "Spring",
+      "Summer",
+      "Fall"
+    ],
+    "difficulty": "Moderate",
+    "crowdLevel": "Low"
+  },
+  {
+    "id": "white-mountain",
+    "name": "White Mountain National Forest",
+    "state": "New Hampshire",
+    "states": [
+      "Maine",
+      "New Hampshire"
+    ],
+    "region": "Northeast",
+    "description": "The White Mountain National Forest was established in 1918. It has a total area of 750,852 acres. Most of the WMNF is in New Hampshire; a small part is in neighboring Maine.",
+    "established": "May 16, 1918",
+    "acres": 761687,
+    "activities": [
+      "Hiking",
+      "Fishing",
+      "Wildlife Watching",
+      "Skiing"
+    ],
+    "coordinates": {
+      "latitude": 44.1,
+      "longitude": -71.4
+    },
+    "websiteUrl": "https://www.fs.usda.gov/whitemountain",
+    "bestTime": [
+      "Summer",
+      "Fall",
+      "Winter"
+    ],
+    "difficulty": "Moderate to Strenuous",
+    "crowdLevel": "High"
+  },
+  {
+    "id": "white-river",
+    "name": "White River National Forest",
+    "state": "Colorado",
+    "region": "Rocky Mountains",
+    "description": "White River National Forest is a National Forest in northwest Colorado. It is the most visited National Forest in the United States, primarily from users of the twelve ski areas within its boundaries. The forest contains 2,285,970 acres.",
+    "established": "June 28, 1902",
+    "acres": 2287495,
+    "activities": [
+      "Hiking",
+      "Wildlife Watching",
+      "Skiing",
+      "Camping"
+    ],
+    "coordinates": {
+      "latitude": 39.589,
+      "longitude": -105.643
+    },
+    "websiteUrl": "https://www.fs.usda.gov/whiteriver",
+    "bestTime": [
+      "Summer",
+      "Winter"
+    ],
+    "difficulty": "Moderate to Strenuous",
+    "crowdLevel": "Very High"
+  },
+  {
+    "id": "willamette",
+    "name": "Willamette National Forest",
+    "state": "Oregon",
+    "region": "Pacific Northwest",
+    "description": "The Willamette National Forest is a National Forest located in the central portion of the Cascade Range of Oregon. It comprises 1,678,031 acres. Over 380,000 acres are designated wilderness.",
+    "established": "July 1, 1933",
+    "acres": 1681674,
+    "visitors": "1,740,000 annually",
+    "activities": [
+      "Hiking",
+      "Camping",
+      "Fishing",
+      "Mountain Biking"
+    ],
+    "coordinates": {
+      "latitude": 44.1071,
+      "longitude": -122.1847
+    },
+    "websiteUrl": "https://www.fs.usda.gov/willamette",
+    "bestTime": [
+      "Summer",
+      "Fall"
+    ],
+    "difficulty": "Moderate",
+    "crowdLevel": "High"
+  },
+  {
+    "id": "william-bankhead",
+    "name": "William B. Bankhead National Forest",
+    "state": "Alabama",
+    "region": "Southeast",
+    "description": "The William B. Bankhead National Forest is one of Alabama's four National Forests, covering 181,230 acres. Known as the 'land of a thousand waterfalls', this forest is popular for outdoor recreation. Within the forest lies the Sipsey Wilderness.",
+    "established": "January 15, 1918",
+    "acres": 181988,
+    "activities": [
+      "Hiking",
+      "Fishing",
+      "Boating",
+      "Swimming",
+      "Hunting",
+      "Wildlife Watching",
+      "Horseback Riding"
+    ],
+    "coordinates": {
+      "latitude": 34.23722,
+      "longitude": -87.33444
+    },
+    "websiteUrl": "https://www.fs.usda.gov/alabama",
+    "bestTime": [
+      "Spring",
+      "Fall"
+    ],
+    "difficulty": "Moderate",
+    "crowdLevel": "Moderate"
+  }
+]

@@ -2,11 +2,17 @@
 import SwiftUI
 import Foundation
 
-/// Filter state: Region / Terrain / Duration (independent of search)
+/// Filter state: Region / Terrain / Duration (Grand Journey)；微觀篩選單獨一組，依實際數據計數
 struct CommunityFilterState {
     var selectedStateIds: Set<String> = []
     var selectedTerrains: Set<String> = []
     var selectedDuration: String?
+
+    var detailedTrackMainType: String? = nil
+    var selectedLandManagers: Set<String> = []
+    var selectedUrbanCategories: Set<String> = []
+    var selectedActivities: Set<String> = []
+    var selectedDurationMicro: String? = nil
 }
 
 private let recentSearchesKey = "recentSearches"
@@ -25,9 +31,11 @@ final class CommunityViewModel: ObservableObject {
         loadRecentSearches()
     }
 
-    /// Whether any filter is active (for search state .result)
+    /// Whether any filter is active (for search state .result)；Grand Journey 或 Detailed Track 任一有篩選即為 true
     var hasActiveFilter: Bool {
-        !filterState.selectedStateIds.isEmpty || !filterState.selectedTerrains.isEmpty || filterState.selectedDuration != nil
+        let grand = !filterState.selectedStateIds.isEmpty || !filterState.selectedTerrains.isEmpty || filterState.selectedDuration != nil
+        let detailed = filterState.detailedTrackMainType != nil || !filterState.selectedLandManagers.isEmpty || !filterState.selectedUrbanCategories.isEmpty || !filterState.selectedActivities.isEmpty || filterState.selectedDurationMicro != nil
+        return grand || detailed
     }
 
     /// Prepend a journey (e.g. from CustomRouteBuilder macro flow).
@@ -159,5 +167,61 @@ final class CommunityViewModel: ObservableObject {
     func clearAllSearchHistory() {
         recentSearches = []
         persistRecentSearches()
+    }
+
+    // MARK: - Profile 解析：id "1" = Sarah Chen Utah，供 Liked/Saved 標籤顯示與跳轉詳情
+    static let sarahUtahJourney: CommunityJourney = CommunityJourney(
+        journeyName: "The Ultimate Utah Mighty 5 Loop",
+        days: [
+            CommunityJourneyDay(
+                dayNumber: 1,
+                location: CommunityGeoLocation(latitude: 38.7331, longitude: -109.5925),
+                locationName: "Arches National Park",
+                notes: "Day one from Moab. Don't miss sunset at Delicate Arch—bring a headlamp; it gets dark fast on the way back.",
+                photoURL: "https://images.unsplash.com/photo-1504192010706-96946577af45",
+                recommendedStay: "Under Canvas Moab",
+                hasWater: true,
+                hasFuel: false,
+                signalStrength: 4
+            ),
+            CommunityJourneyDay(
+                dayNumber: 2,
+                location: CommunityGeoLocation(latitude: 38.4367, longitude: -109.8108),
+                locationName: "Canyonlands (Island in the Sky)",
+                notes: "Stunning canyon views. Shafer Trail is demanding—use low gear. No services in the backcountry.",
+                photoURL: "https://images.unsplash.com/photo-1516939884455-1445c8652f83",
+                recommendedStay: "Willow Flat Campground",
+                hasWater: false,
+                hasFuel: false,
+                signalStrength: 1
+            ),
+            CommunityJourneyDay(
+                dayNumber: 3,
+                location: CommunityGeoLocation(latitude: 38.3670, longitude: -111.2615),
+                locationName: "Capitol Reef National Park",
+                notes: "Drive UT-24—scenery like Mars. The pie here is famous; grab one at Gifford House.",
+                photoURL: "https://images.unsplash.com/photo-1516939884455-1445c8652f83",
+                recommendedStay: "Capitol Reef Resort (Wagons)",
+                hasWater: true,
+                hasFuel: true,
+                signalStrength: 3
+            )
+        ],
+        selectedStates: ["Utah"],
+        duration: "7 Days",
+        vehicle: "SUV",
+        pace: "Moderate",
+        difficulty: "Moderate",
+        tags: ["Utah", "7 Days", "SUV", "Moderate", "Difficulty · Moderate", "Mighty 5"],
+        state: "Utah",
+        author: CommunityAuthor(id: "sarah-chen", displayName: "Sarah Chen", avatarURL: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200"),
+        likeCount: 909,
+        commentCount: 45
+    )
+
+    /// 依貼文 ID 解析為 CommunityJourney，供 Profile Liked/Saved 顯示與 NavigationLink 詳情。
+    static func journey(forPostId id: String) -> CommunityJourney? {
+        if id == "1" { return sarahUtahJourney }
+        return nil
     }
 }

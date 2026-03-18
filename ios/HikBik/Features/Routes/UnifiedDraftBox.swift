@@ -154,10 +154,12 @@ struct DraftItem: Identifiable, Codable, Hashable {
     var nearbyFacilities: [String]?
     /// 宏觀路線發布時寫入的完整 MacroJourneyPost JSON（含每日照片、描述、Airbnb 連結）。Profile / 詳情頁解碼用。
     var macroJourneyJSON: String?
+    /// 微觀 Detailed Track 發布時寫入的完整 DetailedTrackPost JSON（含 viewPointNodes：arrivalTime、amenities、elevation 等）。Community 卡片與詳情頁解碼用。
+    var detailedTrackJSON: String?
 
     enum CodingKeys: String, CodingKey {
         case id, source, category, title, createdAt, waypoints, polylineCoordinates, durationSeconds, coverImageData, formDescription, locationName, currentWeather, nearbyFacilities
-        case macroJourneyJSON
+        case macroJourneyJSON, detailedTrackJSON
     }
 
     /// 從 source 推斷默認 category：Builder→Grand Journeys，Live Recording→Lively Activity，Micro/Detailed→Detailed Tracks。
@@ -169,7 +171,7 @@ struct DraftItem: Identifiable, Codable, Hashable {
         }
     }
 
-    init(id: UUID, source: DraftSource, category: PostCategory? = nil, title: String, createdAt: Date, waypoints: [DraftWaypoint], polylineCoordinates: [DraftCoordinate]?, durationSeconds: Double?, coverImageData: Data? = nil, formDescription: String? = nil, locationName: String? = nil, currentWeather: String? = nil, nearbyFacilities: [String]? = nil, macroJourneyJSON: String? = nil) {
+    init(id: UUID, source: DraftSource, category: PostCategory? = nil, title: String, createdAt: Date, waypoints: [DraftWaypoint], polylineCoordinates: [DraftCoordinate]?, durationSeconds: Double?, coverImageData: Data? = nil, formDescription: String? = nil, locationName: String? = nil, currentWeather: String? = nil, nearbyFacilities: [String]? = nil, macroJourneyJSON: String? = nil, detailedTrackJSON: String? = nil) {
         self.id = id
         self.source = source
         self.category = category ?? Self.category(from: source)
@@ -184,6 +186,7 @@ struct DraftItem: Identifiable, Codable, Hashable {
         self.currentWeather = currentWeather
         self.nearbyFacilities = nearbyFacilities
         self.macroJourneyJSON = macroJourneyJSON
+        self.detailedTrackJSON = detailedTrackJSON
     }
 
     struct DraftWaypoint: Codable, Hashable {
@@ -316,6 +319,7 @@ struct DraftItem: Identifiable, Codable, Hashable {
         currentWeather = try c.decodeIfPresent(String.self, forKey: .currentWeather)
         nearbyFacilities = try c.decodeIfPresent([String].self, forKey: .nearbyFacilities)
         macroJourneyJSON = try c.decodeIfPresent(String.self, forKey: .macroJourneyJSON)
+        detailedTrackJSON = try c.decodeIfPresent(String.self, forKey: .detailedTrackJSON)
     }
 
     func encode(to encoder: Encoder) throws {
@@ -334,6 +338,65 @@ struct DraftItem: Identifiable, Codable, Hashable {
         try c.encodeIfPresent(currentWeather, forKey: .currentWeather)
         try c.encodeIfPresent(nearbyFacilities, forKey: .nearbyFacilities)
         try c.encodeIfPresent(macroJourneyJSON, forKey: .macroJourneyJSON)
+        try c.encodeIfPresent(detailedTrackJSON, forKey: .detailedTrackJSON)
+    }
+
+    /// 解碼為 DetailedTrackPost（僅當 detailedTrackJSON 存在且有效時）。用於 toManualJourney 與 resolved 顯示。
+    private func decodedDetailedTrackPost() -> DetailedTrackPost? {
+        guard let json = detailedTrackJSON, let data = json.data(using: .utf8),
+              var post = try? JSONDecoder().decode(DetailedTrackPost.self, from: data) else { return nil }
+        post.routeID = routeID
+        return post
+    }
+
+    /// 卡片/詳情用：總時長顯示。優先從 Detailed Track JSON 取（calculatedRealDuration 或 totalDurationMinutes），否則用 durationSeconds。
+    var resolvedDurationDisplay: String? {
+        if let post = decodedDetailedTrackPost() {
+            if let real = post.calculatedRealDuration { return real }
+            let m = post.totalDurationMinutes
+            if m < 60 { return "\(m) min" }
+            let h = m / 60
+            let r = m % 60
+            return r > 0 ? "\(h)h \(r)min" : "\(h)h"
+        }
+        guard let sec = durationSeconds, sec >= 0 else { return nil }
+        let total = Int(sec)
+        let minutes = total / 60
+        if minutes < 60 { return "\(minutes) min" }
+        let h = minutes / 60
+        let m = minutes % 60
+        return m > 0 ? "\(h)h \(m)min" : "\(h)h"
+    }
+
+    /// 卡片用：總海拔顯示。優先從 Detailed Track JSON 取 elevationGain，否則用 elevationGainMeters 換算為 ft。
+    var resolvedElevationGain: String? {
+        if let post = decodedDetailedTrackPost(), let gain = post.elevationGain, !gain.isEmpty { return gain }
+        let m = elevationGainMeters
+        guard m > 0 else { return nil }
+        return "\(Int(m * 3.28084)) ft"
+    }
+
+    /// 卡片 Badge 用：Detailed Track 主活動類型（primaryActivityType ?? 首個 viewPoint 的 activityType）。
+    var detailedTrackPrimaryActivityType: ViewPointActivityType? {
+        guard let post = decodedDetailedTrackPost() else { return nil }
+        return post.primaryActivityType ?? post.viewPointNodes.first?.activityType
+    }
+
+    /// Community 卡片用：路線類別（二級體系 subCategoryDisplay 或 legacy category），即 Land Manager 名稱
+    var detailedTrackCategoryDisplay: String? {
+        decodedDetailedTrackPost()?.displayCategory
+    }
+
+    /// Community 卡片左上角標籤：NATURE · DETAILED / URBAN · DETAILED
+    var detailedTrackTier: MicroTrackTier? {
+        decodedDetailedTrackPost()?.trackTier
+    }
+
+    /// 微觀篩選用：時長（分鐘），優先 Detailed Track JSON 的 totalDurationMinutes，否則 durationSeconds 換算
+    var durationMinutesForFilter: Int? {
+        if let post = decodedDetailedTrackPost(), post.totalDurationMinutes > 0 { return post.totalDurationMinutes }
+        guard let sec = durationSeconds, sec > 0 else { return nil }
+        return max(1, Int(sec / 60))
     }
 
     /// 宏觀詳情：優先解碼 macroJourneyJSON（完整每日數據），否則由 waypoints 組最小 CommunityJourney。
@@ -398,8 +461,9 @@ struct DraftItem: Identifiable, Codable, Hashable {
         )
     }
 
-    /// Convert to ManualJourney for ManualJourneyDetailView (route detail sheet). Same routeID for Community + Profile.
+    /// Convert to ManualJourney for ManualJourneyDetailView (route detail sheet). 優先解碼 detailedTrackJSON（Builder 完整 ViewPoint 數據），否則由 waypoints 組最小行程。
     func toManualJourney() -> ManualJourney {
+        if let post = decodedDetailedTrackPost() { return post }
         let nodes = waypoints.enumerated().map { i, w in
             ViewPointNode(
                 title: "Point \(i + 1)",

@@ -507,6 +507,10 @@ struct PostEditorView: View {
                 if let source = sourceDraftItem {
                     TrackDataManager.shared.publishDraft(source, with: finalJourney)
                     TrackDataManager.shared.objectWillChange.send()
+                    let isGrandJourney = source.category == .grandJourney
+                    let postId = PostMediaStore.publishId(publishedIndex: 0, trackRouteID: isGrandJourney ? nil : source.routeID)
+                    let urls = savePostMediaToDocuments(postId: postId, imageData: selectedImageData)
+                    if !urls.isEmpty { PostMediaStore.shared.setImageUrls(id: postId, urls: urls) }
                     print("🚨 [FATAL_FIX] 暴力寫入完成！當前單例總數: \(TrackDataManager.shared.publishedTracks.count)")
                     TrackRecordingLiveActivityManager.startPublishedActivity(
                         distanceMeters: distanceMeters,

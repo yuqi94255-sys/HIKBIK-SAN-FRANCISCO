@@ -1,0 +1,15 @@
+{
+  "yosemite": [
+    "https://images.unsplash.com/photo-1516687401797-25297ff1462c?w=1200",
+    "https://images.unsplash.com/photo-1548625361-08775eea0f2b?w=1200",
+    "https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=1200"
+  ],
+  "sequoia": [
+    "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1200",
+    "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=1200"
+  ],
+  "yellowstone": [
+    "https://images.unsplash.com/photo-1629985692757-48648f4f1fc1?w=1200",
+    "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1200"
+  ]
+}

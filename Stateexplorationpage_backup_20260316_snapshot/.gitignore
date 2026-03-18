@@ -1,0 +1,3 @@
+# Xcode 個人 UI 狀態（勿提交，不影響編譯）
+**/xcuserdata/**/UserInterfaceState.xcuserstate
+**/*.xcuserstate

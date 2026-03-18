@@ -90,6 +90,7 @@ final class RouteDetailViewModel: ObservableObject {
         }
         refreshWeather(forViewPointIndex: nil)
         showSheet = true
+        // Like 狀態優先與 CurrentUser 同步（SocialDataManager 保留兼容）
         isFavorite = SocialDataManager.shared.isFavorite(routeID: effectiveRouteID)
     }
 
@@ -98,6 +99,11 @@ final class RouteDetailViewModel: ObservableObject {
         DispatchQueue.main.async { [weak self] in
             self?.isFavorite = newValue
         }
+    }
+
+    /// 從 CurrentUser 同步 Like 狀態（Profile 跳轉回來時收藏/點贊按鈕正確顯示）
+    func setFavoriteFromCurrentUser(_ liked: Bool) {
+        isFavorite = liked
     }
 
     /// 分享用純文本摘要（無網頁時）：路線名 + 座標簡述

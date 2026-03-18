@@ -208,7 +208,7 @@ struct HomeView: View {
         case .forests: ForestsTab()
         case .grasslands: GrasslandsTab()
         case .recreation: RecreationTab()
-        case .favorites: FavoritesListView()
+        case .favorites: HomeFavoritesView()
         }
     }
 }

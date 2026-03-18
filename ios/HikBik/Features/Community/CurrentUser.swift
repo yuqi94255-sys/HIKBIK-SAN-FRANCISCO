@@ -1,9 +1,22 @@
 // MARK: - Current User — 喜歡、收藏、打卡、關注（模擬；接後端時替換為 API）
 import SwiftUI
 
-/// 當前用戶的社交狀態：點讚、打卡、關注列表、顯示名稱。關注雙向同步由 mockFollowUser 模擬。
+extension Notification.Name {
+    /// 點讚或收藏變更後發送，userInfo: ["id": postId, "type": "like"|"save", "status": Bool]
+    static let socialStatusChanged = Notification.Name("CurrentUser.socialStatusChanged")
+}
+
+private let currentUserLikedKey = "CurrentUser.likedPostIds"
+private let currentUserSavedKey = "CurrentUser.savedPostIds"
+
+/// 當前用戶的社交狀態：點讚、收藏、打卡、關注列表、顯示名稱。關注雙向同步由 mockFollowUser 模擬。點讚/收藏持久化到 UserDefaults。
 final class CurrentUser: ObservableObject {
-    @Published var likedPostIds: Set<String> = []
+    @Published var likedPostIds: Set<String> = [] {
+        didSet { persistLiked() }
+    }
+    @Published var savedPostIds: Set<String> = [] {
+        didSet { persistSaved() }
+    }
     @Published var completedJourneyIds: Set<String> = []
     @Published var displayName: String = "Guest"
 
@@ -14,16 +27,61 @@ final class CurrentUser: ObservableObject {
     /// 模擬：被關注者的粉絲數 [targetUserId: count]，點 Follow 時目標 +1，Unfollow 時 -1
     @Published var mockFollowersCount: [String: Int] = [:]
 
+    init() {
+        loadLikedAndSaved()
+    }
+
+    private func loadLikedAndSaved() {
+        if let arr = UserDefaults.standard.stringArray(forKey: currentUserLikedKey) {
+            likedPostIds = Set(arr)
+        }
+        if let arr = UserDefaults.standard.stringArray(forKey: currentUserSavedKey) {
+            savedPostIds = Set(arr)
+        }
+    }
+
+    private func persistLiked() {
+        UserDefaults.standard.set(Array(likedPostIds), forKey: currentUserLikedKey)
+    }
+
+    private func persistSaved() {
+        UserDefaults.standard.set(Array(savedPostIds), forKey: currentUserSavedKey)
+    }
+
     func toggleLike(postId: String) {
         if likedPostIds.contains(postId) {
             likedPostIds.remove(postId)
         } else {
             likedPostIds.insert(postId)
         }
+        let nowLiked = likedPostIds.contains(postId)
+        NotificationCenter.default.post(
+            name: .socialStatusChanged,
+            object: nil,
+            userInfo: ["id": postId, "type": "like", "status": nowLiked]
+        )
     }
 
     func isLiked(postId: String) -> Bool {
         likedPostIds.contains(postId)
+    }
+
+    func toggleSave(postId: String) {
+        if savedPostIds.contains(postId) {
+            savedPostIds.remove(postId)
+        } else {
+            savedPostIds.insert(postId)
+        }
+        let nowSaved = savedPostIds.contains(postId)
+        NotificationCenter.default.post(
+            name: .socialStatusChanged,
+            object: nil,
+            userInfo: ["id": postId, "type": "save", "status": nowSaved]
+        )
+    }
+
+    func isSaved(postId: String) -> Bool {
+        savedPostIds.contains(postId)
     }
 
     func checkIn(journeyId: String) {

@@ -35,6 +35,8 @@ struct GrandJourneyItem: Identifiable {
     let authorAvatarUrl: String?
     let isFollowing: Bool
     let imageUrl: String
+    /// 多圖輪播 URL 數組；為空時卡片用 imageUrl 單圖，有值時與 PostMediaStore 一起驅動輪播
+    let imageUrls: [String]?
     let days: Int
     let label: String
     let title: String
@@ -69,7 +71,7 @@ struct LiveActivityItem: Identifiable {
     let commentCount: Int
 }
 
-// MARK: - Detailed Track Model
+// MARK: - Detailed Track Model（支援輪播 imageUrls；isLiked/isSaved 由 CurrentUser 同步）
 struct DetailedTrackItem: Identifiable {
     let id: String
     let authorId: String
@@ -77,7 +79,8 @@ struct DetailedTrackItem: Identifiable {
     let authorSubtitle: String
     let authorAvatarUrl: String?
     let isFollowing: Bool
-    let imageUrl: String
+    /// 多圖輪播（至少 1 張）；列表卡片用 TabView 展示
+    let imageUrls: [String]
     let activityTag: String // "4X4 ONLY", "ROCK/CHAIN", "ALPINE TRAIL"
     let title: String
     let distance: String   // "45.8 mi"
@@ -89,7 +92,12 @@ struct DetailedTrackItem: Identifiable {
     let commentCount: Int
 }
 
-// MARK: - Mock Data
+extension DetailedTrackItem {
+    /// 用於卡片底部 Duration 標籤；模型暫無 duration 時顯示佔位
+    var durationDisplay: String { "— min" }
+}
+
+// MARK: - 真實示範數據（僅保留 Sarah Utah；CurrentUser 的「New York」來自 published_*）
 private let mockGrandJourneys: [GrandJourneyItem] = [
     GrandJourneyItem(
         id: "1",
@@ -99,6 +107,7 @@ private let mockGrandJourneys: [GrandJourneyItem] = [
         authorAvatarUrl: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200",
         isFollowing: false,
         imageUrl: "https://images.unsplash.com/photo-1476610182048-b716b8518aae?w=800",
+        imageUrls: nil,
         days: 7,
         label: "EPIC COLLECTION",
         title: "The Ultimate Utah Mighty 5 Loop",
@@ -111,69 +120,9 @@ private let mockGrandJourneys: [GrandJourneyItem] = [
         tags: ["Canyons", "Mountains"],
         createdAt: Date().addingTimeInterval(-3600 * 24 * 2)
     ),
-    GrandJourneyItem(
-        id: "2",
-        authorId: "emma-wilson",
-        authorName: "Emma Wilson",
-        authorSubtitle: "542 followers",
-        authorAvatarUrl: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200",
-        isFollowing: false,
-        imageUrl: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800",
-        days: 12,
-        label: "EPIC COLLECTION",
-        title: "Montana Glacier Country Circuit",
-        mileage: "2,100",
-        vehicle: "SUV",
-        waypoints: ["Glacier", "Yellowstone", "Grand Teton"],
-        likeCount: 1876,
-        commentCount: 92,
-        stateIds: ["mt", "wy"],
-        tags: ["Mountains", "Forests"],
-        createdAt: Date().addingTimeInterval(-3600 * 24 * 5)
-    ),
-    GrandJourneyItem(
-        id: "3",
-        authorId: "mike-rodriguez",
-        authorName: "Mike Rodriguez",
-        authorSubtitle: "Mountain Guide",
-        authorAvatarUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200",
-        isFollowing: true,
-        imageUrl: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=800",
-        days: 10,
-        label: "EPIC COLLECTION",
-        title: "Pacific Northwest Mountain Majesty",
-        mileage: "1,850",
-        vehicle: "SUV",
-        waypoints: ["Olympic", "North Cascades", "Mount Rainier", "Crater Lake"],
-        likeCount: 1432,
-        commentCount: 78,
-        stateIds: ["wa", "or"],
-        tags: ["Mountains", "Forests", "Coastline"],
-        createdAt: Date().addingTimeInterval(-3600 * 24 * 10)
-    ),
-    GrandJourneyItem(
-        id: "4",
-        authorId: "alex-turner",
-        authorName: "Alex Turner",
-        authorSubtitle: "Desert Expert",
-        authorAvatarUrl: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200",
-        isFollowing: false,
-        imageUrl: "https://images.unsplash.com/photo-1534430480872-3498386e7856?w=800",
-        days: 5,
-        label: "EPIC COLLECTION",
-        title: "California Desert Explorer",
-        mileage: "890",
-        vehicle: "4x4",
-        waypoints: ["Joshua Tree", "Death Valley", "Mojave National Preserve"],
-        likeCount: 567,
-        commentCount: 23,
-        stateIds: ["ca", "nv"],
-        tags: ["Desert", "Canyons"],
-        createdAt: Date().addingTimeInterval(-3600 * 24)
-    ),
 ]
 
-/// 模擬 Zion - Angel's Landing 詳情頁數據（含社交屬性：作者、評分、封面圖）
+/// 模擬 Zion - Angel's Landing 詳情頁數據（含社交屬性、輪播 3 圖，routeID 與 mockDetailedTracks 的 id 前綴一致）
 private let zionManualJourneyMock: DetailedTrackPost = DetailedTrackPost(
     category: .nationalPark,
     routeName: "Angel's Landing Trail - Zion",
@@ -190,6 +139,11 @@ private let zionManualJourneyMock: DetailedTrackPost = DetailedTrackPost(
     rating: 4.9,
     reviewCount: 24,
     heroImage: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=800",
+    heroImages: [
+        "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=800",
+        "https://images.unsplash.com/photo-1476610182048-b716b8518aae?w=800",
+        "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800"
+    ],
     routeID: "zion-angels-landing-001"
 )
 
@@ -261,33 +215,20 @@ private let mockLiveActivities: [LiveActivityItem] = {
     ]
 }()
 
+/// 真實示範：Jessica Martinez「Angels Landing Summit」，id 與 zionManualJourneyMock.routeID 一致以便 Profile Saved 跳轉與 Like/Save 同步。
 private let mockDetailedTracks: [DetailedTrackItem] = [
     DetailedTrackItem(
-        id: "dt1",
-        authorId: "tom-wilson",
-        authorName: "Tom Wilson",
-        authorSubtitle: "234 followers",
-        authorAvatarUrl: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200",
-        isFollowing: false,
-        imageUrl: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=800",
-        activityTag: "4X4 ONLY",
-        title: "Maze District - Backcountry Route",
-        distance: "45.8 mi",
-        elevationGain: "+2,100 ft",
-        difficulty: "Hard",
-        difficultyColor: CommunityColors.difficultyOrange,
-        elevationProfileHeights: [0.3, 0.5, 0.8, 0.6, 0.9, 0.7, 0.4, 0.6, 0.8, 0.5],
-        likeCount: 445,
-        commentCount: 28
-    ),
-    DetailedTrackItem(
-        id: "dt2",
+        id: "track_zion-angels-landing-001",
         authorId: "jessica-martinez",
         authorName: "Jessica Martinez",
         authorSubtitle: "427 followers",
         authorAvatarUrl: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200",
         isFollowing: true,
-        imageUrl: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800",
+        imageUrls: [
+            "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=800",
+            "https://images.unsplash.com/photo-1476610182048-b716b8518aae?w=800",
+            "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800"
+        ],
         activityTag: "ROCK/CHAIN",
         title: "Angels Landing Summit",
         distance: "5.4 mi",
@@ -297,60 +238,6 @@ private let mockDetailedTracks: [DetailedTrackItem] = [
         elevationProfileHeights: [0.2, 0.4, 0.7, 0.9, 0.6, 0.8],
         likeCount: 1234,
         commentCount: 89
-    ),
-    DetailedTrackItem(
-        id: "dt3",
-        authorId: "david-kim",
-        authorName: "David Kim",
-        authorSubtitle: "Overlanding Pro",
-        authorAvatarUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200",
-        isFollowing: false,
-        imageUrl: "https://images.unsplash.com/photo-1473580044384-7ba9967e16a0?w=800",
-        activityTag: "ROUGH GRAVEL",
-        title: "Racetrack Playa - The Sliding Rocks",
-        distance: "27.5 mi",
-        elevationGain: "+3,708 ft",
-        difficulty: "Hard",
-        difficultyColor: CommunityColors.difficultyOrange,
-        elevationProfileHeights: [0.4, 0.5, 0.6, 0.7, 0.5, 0.8, 0.6, 0.4],
-        likeCount: 567,
-        commentCount: 34
-    ),
-    DetailedTrackItem(
-        id: "dt4",
-        authorId: "lauren-hughes",
-        authorName: "Lauren Hughes",
-        authorSubtitle: "Backcountry Expert",
-        authorAvatarUrl: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200",
-        isFollowing: false,
-        imageUrl: "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=800",
-        activityTag: "ALPINE TRAIL",
-        title: "The Enchantments - Core Zone",
-        distance: "18 mi",
-        elevationGain: "+6,000 ft",
-        difficulty: "Expert",
-        difficultyColor: CommunityColors.difficultyRed,
-        elevationProfileHeights: [0.3, 0.6, 0.9, 0.85, 0.7, 0.8, 0.5],
-        likeCount: 1890,
-        commentCount: 112
-    ),
-    DetailedTrackItem(
-        id: "dt5",
-        authorId: "chris-anderson",
-        authorName: "Chris Anderson",
-        authorSubtitle: "MTB Guide",
-        authorAvatarUrl: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200",
-        isFollowing: false,
-        imageUrl: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800",
-        activityTag: "DIRT/ROCK",
-        title: "White Rim Trail - Complete Loop",
-        distance: "103.2 mi",
-        elevationGain: "+1,500 ft",
-        difficulty: "Expert",
-        difficultyColor: CommunityColors.difficultyRed,
-        elevationProfileHeights: [0.2, 0.3, 0.25, 0.4, 0.35, 0.3, 0.25, 0.2],
-        likeCount: 678,
-        commentCount: 45
     ),
 ]
 
@@ -377,6 +264,7 @@ struct CommunityDiscoveryView: View {
     @EnvironmentObject private var communityViewModel: CommunityViewModel
     @EnvironmentObject private var currentUser: CurrentUser
     @EnvironmentObject private var socialManager: SocialManager
+    @EnvironmentObject private var postCommentStore: PostCommentStore
     /// 強制全局唯一讀取：直接綁定單例，避免環境傳遞或錯誤實例
     @ObservedObject private var trackDataManager = TrackDataManager.shared
     @ObservedObject private var tabSelection = TabSelectionManager.shared
@@ -424,6 +312,20 @@ struct CommunityDiscoveryView: View {
         }
     }
 
+    /// 微觀篩選是否啟用（任一條件有選即過濾列表）
+    private var hasDetailedFilterActive: Bool {
+        let s = communityViewModel.filterState
+        return s.detailedTrackMainType != nil || !s.selectedLandManagers.isEmpty || !s.selectedUrbanCategories.isEmpty || !s.selectedActivities.isEmpty || s.selectedDurationMicro != nil
+    }
+
+    private var filteredDetailedTrackPublished: [DraftItem] {
+        detailedTrackPublished.filter { draft in matchesDetailedFilter(draft, communityViewModel.filterState) }
+    }
+
+    private var detailedTrackListDataSource: [DraftItem] {
+        (searchState == .results && hasDetailedFilterActive) ? filteredDetailedTrackPublished : detailedTrackPublished
+    }
+
     var body: some View {
         NavigationStack {
             ZStack(alignment: .top) {
@@ -431,9 +333,6 @@ struct CommunityDiscoveryView: View {
                     LazyVStack(alignment: .leading, spacing: 12) {
                         Color.clear
                             .frame(height: stickyHeaderHeight)
-                        Text("實時數據總數: \(trackDataManager.publishedTracks.count)")
-                            .font(.caption)
-                            .foregroundStyle(.blue)
                         if viewMode == .grandJourneys {
                             // Grand Journeys 欄目：僅 category == .grandJourney 的發布數據 + mock
                             ForEach(grandJourneyListDataSource, id: \.id) { item in
@@ -447,12 +346,16 @@ struct CommunityDiscoveryView: View {
                                             item: item,
                                             isFollowing: isFollowing,
                                             isLiked: currentUser.isLiked(postId: item.id),
+                                            isSaved: currentUser.isSaved(postId: item.id),
+                                            displayLikeCount: item.likeCount + (currentUser.isLiked(postId: item.id) ? 1 : 0),
+                                            displayCommentCount: item.commentCount + postCommentStore.commentCount(for: item.id),
                                             authorSubtitleOverride: dynamicUser.map { "\($0.followersCount) followers" },
                                             onFollowTap: {
                                                 UIImpactFeedbackGenerator(style: .light).impactOccurred()
                                                 socialManager.toggleFollow(for: item.authorId, currentUserId: socialManager.currentUserId)
                                             },
-                                            onLikeTap: { toggleLike(item.id) }
+                                            onLikeTap: { toggleLike(item.id) },
+                                            onSaveTap: { toggleSave(item.id) }
                                         )
                                     }
                                     .buttonStyle(.plain)
@@ -487,10 +390,22 @@ struct CommunityDiscoveryView: View {
                                 }
                             }
                         } else if viewMode == .detailedTracks {
-                            // Detailed Tracks 欄目：僅 category == .detailedTrack 的發布數據 + mock
-                            ForEach(detailedTrackPublished, id: \.id) { post in
+                            // Detailed Tracks 欄目：依篩選狀態顯示 detailedTrackListDataSource 或全量
+                            ForEach(detailedTrackListDataSource, id: \.id) { post in
+                                let detailedTrackPostId = "track_\(post.routeID)"
+                                let isLikedDt = currentUser.isLiked(postId: detailedTrackPostId)
                                 VStack(alignment: .leading, spacing: 4) {
-                                    CommunityCardView(draft: post)
+                                    CommunityCardView(
+                                        draft: post,
+                                        authorDisplayName: "Me",
+                                        authorSubtitle: "My post",
+                                        likeCount: 0 + (isLikedDt ? 1 : 0),
+                                        commentCount: postCommentStore.commentCount(for: detailedTrackPostId),
+                                        isLiked: isLikedDt,
+                                        isSaved: currentUser.isSaved(postId: detailedTrackPostId),
+                                        onLikeTap: { toggleLike(detailedTrackPostId) },
+                                        onSaveTap: { toggleSave(detailedTrackPostId) }
+                                    )
                                 }
                                 .onTapGesture {
                                     selectedJourney = post.toManualJourney()
@@ -506,13 +421,17 @@ struct CommunityDiscoveryView: View {
                                     DetailedTrackCard(
                                         item: item,
                                         isFollowing: dtIsFollowing,
-                                        isLiked: likeStates[item.id] ?? false,
+                                        isLiked: currentUser.isLiked(postId: item.id),
+                                        isSaved: currentUser.isSaved(postId: item.id),
+                                        displayLikeCount: item.likeCount + (currentUser.isLiked(postId: item.id) ? 1 : 0),
+                                        displayCommentCount: item.commentCount + postCommentStore.commentCount(for: item.id),
                                         authorSubtitleOverride: dtDynamicSubtitle,
                                         onFollowTap: {
                                             UIImpactFeedbackGenerator(style: .light).impactOccurred()
                                             socialManager.toggleFollow(for: item.authorId, currentUserId: socialManager.currentUserId)
                                         },
-                                        onLikeTap: { toggleLike(item.id) }
+                                        onLikeTap: { toggleLike(item.id) },
+                                        onSaveTap: { toggleSave(item.id) }
                                     )
                                 }
                                 .buttonStyle(PlainButtonStyle())
@@ -526,8 +445,20 @@ struct CommunityDiscoveryView: View {
                                 liveActivityEmptyState
                             } else {
                                 ForEach(livelyActivityPublished, id: \.id) { post in
+                                    let postIdLive = post.id.uuidString
+                                    let isLikedLive = currentUser.isLiked(postId: postIdLive)
                                     VStack(alignment: .leading, spacing: 4) {
-                                        CommunityCardView(draft: post)
+                                        CommunityCardView(
+                                            draft: post,
+                                            authorDisplayName: "Me",
+                                            authorSubtitle: "My post",
+                                            likeCount: 0 + (isLikedLive ? 1 : 0),
+                                            commentCount: postCommentStore.commentCount(for: postIdLive),
+                                            isLiked: isLikedLive,
+                                            isSaved: currentUser.isSaved(postId: postIdLive),
+                                            onLikeTap: { toggleLike(postIdLive) },
+                                            onSaveTap: { toggleSave(postIdLive) }
+                                        )
                                     }
                                     .onTapGesture {
                                         selectedJourney = post.toManualJourney()
@@ -561,6 +492,26 @@ struct CommunityDiscoveryView: View {
             .onPreferenceChange(SafeAreaTopKey.self) { newTop in
                 if abs(safeAreaTop - newTop) > 0.5 { safeAreaTop = newTop }
             }
+            .onAppear {
+                // Sarah Chen (id "1") 輪播效果：Utah Mighty 5 三張圖
+                if PostMediaStore.shared.imageUrls(for: "1") == nil {
+                    let sarahImageUrls = [
+                        "https://images.unsplash.com/photo-1504192010706-96946577af45",
+                        "https://images.unsplash.com/photo-1516939884455-1445c8652f83",
+                        "https://images.unsplash.com/photo-1476610182048-b716b8518aae?w=800"
+                    ]
+                    PostMediaStore.shared.setImageUrls(id: "1", urls: sarahImageUrls)
+                }
+                // Jessica Martinez Detailed Track (track_zion-angels-landing-001) 輪播，與列表/詳情一致
+                if PostMediaStore.shared.imageUrls(for: "track_zion-angels-landing-001") == nil {
+                    let zionImageUrls = [
+                        "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=800",
+                        "https://images.unsplash.com/photo-1476610182048-b716b8518aae?w=800",
+                        "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800"
+                    ]
+                    PostMediaStore.shared.setImageUrls(id: "track_zion-angels-landing-001", urls: zionImageUrls)
+                }
+            }
             .sheet(isPresented: $showDetail) {
                 if let j = selectedJourney {
                     ManualJourneyDetailView(journey: j)
@@ -571,9 +522,24 @@ struct CommunityDiscoveryView: View {
                 }
             }
             .sheet(isPresented: $showFilterSheet) {
-                CommunityFilterSheet(viewMode: viewMode, filterState: $communityViewModel.filterState)
-                    .presentationDetents([.medium, .large])
-                    .presentationDragIndicator(.visible)
+                CommunityFilterSheet(
+                    viewMode: viewMode,
+                    filterState: $communityViewModel.filterState,
+                    grandJourneyItems: grandJourneyListForFilter,
+                    communityViewModel: communityViewModel,
+                    detailedTrackItems: detailedTrackPublished,
+                    onApplyDetailedFilter: { mainType, land, urban, act, dur in
+                        var s = communityViewModel.filterState
+                        s.detailedTrackMainType = mainType
+                        s.selectedLandManagers = land
+                        s.selectedUrbanCategories = urban
+                        s.selectedActivities = act
+                        s.selectedDurationMicro = dur
+                        communityViewModel.filterState = s
+                    }
+                )
+                .presentationDetents([.medium, .large])
+                .presentationDragIndicator(.visible)
             }
             .onChange(of: communityViewModel.searchText) { _, _ in syncSearchState() }
             .onChange(of: isSearchFieldFocused) { _, _ in syncSearchState() }
@@ -590,6 +556,11 @@ struct CommunityDiscoveryView: View {
                     TabSelectionManager.shared.shouldOpenCommunityOnLiveActivity = false
                 }
                 trackDataManager.reloadFromStore()
+            }
+            .onReceive(NotificationCenter.default.publisher(for: .postDeleted)) { _ in
+                withAnimation(.easeOut(duration: 0.25)) {
+                    trackDataManager.reloadFromStore()
+                }
             }
             .onChange(of: showFilterSheet) { _, isShowing in
                 if !isShowing { syncSearchState() }
@@ -1065,6 +1036,12 @@ struct CommunityDiscoveryView: View {
         currentUser.toggleLike(postId: id)
     }
 
+    private func toggleSave(_ id: String) {
+        let generator = UIImpactFeedbackGenerator(style: .light)
+        generator.impactOccurred()
+        currentUser.toggleSave(postId: id)
+    }
+
     /// 從 "339 followers" 解析出 339，用於列表 onAppear 時註冊作者初始粉絲數。
     private static func parseFollowersFromSubtitle(_ subtitle: String) -> Int {
         Int(subtitle.split(separator: " ").first ?? Substring("")) ?? 0
@@ -1076,7 +1053,7 @@ struct CommunityDiscoveryView: View {
         if item.id.hasPrefix("published_"), let idx = Int(item.id.replacingOccurrences(of: "published_", with: "")),
            idx >= 0, idx < grandJourneyPublished.count {
             let draft = grandJourneyPublished[idx]
-            CommunityMacroDetailView(journey: communityJourneyFromDraft(draft), journeyId: item.id, coverImageData: draft.coverImageData)
+            CommunityMacroDetailView(journey: draft.communityJourneyForMacroDetail(), journeyId: item.id, coverImageData: draft.coverImageData)
         } else if item.id == "1" {
             CommunityMacroDetailView(journey: Self.sarahChenUtahCommunityJourney, journeyId: item.id)
         } else {
@@ -1118,19 +1095,31 @@ struct CommunityDiscoveryView: View {
         )
     }
 
-    /// Map DraftItem (from TrackDataManager.publishedTracks) to GrandJourneyItem for list; id "published_<index>" for detail lookup.
+    /// Map DraftItem (from TrackDataManager.publishedTracks) to GrandJourneyItem for list; id "published_<index>" for detail lookup。Days 取 itinerary 真實數量；封面圖優先 PostMediaStore 再 draft。
     private func grandJourneyItemFromDraft(_ draft: DraftItem, publishedIndex: Int) -> GrandJourneyItem {
         let miles = draft.totalDistanceMeters / 1609.34
         let mileageText = miles >= 0.1 ? String(format: "%.1f mi", miles) : "—"
+        let postId = "published_\(publishedIndex)"
+        let dayCount: Int = {
+            if let json = draft.macroJourneyJSON, let data = json.data(using: .utf8),
+               let post = try? JSONDecoder().decode(MacroJourneyPost.self, from: data) {
+                return max(1, post.days.count)
+            }
+            return max(1, draft.waypoints.count)
+        }()
+        let fallbackImage = "https://images.unsplash.com/photo-1476610182048-b716b8518aae?w=800"
+        let imageUrls = PostMediaStore.shared.imageUrls(for: postId)
+        let imageUrl = imageUrls?.first ?? fallbackImage
         return GrandJourneyItem(
-            id: "published_\(publishedIndex)",
+            id: postId,
             authorId: "me",
             authorName: "Me",
             authorSubtitle: "Just published",
             authorAvatarUrl: nil,
             isFollowing: false,
-            imageUrl: "https://images.unsplash.com/photo-1476610182048-b716b8518aae?w=800",
-            days: 1,
+            imageUrl: imageUrl,
+            imageUrls: imageUrls,
+            days: dayCount,
             label: "LIVE RECORD",
             title: draft.title,
             mileage: mileageText,
@@ -1144,9 +1133,11 @@ struct CommunityDiscoveryView: View {
         )
     }
 
-    /// Map CommunityJourney to GrandJourneyItem (for legacy/mock flow).
+    /// Map CommunityJourney to GrandJourneyItem (for legacy/mock flow)。Days 用 itinerary.count；多圖用 journey.imageUrls。
     private func grandJourneyItem(from journey: CommunityJourney, publishedIndex: Int) -> GrandJourneyItem {
-        let imageUrl = journey.days.first?.photoURL ?? "https://images.unsplash.com/photo-1476610182048-b716b8518aae?w=800"
+        let fallback = "https://images.unsplash.com/photo-1476610182048-b716b8518aae?w=800"
+        let imageUrls = journey.imageUrls
+        let imageUrl = imageUrls?.first ?? journey.coverImageURL ?? journey.days.first?.photoURL ?? fallback
         let stateIds = journey.selectedStates.map { Self.stateNameToId($0) }
         return GrandJourneyItem(
             id: "published_\(publishedIndex)",
@@ -1156,7 +1147,8 @@ struct CommunityDiscoveryView: View {
             authorAvatarUrl: journey.author?.avatarURL,
             isFollowing: false,
             imageUrl: imageUrl,
-            days: journey.days.count,
+            imageUrls: imageUrls,
+            days: max(1, journey.days.count),
             label: "EPIC COLLECTION",
             title: journey.journeyName,
             mileage: "",
@@ -1255,9 +1247,15 @@ struct GrandJourneyCard: View {
     let item: GrandJourneyItem
     let isFollowing: Bool
     let isLiked: Bool
+    var isSaved: Bool = false
+    /// 樂觀 like 數：item.likeCount + (isLiked ? 1 : 0)
+    var displayLikeCount: Int? = nil
+    /// 評論數：item.commentCount + PostCommentStore 增量
+    var displayCommentCount: Int? = nil
     var authorSubtitleOverride: String? = nil
     let onFollowTap: () -> Void
     let onLikeTap: () -> Void
+    var onSaveTap: (() -> Void)? = nil
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -1318,22 +1316,32 @@ struct GrandJourneyCard: View {
         .background(CommunityColors.cardBg)
     }
 
-    /// 沉浸式圖片：3:2 比例，底部漸變 + 標題與數據
+    /// 沉浸式圖片：多圖用輪播，單圖靜態；3:2 比例，底部漸變 + 標題與數據。優先 item.imageUrls，再 PostMediaStore，再 item.imageUrl。
     private var imageSection: some View {
         GeometryReader { geo in
             let w = geo.size.width
             let h = w * 2 / 3
+            let urls = (item.imageUrls ?? PostMediaStore.shared.imageUrls(for: item.id) ?? [item.imageUrl]).filter { !$0.isEmpty }
+            let displayUrls = urls.isEmpty ? [item.imageUrl] : urls
+
             ZStack(alignment: .bottomLeading) {
-                AsyncImage(url: URL(string: item.imageUrl)) { phase in
-                    switch phase {
-                    case .success(let img): img.resizable().aspectRatio(contentMode: .fill)
-                    case .failure: Color.gray.opacity(0.3)
-                    default: Color.gray.opacity(0.2)
+                if displayUrls.count > 1 {
+                    MediaCarouselView(urls: displayUrls, cornerRadius: 0, aspectRatio: 3/2, fixedHeight: h)
+                        .frame(width: w, height: h)
+                        .frame(maxWidth: .infinity)
+                        .clipped()
+                } else {
+                    AsyncImage(url: URL(string: displayUrls.first ?? item.imageUrl)) { phase in
+                        switch phase {
+                        case .success(let img): img.resizable().aspectRatio(contentMode: .fill)
+                        case .failure: Color.gray.opacity(0.3)
+                        default: Color.gray.opacity(0.2)
+                        }
                     }
+                    .frame(width: w, height: h)
+                    .frame(maxWidth: .infinity)
+                    .clipped()
                 }
-                .frame(width: w, height: h)
-                .frame(maxWidth: .infinity)
-                .clipped()
 
                 LinearGradient(
                     colors: [.clear, .black.opacity(0.9)],
@@ -1375,15 +1383,20 @@ struct GrandJourneyCard: View {
         .aspectRatio(3/2, contentMode: .fit)
     }
 
-    /// 底部交互橫條：點讚、評論、收藏、分享
+    private var effectiveLikeCount: Int { displayLikeCount ?? item.likeCount }
+    private var effectiveCommentCount: Int { displayCommentCount ?? item.commentCount }
+
+    /// 底部交互橫條：點讚、評論、收藏、分享（樂觀數字 + 愛心紅/書籤黃 + 縮放動畫）
     private var actionBar: some View {
         HStack(spacing: 16) {
             Button(action: onLikeTap) {
                 HStack(spacing: 4) {
                     Image(systemName: isLiked ? "heart.fill" : "heart")
                         .font(.system(size: 16))
-                        .foregroundStyle(isLiked ? CommunityColors.accentGreen : CommunityColors.textMuted)
-                    Text("\(item.likeCount)")
+                        .scaleEffect(isLiked ? 1.2 : 1.0)
+                        .animation(.spring(response: 0.3, dampingFraction: 0.6), value: isLiked)
+                        .foregroundStyle(isLiked ? Color.red : CommunityColors.textMuted)
+                    Text("\(effectiveLikeCount)")
                         .font(.system(size: 13, weight: .medium))
                         .foregroundStyle(CommunityColors.textMuted)
                 }
@@ -1393,13 +1406,22 @@ struct GrandJourneyCard: View {
                 Image(systemName: "bubble.right")
                     .font(.system(size: 16))
                     .foregroundStyle(CommunityColors.textMuted)
-                Text("\(item.commentCount)")
+                Text("\(effectiveCommentCount)")
                     .font(.system(size: 13, weight: .medium))
                     .foregroundStyle(CommunityColors.textMuted)
             }
-            Image(systemName: "bookmark")
-                .font(.system(size: 16))
-                .foregroundStyle(CommunityColors.textMuted)
+            if let onSave = onSaveTap {
+                Button(action: onSave) {
+                    Image(systemName: isSaved ? "bookmark.fill" : "bookmark")
+                        .font(.system(size: 16))
+                        .foregroundStyle(isSaved ? Color.yellow : CommunityColors.textMuted)
+                }
+                .buttonStyle(.plain)
+            } else {
+                Image(systemName: "bookmark")
+                    .font(.system(size: 16))
+                    .foregroundStyle(CommunityColors.textMuted)
+            }
             Spacer()
             Button { } label: {
                 Image(systemName: "square.and.arrow.up")
@@ -1414,114 +1436,261 @@ struct GrandJourneyCard: View {
     }
 }
 
-// MARK: - CommunityCardView (Template A: Hero 封面、標題、橫向儀表盤 km/m/min、天氣與地點)
+private func communityActivityIcon(for activity: ViewPointActivityType) -> String {
+    switch activity {
+    case .hiking: return "figure.hiking"
+    case .biking: return "bicycle"
+    case .climbing: return "figure.climbing"
+    case .summit: return "mountain.2.fill"
+    case .mtb: return "bicycle"
+    case .overlanding: return "car.fill"
+    case .camping: return "tent.fill"
+    case .paddling: return "water.waves"
+    case .fishing: return "figure.fishing"
+    case .boating: return "sailboat.fill"
+    }
+}
+
+/// 運動類型 emoji，用於卡片第一顆膠囊「🚲 Biking · 2.4 km」
+private func communityActivityEmoji(for activity: ViewPointActivityType) -> String {
+    switch activity {
+    case .hiking: return "🥾"
+    case .biking, .mtb: return "🚲"
+    case .climbing: return "🧗"
+    case .summit: return "⛰️"
+    case .overlanding: return "🚗"
+    case .camping: return "⛺"
+    case .paddling: return "🛶"
+    case .fishing: return "🎣"
+    case .boating: return "⛵"
+    }
+}
+
+// MARK: - CommunityCardView（與 DetailedTrackCard 樣式 B 完全一致：頭像行 → 全幅圖+膠囊+標題 → 社交欄，無灰色塊）
+/// showTypeLabel：Community 傳 false 隱藏左上角藍色標籤；Profile 若復用此組件可傳 true 保留標籤。
 private struct CommunityCardView: View {
     let draft: DraftItem
+    var authorDisplayName: String = "Me"
+    var authorSubtitle: String = "My post"
+    var likeCount: Int = 0
+    var commentCount: Int = 0
+    var isLiked: Bool = false
+    var isSaved: Bool = false
+    /// false = Community 不顯示藍色 [Activity]·DETAILED TRACK；true = Profile 保留標籤
+    var showTypeLabel: Bool = false
+    var onLikeTap: (() -> Void)? = nil
+    var onSaveTap: (() -> Void)? = nil
 
     private var distanceKm: String {
         let km = draft.totalDistanceMeters / 1000
         return km < 0.01 ? "0 km" : String(format: "%.2f km", km)
     }
-    private var elevationM: String {
-        let m = draft.elevationGainMeters
-        return m < 1 ? "0 m" : String(format: "%.0f m", m)
+    /// 運動類型展示：用於第一顆膠囊「Biking · 2.4 km」
+    private var activityDisplay: String {
+        draft.detailedTrackPrimaryActivityType?.rawValue ?? "—"
     }
-    private var durationMin: String {
+    /// 路線類別（如 National Park），替換原海拔 0m 位置
+    private var categoryPillText: String {
+        draft.detailedTrackCategoryDisplay ?? "—"
+    }
+    /// 時長：優先 Builder 存儲的 detailedTrackJSON（首尾 arrivalTime 計算或 totalDurationMinutes），否則 durationSeconds
+    private var durationPillText: String {
+        if let resolved = draft.resolvedDurationDisplay, !resolved.isEmpty { return resolved }
         guard let sec = draft.durationSeconds, sec >= 0 else { return "— min" }
         let min = Int(sec / 60)
-        return "\(min) min"
+        return min < 60 ? "\(min) min" : "\(min / 60)h \(min % 60)min"
     }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            ZStack(alignment: .bottomLeading) {
+            userAvatarRow
+            fullImageWithPillsAndTitle
+            socialBar
+        }
+        .background(CommunityColors.cardBg)
+        .clipShape(RoundedRectangle(cornerRadius: detailedTrackCardCorner))
+        .overlay(
+            RoundedRectangle(cornerRadius: detailedTrackCardCorner)
+                .stroke(.white.opacity(0.15), lineWidth: 0.5)
+        )
+    }
+
+    /// [1] 用戶頭像行：動態讀取發布者頭像與名稱
+    private var userAvatarRow: some View {
+        HStack(alignment: .center, spacing: 12) {
+            Image(systemName: "person.circle.fill")
+                .font(.system(size: 40))
+                .foregroundStyle(CommunityColors.textMuted)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(authorDisplayName)
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(CommunityColors.textPrimary)
+                Text(authorSubtitle)
+                    .font(.system(size: 12))
+                    .foregroundStyle(CommunityColors.textMuted)
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(CommunityColors.cardBg)
+    }
+
+    /// [2] 全幅風景圖：fill + clipped，底部漸變；標題（白色粗體）在膠囊上方，里程/海拔/時間為半透明膠囊疊加在左下方
+    private var fullImageWithPillsAndTitle: some View {
+        ZStack(alignment: .bottomLeading) {
+            Group {
                 if let coverData = draft.coverImageData, let uiImage = UIImage(data: coverData) {
                     Image(uiImage: uiImage)
                         .resizable()
-                        .scaledToFill()
-                        .frame(height: 180)
-                        .frame(maxWidth: .infinity)
-                        .clipped()
+                        .aspectRatio(contentMode: .fill)
                 } else {
                     CommunityCardViewHeroThumbnail(draft: draft)
-                        .frame(height: 180)
-                        .frame(maxWidth: .infinity)
                 }
-                LinearGradient(colors: [.clear, .black.opacity(0.85)], startPoint: .top, endPoint: .bottom)
-                    .frame(height: 180)
-                VStack(alignment: .leading, spacing: 6) {
-                    Text(draft.title.isEmpty ? "Recorded Route" : draft.title)
-                        .font(.system(size: 18, weight: .bold))
-                        .foregroundStyle(.white)
-                        .shadow(color: .black.opacity(0.5), radius: 2)
-                        .lineLimit(2)
-                    if let loc = draft.locationName, !loc.isEmpty {
-                        HStack(spacing: 5) {
-                            Image(systemName: "location.fill")
-                                .font(.system(size: 12))
-                            Text(loc)
-                                .font(.system(size: 13))
-                        }
-                        .foregroundStyle(.white.opacity(0.95))
-                    }
-                }
-                .padding(14)
             }
+            .frame(height: detailedTrackCardImageHeight)
             .frame(maxWidth: .infinity)
-            HStack(spacing: 20) {
-                HStack(spacing: 6) {
-                    Image(systemName: "arrow.triangle.swap")
-                        .font(.system(size: 14))
-                        .foregroundStyle(CommunityColors.accentGreen)
-                    Text(distanceKm)
-                        .font(.system(size: 14, weight: .semibold, design: .monospaced))
-                        .foregroundStyle(CommunityColors.textPrimary)
-                }
-                HStack(spacing: 6) {
-                    Image(systemName: "arrow.up.right")
-                        .font(.system(size: 14))
-                        .foregroundStyle(CommunityColors.accentGreen)
-                    Text(elevationM)
-                        .font(.system(size: 14, weight: .medium, design: .monospaced))
-                        .foregroundStyle(CommunityColors.textMuted)
-                }
-                HStack(spacing: 6) {
-                    Image(systemName: "clock.fill")
-                        .font(.system(size: 14))
-                        .foregroundStyle(CommunityColors.accentGreen)
-                    Text(durationMin)
-                        .font(.system(size: 14, weight: .medium, design: .monospaced))
-                        .foregroundStyle(CommunityColors.textMuted)
-                }
+            .clipped()
+
+            LinearGradient(
+                colors: [.clear, .black.opacity(0.7)],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .frame(height: detailedTrackCardImageHeight)
+            .frame(maxWidth: .infinity)
+            .allowsHitTesting(false)
+
+            VStack(alignment: .leading, spacing: 10) {
                 Spacer(minLength: 0)
-                if let weather = draft.currentWeather, !weather.isEmpty {
-                    HStack(spacing: 4) {
-                        Image(systemName: "cloud.sun.fill")
-                            .font(.system(size: 14))
-                        Text(weather)
-                            .font(.system(size: 12))
-                            .lineLimit(1)
+                Text(draft.title.isEmpty ? "Recorded Route" : draft.title)
+                    .font(.system(size: 18, weight: .bold))
+                    .foregroundStyle(.white)
+                    .lineLimit(2)
+                dataPillsRow
+            }
+            .padding(16)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .frame(height: detailedTrackCardImageHeight)
+
+            if let tier = draft.detailedTrackTier {
+                VStack {
+                    HStack(spacing: 6) {
+                        Text(tier == .nature ? "🌲 NATURE · DETAILED" : "🏙️ URBAN · DETAILED")
+                            .font(.system(size: 10, weight: .heavy, design: .rounded))
+                            .foregroundStyle(.white)
                     }
-                    .foregroundStyle(CommunityColors.textMuted)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(
+                        tier == .nature
+                            ? LinearGradient(colors: [Color(hex: "16A34A"), Color(hex: "16A34A")], startPoint: .leading, endPoint: .trailing)
+                            : LinearGradient(colors: [Color(hex: "2563EB"), Color(hex: "EA580C")], startPoint: .leading, endPoint: .trailing)
+                    )
+                    .clipShape(Capsule())
+                    Spacer(minLength: 0)
                 }
-                if let facilities = draft.nearbyFacilities, !facilities.isEmpty {
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .frame(height: detailedTrackCardImageHeight)
+                .padding(12)
+                .allowsHitTesting(false)
+            }
+        }
+        .frame(height: detailedTrackCardImageHeight)
+        .frame(maxWidth: .infinity)
+        .clipped()
+    }
+
+    /// 半透明膠囊：運動類型（含 emoji）· 里程、Land Manager/Sub-category、時長（無 0 m）
+    private var dataPillsRow: some View {
+        let activityType = draft.detailedTrackPrimaryActivityType
+        let firstPillText: String = {
+            if let a = activityType {
+                let emoji = communityActivityEmoji(for: a)
+                return "\(emoji) \(a.rawValue) · \(distanceKm)"
+            }
+            return "— · \(distanceKm)"
+        }()
+        let activityIcon = activityType.map { communityActivityIcon(for: $0) } ?? "figure.walk"
+        return HStack(spacing: 8) {
+            dataPill(icon: activityIcon, text: firstPillText)
+            dataPill(icon: "leaf.fill", text: categoryPillText)
+            dataPill(icon: "clock", text: durationPillText)
+        }
+    }
+
+    private func dataPill(icon: String, text: String) -> some View {
+        HStack(spacing: 4) {
+            Image(systemName: icon)
+                .font(.system(size: 10, weight: .semibold))
+            Text(text)
+                .font(communityMonoFont)
+        }
+        .foregroundStyle(.white.opacity(0.95))
+        .padding(.horizontal, 10)
+        .padding(.vertical, 6)
+        .background(.ultraThinMaterial)
+        .clipShape(Capsule())
+    }
+
+    /// [3] 交互動作欄：Like / Comment / Save / Share（樂觀數字 + 愛心紅/書籤黃 + 縮放動畫）
+    private var socialBar: some View {
+        HStack(spacing: 16) {
+            if let onLike = onLikeTap {
+                Button(action: onLike) {
                     HStack(spacing: 4) {
-                        Image(systemName: "mappin.circle.fill")
-                            .font(.system(size: 14))
-                        Text(facilities.prefix(2).joined(separator: ", "))
-                            .font(.system(size: 12))
-                            .lineLimit(1)
+                        Image(systemName: isLiked ? "heart.fill" : "heart")
+                            .font(.system(size: 16))
+                            .scaleEffect(isLiked ? 1.2 : 1.0)
+                            .animation(.spring(response: 0.3, dampingFraction: 0.6), value: isLiked)
+                            .foregroundStyle(isLiked ? Color.red : CommunityColors.textMuted)
+                        Text("\(likeCount)")
+                            .font(.system(size: 13, weight: .medium))
+                            .foregroundStyle(CommunityColors.textMuted)
                     }
-                    .foregroundStyle(CommunityColors.textMuted)
+                }
+                .buttonStyle(.plain)
+            } else {
+                HStack(spacing: 4) {
+                    Image(systemName: "heart")
+                        .font(.system(size: 16))
+                        .foregroundStyle(CommunityColors.textMuted)
+                    Text("\(likeCount)")
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundStyle(CommunityColors.textMuted)
                 }
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 14)
-            .background(CommunityColors.cardBg)
+            HStack(spacing: 4) {
+                Image(systemName: "bubble.right")
+                    .font(.system(size: 16))
+                    .foregroundStyle(CommunityColors.textMuted)
+                Text("\(commentCount)")
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundStyle(CommunityColors.textMuted)
+            }
+            if let onSave = onSaveTap {
+                Button(action: onSave) {
+                    Image(systemName: isSaved ? "bookmark.fill" : "bookmark")
+                        .font(.system(size: 16))
+                        .foregroundStyle(isSaved ? Color.yellow : CommunityColors.textMuted)
+                }
+                .buttonStyle(.plain)
+            } else {
+                Image(systemName: "bookmark")
+                    .font(.system(size: 16))
+                    .foregroundStyle(CommunityColors.textMuted)
+            }
+            Spacer(minLength: 0)
+            Button { } label: {
+                Image(systemName: "square.and.arrow.up")
+                    .font(.system(size: 16))
+                    .foregroundStyle(CommunityColors.textMuted)
+            }
+            .buttonStyle(.plain)
         }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
         .background(CommunityColors.cardBg)
-        .clipShape(RoundedRectangle(cornerRadius: 16))
-        .overlay(RoundedRectangle(cornerRadius: 16).stroke(Color.white.opacity(0.06), lineWidth: 1))
     }
 }
 
@@ -1560,32 +1729,42 @@ private struct CommunityCardViewHeroThumbnail: View {
     }
 }
 
-// MARK: - DetailedTrackCard（與 GrandJourneyCard 圓角、圖片比例、頭部一致）
+// MARK: - DetailedTrackCard（Jessica 樣式 B 全局統一：頭像行 → 全幅圖+膠囊+標題 → 社交欄，無灰色塊）
+private let detailedTrackCardImageHeight: CGFloat = 260
+private let detailedTrackCardCorner: CGFloat = 16
+
 struct DetailedTrackCard: View {
     let item: DetailedTrackItem
     let isFollowing: Bool
     let isLiked: Bool
+    var isSaved: Bool = false
+    /// 樂觀 like 數：item.likeCount + (isLiked ? 1 : 0)
+    var displayLikeCount: Int? = nil
+    /// 評論數：item.commentCount + PostCommentStore 增量
+    var displayCommentCount: Int? = nil
     var authorSubtitleOverride: String? = nil
     let onFollowTap: () -> Void
     let onLikeTap: () -> Void
+    var onSaveTap: (() -> Void)? = nil
+    /// 用戶自己發布時傳入，右上角顯示 … 管理按鈕
+    var onManageTap: (() -> Void)? = nil
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            cardHeader
-            imageSection
-            elevationProfileRow
-            interactionsRow
+            userAvatarRow
+            fullImageWithPillsAndTitle
+            socialBar
         }
         .background(CommunityColors.cardBg)
-        .clipShape(RoundedRectangle(cornerRadius: grandCardCorner))
+        .clipShape(RoundedRectangle(cornerRadius: detailedTrackCardCorner))
         .overlay(
-            RoundedRectangle(cornerRadius: grandCardCorner)
-                .stroke(Color.white.opacity(0.06), lineWidth: 1)
+            RoundedRectangle(cornerRadius: detailedTrackCardCorner)
+                .stroke(.white.opacity(0.15), lineWidth: 0.5)
         )
     }
 
-    /// 頭部與 GrandJourneyCard 一致：40pt 頭像、14pt 名字、12pt 副標
-    private var cardHeader: some View {
+    /// [1] 用戶頭像行：動態讀取發布者頭像與名稱，與主頁暗藍色銜接
+    private var userAvatarRow: some View {
         HStack(alignment: .center, spacing: 12) {
             AsyncImage(url: item.authorAvatarUrl.flatMap(URL.init(string:))) { phase in
                 switch phase {
@@ -1622,115 +1801,121 @@ struct DetailedTrackCard: View {
         .background(CommunityColors.cardBg)
     }
 
-    /// 圖片區與 GrandJourneyCard 一致：3:2 比例，底部漸變 + 標題與數據
-    private var imageSection: some View {
-        GeometryReader { geo in
-            let w = geo.size.width
-            let h = w * 2 / 3
-            ZStack(alignment: .topLeading) {
-                AsyncImage(url: URL(string: item.imageUrl)) { phase in
-                    switch phase {
-                    case .success(let img): img.resizable().aspectRatio(contentMode: .fill)
-                    case .failure: Color.gray.opacity(0.3)
-                    default: Color.gray.opacity(0.2)
-                    }
-                }
-                .frame(width: w, height: h)
-                .frame(maxWidth: .infinity)
-                .clipped()
+    /// [2] 全幅風景圖：fill + clipped，底部漸變；標題（白色粗體）在膠囊上方，里程/海拔/時間為半透明膠囊疊加在左下方
+    private var fullImageWithPillsAndTitle: some View {
+        let urls = (PostMediaStore.shared.imageUrls(for: item.id) ?? item.imageUrls).filter { !$0.isEmpty }
+        let displayUrls = urls.isEmpty ? ["https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=800"] : urls
 
-                activityTagView
-                targetIconView
-
-                LinearGradient(
-                    colors: [.clear, .black.opacity(0.85)],
-                    startPoint: .top,
-                    endPoint: .bottom
-                )
-                .frame(width: w, height: h)
-                .allowsHitTesting(false)
-
-                VStack(alignment: .leading, spacing: 6) {
-                    Spacer()
-                    Text("TECHNICAL TRACK")
-                        .font(.system(size: 11, weight: .semibold))
-                        .foregroundStyle(CommunityColors.textMuted)
-                    Text(item.title)
-                        .font(.system(size: 18, weight: .bold))
-                        .foregroundStyle(.white)
-                        .lineLimit(2)
-                    HStack(spacing: 6) {
-                        Text(item.distance)
-                            .font(communityMonoFont)
-                            .foregroundStyle(.white)
-                        Text("•")
-                            .foregroundStyle(.white.opacity(0.7))
-                        Text("↑ \(item.elevationGain)")
-                            .font(communityMonoFont)
-                            .foregroundStyle(.white)
-                        Text("•")
-                            .foregroundStyle(.white.opacity(0.7))
-                        HStack(spacing: 4) {
-                            Circle()
-                                .fill(item.difficultyColor)
-                                .frame(width: 6, height: 6)
-                            Text(item.difficulty)
-                                .font(communityMonoFont)
-                                .foregroundStyle(.white)
+        return ZStack(alignment: .bottomLeading) {
+            Group {
+                if displayUrls.count > 1 {
+                    MediaCarouselView(urls: displayUrls, cornerRadius: 0, aspectRatio: 16/10, fixedHeight: detailedTrackCardImageHeight)
+                        .frame(height: detailedTrackCardImageHeight)
+                        .frame(maxWidth: .infinity)
+                        .clipped()
+                } else {
+                    AsyncImage(url: URL(string: displayUrls[0])) { phase in
+                        switch phase {
+                        case .success(let img): img.resizable().aspectRatio(contentMode: .fill)
+                        case .failure: Color.gray.opacity(0.3)
+                        default: Color.gray.opacity(0.2)
                         }
                     }
+                    .frame(height: detailedTrackCardImageHeight)
+                    .frame(maxWidth: .infinity)
+                    .clipped()
                 }
-                .padding(16)
-                .frame(width: w, height: h, alignment: .leading)
             }
-            .frame(width: w, height: h)
-        }
-        .aspectRatio(3/2, contentMode: .fit)
-    }
+            .aspectRatio(contentMode: .fill)
 
-    private var activityTagView: some View {
-        Text(item.activityTag)
-            .font(.system(size: 11, weight: .bold))
-            .foregroundStyle(.white)
-            .padding(.horizontal, 10)
-            .padding(.vertical, 6)
-            .background(CommunityColors.tagPurple.opacity(0.85))
-            .clipShape(Capsule())
-            .padding(12)
-    }
+            LinearGradient(
+                colors: [.clear, .black.opacity(0.7)],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .frame(height: detailedTrackCardImageHeight)
+            .frame(maxWidth: .infinity)
+            .allowsHitTesting(false)
 
-    private var targetIconView: some View {
-        Image(systemName: "scope")
-            .font(.system(size: 18))
-            .foregroundStyle(CommunityColors.accentGreen)
-            .frame(width: 36, height: 36)
-            .background(Color.black.opacity(0.4))
-            .clipShape(Circle())
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
-            .padding(12)
-    }
+            VStack(alignment: .leading, spacing: 10) {
+                Spacer(minLength: 0)
+                Text(item.title)
+                    .font(.system(size: 18, weight: .bold))
+                    .foregroundStyle(.white)
+                    .lineLimit(2)
+                dataPillsRow
+            }
+            .padding(16)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .frame(height: detailedTrackCardImageHeight)
 
-    private var elevationProfileRow: some View {
-        HStack(spacing: 3) {
-            ForEach(Array(item.elevationProfileHeights.enumerated()), id: \.offset) { _, h in
-                RoundedRectangle(cornerRadius: 2)
-                    .fill(CommunityColors.accentGreen)
-                    .frame(height: max(4, 24 * h))
+            if onManageTap != nil {
+                VStack {
+                    HStack {
+                        Spacer(minLength: 0)
+                        Menu {
+                            Button(role: .destructive, action: { onManageTap?() }) {
+                                Label("Delete Post", systemImage: "trash")
+                            }
+                        } label: {
+                            Image(systemName: "ellipsis")
+                                .font(.system(size: 16, weight: .semibold))
+                                .foregroundStyle(.white)
+                                .frame(width: 36, height: 36)
+                                .background(.ultraThinMaterial, in: Circle())
+                        }
+                        .frame(width: 44, height: 44)
+                        .padding(12)
+                    }
+                    Spacer(minLength: 0)
+                }
+                .frame(height: detailedTrackCardImageHeight)
+                .frame(maxWidth: .infinity)
+                .allowsHitTesting(true)
             }
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 10)
+        .frame(height: detailedTrackCardImageHeight)
+        .frame(maxWidth: .infinity)
+        .clipped()
     }
 
-    /// 底部交互與 GrandJourneyCard 一致：圖標 + 數字，padding 12
-    private var interactionsRow: some View {
+    /// 里程、海拔、時間：半透明膠囊疊加在圖片左下方
+    private var dataPillsRow: some View {
+        HStack(spacing: 8) {
+            dataPill(icon: "location.fill", text: item.distance)
+            dataPill(icon: "arrow.up.right", text: item.elevationGain)
+            dataPill(icon: "clock", text: item.durationDisplay)
+        }
+    }
+
+    private func dataPill(icon: String, text: String) -> some View {
+        HStack(spacing: 4) {
+            Image(systemName: icon)
+                .font(.system(size: 10, weight: .semibold))
+            Text(text)
+                .font(communityMonoFont)
+        }
+        .foregroundStyle(.white.opacity(0.95))
+        .padding(.horizontal, 10)
+        .padding(.vertical, 6)
+        .background(.ultraThinMaterial)
+        .clipShape(Capsule())
+    }
+
+    private var effectiveLikeCount: Int { displayLikeCount ?? item.likeCount }
+    private var effectiveCommentCount: Int { displayCommentCount ?? item.commentCount }
+
+    /// [3] 交互動作欄：Like / Comment / Save / Share（樂觀數字 + 愛心紅/書籤黃 + 縮放動畫）
+    private var socialBar: some View {
         HStack(spacing: 16) {
             Button(action: onLikeTap) {
                 HStack(spacing: 4) {
                     Image(systemName: isLiked ? "heart.fill" : "heart")
                         .font(.system(size: 16))
-                        .foregroundStyle(isLiked ? CommunityColors.accentGreen : CommunityColors.textMuted)
-                    Text("\(item.likeCount)")
+                        .scaleEffect(isLiked ? 1.2 : 1.0)
+                        .animation(.spring(response: 0.3, dampingFraction: 0.6), value: isLiked)
+                        .foregroundStyle(isLiked ? Color.red : CommunityColors.textMuted)
+                    Text("\(effectiveLikeCount)")
                         .font(.system(size: 13, weight: .medium))
                         .foregroundStyle(CommunityColors.textMuted)
                 }
@@ -1740,13 +1925,22 @@ struct DetailedTrackCard: View {
                 Image(systemName: "bubble.right")
                     .font(.system(size: 16))
                     .foregroundStyle(CommunityColors.textMuted)
-                Text("\(item.commentCount)")
+                Text("\(effectiveCommentCount)")
                     .font(.system(size: 13, weight: .medium))
                     .foregroundStyle(CommunityColors.textMuted)
             }
-            Image(systemName: "bookmark")
-                .font(.system(size: 16))
-                .foregroundStyle(CommunityColors.textMuted)
+            if let onSave = onSaveTap {
+                Button(action: onSave) {
+                    Image(systemName: isSaved ? "bookmark.fill" : "bookmark")
+                        .font(.system(size: 16))
+                        .foregroundStyle(isSaved ? Color.yellow : CommunityColors.textMuted)
+                }
+                .buttonStyle(.plain)
+            } else {
+                Image(systemName: "bookmark")
+                    .font(.system(size: 16))
+                    .foregroundStyle(CommunityColors.textMuted)
+            }
             Spacer()
             Button { } label: {
                 Image(systemName: "square.and.arrow.up")
@@ -2020,18 +2214,47 @@ private let filterRegionsAll: [FilterRegionItem] = [
 private let filterInitialRegionIds = ["west", "southwest", "mountain"]
 private let filterMonoFont = Font.system(size: 12, weight: .medium, design: .monospaced)
 
-// MARK: - Detailed Track Filter Options (Technical)
-private let dtLandManagerOptions = ["National Park", "National Forest", "State Park", "State Forest", "National Recreation"]
-private let dtActivityOptions = ["Hiking", "MTB", "Overlanding", "Backcountry", "Trail Running", "Climbing"]
-private let dtSurfaceOptions = ["Paved", "Gravel", "Dirt", "4x4 Only", "Rock/Scramble", "Mixed"]
-private let dtDifficultyOptions = ["Easy", "Moderate", "Hard", "Expert"]
+/// 微觀篩選邏輯：與 DetailedTrackFilterView 內一致，用於列表過濾與結果數
+private func matchesDetailedFilter(_ draft: DraftItem, _ state: CommunityFilterState) -> Bool {
+    if let tier = state.detailedTrackMainType {
+        guard draft.detailedTrackTier?.rawValue == tier else { return false }
+        if tier == "Nature", !state.selectedLandManagers.isEmpty {
+            guard let cat = draft.detailedTrackCategoryDisplay, state.selectedLandManagers.contains(cat) else { return false }
+        }
+        if tier == "Urban", !state.selectedUrbanCategories.isEmpty {
+            guard let cat = draft.detailedTrackCategoryDisplay, state.selectedUrbanCategories.contains(cat) else { return false }
+        }
+    }
+    if !state.selectedActivities.isEmpty {
+        guard let act = draft.detailedTrackPrimaryActivityType?.rawValue, state.selectedActivities.contains(act) else { return false }
+    }
+    if let band = state.selectedDurationMicro, let min = draft.durationMinutesForFilter {
+        let inRange: Bool = switch band {
+        case "< 30min": min < 30
+        case "30-60min": min >= 30 && min < 60
+        case "1-2h": min >= 60 && min < 120
+        case "2h+": min >= 120
+        default: true
+        }
+        if !inRange { return false }
+    }
+    return true
+}
 
-// MARK: - Grand Journey Filter View (Expandable Regions, Terrain, Duration)
+// MARK: - Detailed Track Filter Options (Micro only: Main Type → Sub-category, Activity, Duration)
+private let dtLandManagerOptions = ["National Park", "National Forest", "State Park", "State Forest", "National Recreation Area", "National Grassland"]
+private let dtUrbanOptions = ["Cafe", "Architecture", "City Park", "Historic Site", "Shopping"]
+private let dtActivityOptions = ["Hiking", "Biking", "MTB", "Overlanding", "Climbing", "Camping", "Paddling", "Summit"]
+private let dtDurationMicroOptions = ["< 30min", "30-60min", "1-2h", "2h+"]
+
+// MARK: - Grand Journey Filter View (結果數與州別路線數依 allItems 實際數據)
 struct GrandJourneyFilterView: View {
     @Environment(\.dismiss) private var dismiss
     @Binding var selectedStateIds: Set<String>
     @Binding var selectedTerrains: Set<String>
     @Binding var selectedDuration: String?
+    var allItems: [GrandJourneyItem] = []
+    var viewModel: CommunityViewModel? = nil
 
     @State private var showAllRegions = false
 
@@ -2040,11 +2263,15 @@ struct GrandJourneyFilterView: View {
         return filterRegionsAll.filter { filterInitialRegionIds.contains($0.id) }
     }
 
+    /// 符合當前篩選條件的路線數（由 viewModel.filteredJourneys 依實際數據計算）
     private var resultCount: Int {
-        let stateCount = selectedStateIds.isEmpty ? 0 : selectedStateIds.count * 48
-        let terrainBonus = selectedTerrains.isEmpty ? 0 : selectedTerrains.count * 12
-        let durationBonus = selectedDuration == nil ? 0 : 24
-        return max(0, stateCount + terrainBonus + durationBonus)
+        guard let vm = viewModel else { return allItems.count }
+        return vm.filteredJourneys(from: allItems).count
+    }
+
+    /// 某州實際路線數
+    private func routeCount(forStateId stateId: String) -> Int {
+        allItems.filter { $0.stateIds.contains(stateId) }.count
     }
 
     var body: some View {
@@ -2061,6 +2288,7 @@ struct GrandJourneyFilterView: View {
                                     ForEach(region.states) { state in
                                         FilterStateCard(
                                             state: state,
+                                            routeCount: routeCount(forStateId: state.id),
                                             isSelected: selectedStateIds.contains(state.id),
                                             onTap: { toggleState(state.id) }
                                         )
@@ -2224,11 +2452,15 @@ struct GrandJourneyFilterView: View {
     }
 }
 
-// MARK: - Filter State Card (Two-column grid, neon green when selected)
+// MARK: - Filter State Card (路線數由傳入 routeCount 決定，無佔位)
 private struct FilterStateCard: View {
     let state: FilterStateItem
+    /// 該州實際路線數（由數據計算）；未傳時用 state.routeCount 兼容
+    var routeCount: Int? = nil
     let isSelected: Bool
     let onTap: () -> Void
+
+    private var displayCount: Int { routeCount ?? state.routeCount }
 
     var body: some View {
         Button(action: onTap) {
@@ -2237,7 +2469,7 @@ private struct FilterStateCard: View {
                     .font(.system(size: 15, weight: .semibold))
                     .foregroundStyle(CommunityColors.textPrimary)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                Text("\(state.routeCount) Routes")
+                Text("\(displayCount) Routes")
                     .font(filterMonoFont)
                     .foregroundStyle(CommunityColors.textMuted)
             }
@@ -2254,46 +2486,146 @@ private struct FilterStateCard: View {
     }
 }
 
-// MARK: - Detailed Track Filter View (Land Manager, Activity, Surface, Difficulty)
+// MARK: - Detailed Track Filter View (結果數依 allItems 篩選後實際數量)
 struct DetailedTrackFilterView: View {
     @Environment(\.dismiss) private var dismiss
+    @Binding var mainType: String?
     @Binding var selectedLandManagers: Set<String>
+    @Binding var selectedUrbanCategories: Set<String>
     @Binding var selectedActivities: Set<String>
-    @Binding var selectedSurfaces: Set<String>
-    @Binding var selectedDifficulties: Set<String>
+    @Binding var selectedDurationMicro: String?
+    var allItems: [DraftItem] = []
+    var onShowResults: (() -> Void)? = nil
 
+    /// 符合當前篩選條件的微觀路線數
     private var resultCount: Int {
-        let a = selectedLandManagers.isEmpty ? 0 : selectedLandManagers.count * 20
-        let b = selectedActivities.isEmpty ? 0 : selectedActivities.count * 15
-        let c = selectedSurfaces.isEmpty ? 0 : selectedSurfaces.count * 12
-        let d = selectedDifficulties.isEmpty ? 0 : selectedDifficulties.count * 18
-        return max(0, a + b + c + d)
+        allItems.filter { matchesDetailedFilter($0) }.count
+    }
+
+    private func matchesDetailedFilter(_ draft: DraftItem) -> Bool {
+        if let tier = mainType {
+            guard draft.detailedTrackTier?.rawValue == tier else { return false }
+            if tier == "Nature", !selectedLandManagers.isEmpty {
+                guard let cat = draft.detailedTrackCategoryDisplay, selectedLandManagers.contains(cat) else { return false }
+            }
+            if tier == "Urban", !selectedUrbanCategories.isEmpty {
+                guard let cat = draft.detailedTrackCategoryDisplay, selectedUrbanCategories.contains(cat) else { return false }
+            }
+        }
+        if !selectedActivities.isEmpty {
+            guard let act = draft.detailedTrackPrimaryActivityType?.rawValue, selectedActivities.contains(act) else { return false }
+        }
+        if let band = selectedDurationMicro, let min = draft.durationMinutesForFilter {
+            let inRange: Bool = switch band {
+            case "< 30min": min < 30
+            case "30-60min": min >= 30 && min < 60
+            case "1-2h": min >= 60 && min < 120
+            case "2h+": min >= 120
+            default: true
+            }
+            if !inRange { return false }
+        }
+        return true
     }
 
     var body: some View {
         VStack(spacing: 0) {
             ScrollView {
-                VStack(alignment: .leading, spacing: 18) {
-                    filterSection(title: "LAND MANAGER", options: dtLandManagerOptions, selected: selectedLandManagers, columns: 2) { selectedLandManagers = $0 }
+                VStack(alignment: .leading, spacing: 20) {
+                    mainTypeSection
+                    if mainType == "Nature" {
+                        filterSection(title: "LAND MANAGER", options: dtLandManagerOptions, selected: selectedLandManagers, columns: 2) { selectedLandManagers = $0 }
+                    }
+                    if mainType == "Urban" {
+                        filterSection(title: "CITY CATEGORY", options: dtUrbanOptions, selected: selectedUrbanCategories, columns: 2) { selectedUrbanCategories = $0 }
+                    }
                     filterSection(title: "ACTIVITY TYPE", options: dtActivityOptions, selected: selectedActivities, columns: 3) { selectedActivities = $0 }
-                    filterSection(title: "SURFACE TYPE", options: dtSurfaceOptions, selected: selectedSurfaces, columns: 2) { selectedSurfaces = $0 }
-                    filterSection(title: "DIFFICULTY LEVEL", options: dtDifficultyOptions, selected: selectedDifficulties, columns: 2) { selectedDifficulties = $0 }
+                    durationSection
                     Color.clear.frame(height: 100)
                 }
                 .padding(16)
             }
 
             detailedTrackStickyBar(resultCount: resultCount) {
+                mainType = nil
                 selectedLandManagers.removeAll()
+                selectedUrbanCategories.removeAll()
                 selectedActivities.removeAll()
-                selectedSurfaces.removeAll()
-                selectedDifficulties.removeAll()
+                selectedDurationMicro = nil
             } onShowResults: {
-                dismiss()
+                onShowResults?() ?? dismiss()
             }
         }
         .background(CommunityColors.background)
         .preferredColorScheme(.dark)
+    }
+
+    private var mainTypeSection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("MAIN TYPE")
+                .font(.system(size: 11, weight: .bold))
+                .foregroundStyle(CommunityColors.textMuted)
+                .textCase(.uppercase)
+            HStack(spacing: 12) {
+                Button {
+                    mainType = mainType == "Nature" ? nil : "Nature"
+                    if mainType != "Nature" { selectedLandManagers.removeAll() }
+                    if mainType == "Nature" { selectedUrbanCategories.removeAll() }
+                } label: {
+                    Text("Nature")
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundStyle(CommunityColors.textPrimary)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 12)
+                        .background(mainType == "Nature" ? Color.white.opacity(0.2) : Color.white.opacity(0.08))
+                        .clipShape(RoundedRectangle(cornerRadius: 10))
+                        .overlay(RoundedRectangle(cornerRadius: 10).stroke(mainType == "Nature" ? CommunityColors.accentGreen : Color.white.opacity(0.12), lineWidth: 1))
+                }
+                .buttonStyle(.plain)
+                Button {
+                    mainType = mainType == "Urban" ? nil : "Urban"
+                    if mainType != "Urban" { selectedUrbanCategories.removeAll() }
+                    if mainType == "Urban" { selectedLandManagers.removeAll() }
+                } label: {
+                    Text("Urban")
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundStyle(CommunityColors.textPrimary)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 12)
+                        .background(mainType == "Urban" ? Color.white.opacity(0.2) : Color.white.opacity(0.08))
+                        .clipShape(RoundedRectangle(cornerRadius: 10))
+                        .overlay(RoundedRectangle(cornerRadius: 10).stroke(mainType == "Urban" ? CommunityColors.accentGreen : Color.white.opacity(0.12), lineWidth: 1))
+                }
+                .buttonStyle(.plain)
+            }
+        }
+    }
+
+    private var durationSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("DURATION")
+                .font(.system(size: 11, weight: .bold))
+                .foregroundStyle(CommunityColors.textMuted)
+                .textCase(.uppercase)
+            HStack(spacing: 8) {
+                ForEach(dtDurationMicroOptions, id: \.self) { option in
+                    Button {
+                        selectedDurationMicro = selectedDurationMicro == option ? nil : option
+                    } label: {
+                        Text(option)
+                            .font(.system(size: 13, weight: selectedDurationMicro == option ? .semibold : .medium))
+                            .foregroundStyle(CommunityColors.textPrimary)
+                            .lineLimit(1)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 8)
+                            .background(selectedDurationMicro == option ? Color.white.opacity(0.18) : Color.white.opacity(0.08))
+                            .clipShape(RoundedRectangle(cornerRadius: 10))
+                            .overlay(RoundedRectangle(cornerRadius: 10).stroke(selectedDurationMicro == option ? CommunityColors.accentGreen : Color.white.opacity(0.12), lineWidth: 1))
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+        }
     }
 
     private func filterSection(title: String, options: [String], selected: Set<String>, columns: Int, onToggle: @escaping (Set<String>) -> Void) -> some View {
@@ -2391,26 +2723,37 @@ private func detailedTrackStickyBar(resultCount: Int, onClearAll: @escaping () -
     .background(.ultraThinMaterial)
 }
 
-// MARK: - Community Filter Sheet (Grand Journey 使用 ViewModel.filterState，與搜尋並行)
+// MARK: - Community Filter Sheet（依實際數據：結果數與選項數量由路線數據定義）
 struct CommunityFilterSheet: View {
     @Environment(\.dismiss) private var dismiss
     fileprivate var viewMode: CommunityViewMode = .grandJourneys
     @Binding var filterState: CommunityFilterState
+    var grandJourneyItems: [GrandJourneyItem] = []
+    var communityViewModel: CommunityViewModel? = nil
+    var detailedTrackItems: [DraftItem] = []
+    var onApplyDetailedFilter: ((String?, Set<String>, Set<String>, Set<String>, String?) -> Void)? = nil
 
+    @State private var detailedTrackMainType: String? = nil
     @State private var selectedLandManagers: Set<String> = []
+    @State private var selectedUrbanCategories: Set<String> = []
     @State private var selectedActivities: Set<String> = []
-    @State private var selectedSurfaces: Set<String> = []
-    @State private var selectedDifficulties: Set<String> = []
+    @State private var selectedDurationMicro: String? = nil
 
     var body: some View {
         NavigationStack {
             Group {
                 if viewMode == .detailedTracks {
                     DetailedTrackFilterView(
+                        mainType: $detailedTrackMainType,
                         selectedLandManagers: $selectedLandManagers,
+                        selectedUrbanCategories: $selectedUrbanCategories,
                         selectedActivities: $selectedActivities,
-                        selectedSurfaces: $selectedSurfaces,
-                        selectedDifficulties: $selectedDifficulties
+                        selectedDurationMicro: $selectedDurationMicro,
+                        allItems: detailedTrackItems,
+                        onShowResults: {
+                            onApplyDetailedFilter?(detailedTrackMainType, selectedLandManagers, selectedUrbanCategories, selectedActivities, selectedDurationMicro)
+                            dismiss()
+                        }
                     )
                 } else if viewMode == .liveActivity {
                     liveActivityFilterPlaceholder
@@ -2427,20 +2770,38 @@ struct CommunityFilterSheet: View {
                         selectedDuration: Binding(
                             get: { filterState.selectedDuration },
                             set: { filterState.selectedDuration = $0 }
-                        )
+                        ),
+                        allItems: grandJourneyItems,
+                        viewModel: communityViewModel
                     )
                 }
             }
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Done") { dismiss() }
-                        .font(.system(size: 16, weight: .medium))
-                        .foregroundStyle(CommunityColors.accentGreen)
+                    Button("Done") {
+                        if viewMode == .detailedTracks { syncDetailedFilterToState() }
+                        dismiss()
+                    }
+                    .font(.system(size: 16, weight: .medium))
+                    .foregroundStyle(CommunityColors.accentGreen)
+                }
+            }
+            .onAppear {
+                if viewMode == .detailedTracks {
+                    detailedTrackMainType = filterState.detailedTrackMainType
+                    selectedLandManagers = filterState.selectedLandManagers
+                    selectedUrbanCategories = filterState.selectedUrbanCategories
+                    selectedActivities = filterState.selectedActivities
+                    selectedDurationMicro = filterState.selectedDurationMicro
                 }
             }
         }
         .preferredColorScheme(.dark)
+    }
+
+    private func syncDetailedFilterToState() {
+        onApplyDetailedFilter?(detailedTrackMainType, selectedLandManagers, selectedUrbanCategories, selectedActivities, selectedDurationMicro)
     }
 
     private var liveActivityFilterPlaceholder: some View {

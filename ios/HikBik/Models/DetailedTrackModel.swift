@@ -14,9 +14,44 @@ enum DetailedTrackCategory: String, CaseIterable, Identifiable, Codable {
     public var id: String { rawValue }
 }
 
+/// Micro route tier: Nature / Urban (Builder segmented control — English only)
+enum MicroTrackTier: String, CaseIterable, Identifiable, Codable {
+    case nature = "Nature"
+    case urban = "Urban"
+    public var id: String { rawValue }
+    /// Display in Custom Route Builder; English only.
+    var label: String {
+        switch self {
+        case .nature: return "Nature"
+        case .urban: return "Urban"
+        }
+    }
+}
+
+/// Nature tier sub-category (legacy; Builder uses DetailedTrackCategory for Nature)
+enum NatureSubCategory: String, CaseIterable, Identifiable, Codable {
+    case nationalPark = "National Park"
+    case forest = "Forest"
+    case mountain = "Mountain"
+    case lake = "Lake"
+    case waterfall = "Waterfall"
+    public var id: String { rawValue }
+}
+
+/// Urban tier sub-category
+enum UrbanSubCategory: String, CaseIterable, Identifiable, Codable {
+    case cafe = "Cafe"
+    case architecture = "Architecture"
+    case cityPark = "City Park"
+    case historicSite = "Historic Site"
+    case shopping = "Shopping"
+    public var id: String { rawValue }
+}
+
 /// Activity type per view point.
 enum ViewPointActivityType: String, CaseIterable, Identifiable, Codable {
     case hiking = "Hiking"
+    case biking = "Biking"
     case mtb = "MTB"
     case overlanding = "Overlanding"
     case camping = "Camping"
@@ -37,6 +72,8 @@ struct ViewPointNode: Identifiable, Codable {
     var longitude: Double?
     /// Number of photos (actual image data not encoded in JSON).
     var photoCount: Int
+    /// 發布後由 Builder 寫入的本地圖片 URL 數組，詳情頁用於顯示該打卡點照片。
+    var imageUrls: [String]?
     /// Professional data (optional).
     var arrivalTime: String?
     var elevation: String?
@@ -47,13 +84,14 @@ struct ViewPointNode: Identifiable, Codable {
     var signalStrength: Int
     var recommendedStay: String?
 
-    init(id: UUID = UUID(), title: String = "", activityType: ViewPointActivityType = .hiking, latitude: Double? = nil, longitude: Double? = nil, photoCount: Int = 0, arrivalTime: String? = nil, elevation: String? = nil, hasWater: Bool = false, hasFuel: Bool = false, signalStrength: Int = 0, recommendedStay: String? = nil) {
+    init(id: UUID = UUID(), title: String = "", activityType: ViewPointActivityType = .hiking, latitude: Double? = nil, longitude: Double? = nil, photoCount: Int = 0, imageUrls: [String]? = nil, arrivalTime: String? = nil, elevation: String? = nil, hasWater: Bool = false, hasFuel: Bool = false, signalStrength: Int = 0, recommendedStay: String? = nil) {
         self.id = id
         self.title = title
         self.activityType = activityType
         self.latitude = latitude
         self.longitude = longitude
         self.photoCount = photoCount
+        self.imageUrls = imageUrls
         self.arrivalTime = arrivalTime
         self.elevation = elevation
         self.hasWater = hasWater
@@ -69,7 +107,7 @@ struct ViewPointNode: Identifiable, Codable {
     }
 
     enum CodingKeys: String, CodingKey {
-        case id, title, activityType, latitude, longitude, photoCount
+        case id, title, activityType, latitude, longitude, photoCount, imageUrls
         case arrivalTime, elevation, hasWater, hasFuel, signalStrength, recommendedStay
     }
 
@@ -81,6 +119,7 @@ struct ViewPointNode: Identifiable, Codable {
         latitude = try c.decodeIfPresent(Double.self, forKey: .latitude)
         longitude = try c.decodeIfPresent(Double.self, forKey: .longitude)
         photoCount = try c.decode(Int.self, forKey: .photoCount)
+        imageUrls = try c.decodeIfPresent([String].self, forKey: .imageUrls)
         arrivalTime = try c.decodeIfPresent(String.self, forKey: .arrivalTime)
         elevation = try c.decodeIfPresent(String.self, forKey: .elevation)
         hasWater = (try? c.decode(Bool.self, forKey: .hasWater)) ?? false
@@ -98,6 +137,7 @@ struct ViewPointNode: Identifiable, Codable {
         try c.encodeIfPresent(latitude, forKey: .latitude)
         try c.encodeIfPresent(longitude, forKey: .longitude)
         try c.encode(photoCount, forKey: .photoCount)
+        try c.encodeIfPresent(imageUrls, forKey: .imageUrls)
         try c.encodeIfPresent(arrivalTime, forKey: .arrivalTime)
         try c.encodeIfPresent(elevation, forKey: .elevation)
         try c.encode(hasWater, forKey: .hasWater)
@@ -121,11 +161,17 @@ struct DetailedTrackAuthor: Codable, Equatable {
 }
 
 /// Full Detailed Track post: category + name + duration + view points + optional elevation/amenities (JSON export).
-/// 社交屬性：author、rating、reviewCount、heroImage、routeID（唯一標識，用於收藏/點贊同步與持久化）。
+/// 社交屬性：author、rating、reviewCount、heroImage/heroImages、routeID（唯一標識，用於收藏/點贊同步與持久化）。
 struct DetailedTrackPost: Codable {
     var category: DetailedTrackCategory?
+    /// 微觀路線第一層：Nature / Urban
+    var trackTier: MicroTrackTier?
+    /// 微觀路線第二層：如 National Park（Nature）或 Cafe（Urban）
+    var subCategoryDisplay: String?
     var routeName: String
     var totalDurationMinutes: Int
+    /// 軌道級主活動類型，用於卡片 Badge 顯示（如 HIKING · DETAILED TRACK）；nil 時用首個 viewPoint 的 activityType。
+    var primaryActivityType: ViewPointActivityType?
     var viewPointNodes: [ViewPointNode]
     var elevationGain: String?
     var elevationPeak: String?
@@ -134,13 +180,23 @@ struct DetailedTrackPost: Codable {
     var rating: Float?
     var reviewCount: Int?
     var heroImage: String?
+    /// 詳情頁輪播多圖；為空時使用 heroImage 單圖。
+    var heroImages: [String]?
     /// 唯一路線 ID，用於 SocialDataManager 收藏/點贊持久化；nil 時由 effectiveRouteID 生成穩定 fallback。
     var routeID: String?
 
-    init(category: DetailedTrackCategory? = nil, routeName: String = "", totalDurationMinutes: Int = 0, viewPointNodes: [ViewPointNode] = [], elevationGain: String? = nil, elevationPeak: String? = nil, amenitiesDisplay: [String]? = nil, author: DetailedTrackAuthor? = nil, rating: Float? = nil, reviewCount: Int? = nil, heroImage: String? = nil, routeID: String? = nil) {
+    enum CodingKeys: String, CodingKey {
+        case category, trackTier, subCategoryDisplay, routeName, totalDurationMinutes, primaryActivityType, viewPointNodes, elevationGain, elevationPeak
+        case amenitiesDisplay, author, rating, reviewCount, heroImage, heroImages, routeID
+    }
+
+    init(category: DetailedTrackCategory? = nil, trackTier: MicroTrackTier? = nil, subCategoryDisplay: String? = nil, routeName: String = "", totalDurationMinutes: Int = 0, primaryActivityType: ViewPointActivityType? = nil, viewPointNodes: [ViewPointNode] = [], elevationGain: String? = nil, elevationPeak: String? = nil, amenitiesDisplay: [String]? = nil, author: DetailedTrackAuthor? = nil, rating: Float? = nil, reviewCount: Int? = nil, heroImage: String? = nil, heroImages: [String]? = nil, routeID: String? = nil) {
         self.category = category
+        self.trackTier = trackTier
+        self.subCategoryDisplay = subCategoryDisplay
         self.routeName = routeName
         self.totalDurationMinutes = totalDurationMinutes
+        self.primaryActivityType = primaryActivityType
         self.viewPointNodes = viewPointNodes
         self.elevationGain = elevationGain
         self.elevationPeak = elevationPeak
@@ -149,6 +205,7 @@ struct DetailedTrackPost: Codable {
         self.rating = rating
         self.reviewCount = reviewCount
         self.heroImage = heroImage
+        self.heroImages = heroImages
         self.routeID = routeID
     }
 
@@ -162,9 +219,13 @@ struct DetailedTrackPost: Codable {
         return "dt_\(safeName)_\(Int(lat * 1e5))_\(Int(lon * 1e5))"
     }
 
+    /// 顯示用類別：優先二級 subCategoryDisplay，否則 legacy category
+    var displayCategory: String? { subCategoryDisplay ?? category?.rawValue }
+
     var isReadyToPublish: Bool {
         guard !routeName.trimmingCharacters(in: .whitespaces).isEmpty else { return false }
-        guard category != nil else { return false }
+        let hasCategory = category != nil || (trackTier != nil && subCategoryDisplay != nil)
+        guard hasCategory else { return false }
         guard totalDurationMinutes > 0 else { return false }
         guard viewPointNodes.count >= 2 else { return false }
         return viewPointNodes.allSatisfy(\.isComplete)
