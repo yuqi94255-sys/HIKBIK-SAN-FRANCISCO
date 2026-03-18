@@ -1,3 +1,41 @@
 # Xcode 個人 UI 狀態（勿提交，不影響編譯）
 **/xcuserdata/**/UserInterfaceState.xcuserstate
 **/*.xcuserstate
+
+# 備份與推送腳本（不進倉庫）
+/Stateexplorationpage_backup*/
+/push-to-github.sh
+/README_備份說明*
+
+# 根目錄舊版 Web 專案（倉庫只保留 ios）
+/*.tsx
+/*.ts
+/*.css
+/*.html
+/*.js
+/Guidelines.md
+/README.md
+/activities.ts
+/add-forest-cities.ts
+/alabama-regions.ts
+/build-verification.ts
+/convert-states.ts
+/data-importer.ts
+/favorites-utils.ts
+/favorites.ts
+/forest-grassland-facilities.ts
+/locationService.ts
+/map-utils.ts
+/*-data.ts
+/national-parks-*.ts
+/packing-list-utils.ts
+/recommendation-utils.ts
+/recreation-facilities*.ts
+/share-utils.ts
+/state-data-loader.ts
+/state-parks-facilities.ts
+/states-data.ts
+/suppress-errors.js
+/trips.ts
+/useScrollFadeIn.ts
+/verify-all-states.ts

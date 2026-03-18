@@ -1,5 +1,0 @@
-[
-  {"parkId": "yosemite", "currentTemp": 72, "condition": "Sunny", "humidity": 35, "windSpeed": 8, "bestMonths": ["May", "June", "September"], "forecast": [{"day": "Mon", "icon": "☀️", "high": 75, "low": 48, "condition": "Sunny"}, {"day": "Tue", "icon": "⛅", "high": 73, "low": 50, "condition": "Partly Cloudy"}, {"day": "Wed", "icon": "☀️", "high": 76, "low": 49, "condition": "Sunny"}], "seasonalInfo": [{"season": "Summer", "description": "Best hiking weather, all trails open"}, {"season": "Fall", "description": "Fewer crowds, fall colors"}]},
-  {"parkId": "sequoia", "currentTemp": 68, "condition": "Partly Cloudy", "humidity": 40, "windSpeed": 5, "bestMonths": ["June", "July", "August"], "forecast": [{"day": "Mon", "icon": "⛅", "high": 70, "low": 45, "condition": "Partly Cloudy"}], "seasonalInfo": [{"season": "Summer", "description": "Ideal for high country"}]},
-  {"parkId": "yellowstone", "currentTemp": 65, "condition": "Sunny", "humidity": 42, "windSpeed": 10, "bestMonths": ["May", "September"], "forecast": [{"day": "Mon", "icon": "☀️", "high": 68, "low": 38, "condition": "Sunny"}], "seasonalInfo": [{"season": "Summer", "description": "Peak visitation"}]}
-]
