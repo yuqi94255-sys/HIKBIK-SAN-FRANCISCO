@@ -318,7 +318,11 @@ struct TripCardView: View {
 
             // Bottom action (conditional)
             if item.status == .upcoming {
-                Button { } label: {
+                Button {
+                    AuthGuard.run(message: AuthGuardMessages.startNavigation) {
+                        // TODO: push live navigation when My Trips 接入真實行程
+                    }
+                } label: {
                     HStack(spacing: 8) {
                         Image(systemName: "play.circle.fill")
                             .font(.system(size: 22))

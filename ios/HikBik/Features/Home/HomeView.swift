@@ -438,13 +438,19 @@ private struct TravelEssentialsRow: View {
                 .foregroundStyle(textMuted)
             HStack(spacing: 12) {
                 travelTile(icon: "airplane", label: "Flights") {
-                    print("Search flights to \(parkName)")
+                    AuthGuard.run(message: AuthGuardMessages.travelBooking) {
+                        print("Search flights to \(parkName)")
+                    }
                 }
                 travelTile(icon: "house.fill", label: "Stays") {
-                    print("Search stays near \(parkName)")
+                    AuthGuard.run(message: AuthGuardMessages.travelBooking) {
+                        print("Search stays near \(parkName)")
+                    }
                 }
                 travelTile(icon: "tent.fill", label: "Camping") {
-                    print("Search campsites in \(parkName)")
+                    AuthGuard.run(message: AuthGuardMessages.travelBooking) {
+                        print("Search campsites in \(parkName)")
+                    }
                 }
             }
         }

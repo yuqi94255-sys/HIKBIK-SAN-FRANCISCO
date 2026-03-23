@@ -1,5 +1,6 @@
 import SwiftUI
 import MapKit
+import UIKit
 
 private let exploreListDarkBackground = Color(hex: "1A3324")
 
@@ -1037,7 +1038,11 @@ struct RecreationDetailSheetContent: View {
                     }
                 }
                 if let reserve = recViewModel.ridbRecArea?.recAreaReservationURL?.trimmingCharacters(in: .whitespacesAndNewlines), !reserve.isEmpty, let reserveUrl = URL(string: reserve) {
-                    Link(destination: reserveUrl) {
+                    Button {
+                        AuthGuard.run(message: AuthGuardMessages.travelBooking) {
+                            UIApplication.shared.open(reserveUrl)
+                        }
+                    } label: {
                         HStack(spacing: 6) {
                             Image(systemName: "calendar.badge.clock")
                                 .font(.caption)
@@ -1046,6 +1051,7 @@ struct RecreationDetailSheetContent: View {
                         }
                         .foregroundStyle(themeColor)
                     }
+                    .buttonStyle(.plain)
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)

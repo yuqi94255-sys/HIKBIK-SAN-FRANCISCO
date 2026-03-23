@@ -39,6 +39,7 @@
 		B00100000000000000001E /* ExploreView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00100000000000000001E /* ExploreView.swift */; };
 		B00100000000000000001F /* TripsListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00100000000000000001F /* TripsListView.swift */; };
 		B001000000000000000020 /* ProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F001000000000000000020 /* ProfileView.swift */; };
+		B0010000000000000000B5 /* EditProfileSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0010000000000000000B5 /* EditProfileSheet.swift */; };
 		B001000000000000000021 /* FavoritesListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F001000000000000000021 /* FavoritesListView.swift */; };
 		B001000000000000000022 /* NationalParkExtendedModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = F001000000000000000022 /* NationalParkExtendedModels.swift */; };
 		B001000000000000000023 /* national-parks-facilities.json in Resources */ = {isa = PBXBuildFile; fileRef = F001000000000000000023 /* national-parks-facilities.json */; };
@@ -120,6 +121,9 @@
 		B00100000000000000006F /* SocialDataManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00100000000000000006F /* SocialDataManager.swift */; };
 		B001000000000000000070 /* AuthService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F001000000000000000070 /* AuthService.swift */; };
 		B001000000000000000071 /* AuthManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F001000000000000000071 /* AuthManager.swift */; };
+		B0010000000000000000B3 /* UserProfile.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0010000000000000000B3 /* UserProfile.swift */; };
+		B0010000000000000000B4 /* UserProfileViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0010000000000000000B4 /* UserProfileViewModel.swift */; };
+		B0010000000000000000B1 /* AuthGuardKit.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0010000000000000000B1 /* AuthGuardKit.swift */; };
 		B001000000000000000072 /* TrackRecorderEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = F001000000000000000072 /* TrackRecorderEngine.swift */; };
 		B001000000000000000073 /* PostEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F001000000000000000073 /* PostEditorView.swift */; };
 		B001000000000000000074 /* RouteFollowingNavigationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F001000000000000000074 /* RouteFollowingNavigationView.swift */; };
@@ -128,6 +132,7 @@
 		B001000000000000000077 /* TrackRecordingLiveActivityManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F001000000000000000077 /* TrackRecordingLiveActivityManager.swift */; };
 		B001000000000000000078 /* ShippingService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F001000000000000000078 /* ShippingService.swift */; };
 		B00100000000000000007A /* APIClientBase.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00100000000000000007A /* APIClientBase.swift */; };
+		B0010000000000000000B2 /* APIConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0010000000000000000B2 /* APIConfig.swift */; };
 		B00100000000000000007B /* ReturnService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00100000000000000007B /* ReturnService.swift */; };
 		B00100000000000000007C /* UserAddressService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00100000000000000007C /* UserAddressService.swift */; };
 		B00100000000000000008A /* RIDBConfig.plist in Resources */ = {isa = PBXBuildFile; fileRef = F00100000000000000008A /* RIDBConfig.plist */; platformFilter = ios; };
@@ -202,6 +207,7 @@
 		F00100000000000000001E /* ExploreView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExploreView.swift; sourceTree = "<group>"; };
 		F00100000000000000001F /* TripsListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TripsListView.swift; sourceTree = "<group>"; };
 		F001000000000000000020 /* ProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileView.swift; sourceTree = "<group>"; };
+		F0010000000000000000B5 /* EditProfileSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditProfileSheet.swift; sourceTree = "<group>"; };
 		F001000000000000000021 /* FavoritesListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FavoritesListView.swift; sourceTree = "<group>"; };
 		F001000000000000000022 /* NationalParkExtendedModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NationalParkExtendedModels.swift; sourceTree = "<group>"; };
 		F001000000000000000023 /* national-parks-facilities.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "national-parks-facilities.json"; sourceTree = "<group>"; };
@@ -283,6 +289,9 @@
 		F00100000000000000006F /* SocialDataManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SocialDataManager.swift; sourceTree = "<group>"; };
 		F001000000000000000070 /* AuthService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthService.swift; sourceTree = "<group>"; };
 		F001000000000000000071 /* AuthManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthManager.swift; sourceTree = "<group>"; };
+		F0010000000000000000B3 /* UserProfile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserProfile.swift; sourceTree = "<group>"; };
+		F0010000000000000000B4 /* UserProfileViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserProfileViewModel.swift; sourceTree = "<group>"; };
+		F0010000000000000000B1 /* AuthGuardKit.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthGuardKit.swift; sourceTree = "<group>"; };
 		F001000000000000000072 /* TrackRecorderEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrackRecorderEngine.swift; sourceTree = "<group>"; };
 		F001000000000000000073 /* PostEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostEditorView.swift; sourceTree = "<group>"; };
 		F001000000000000000074 /* RouteFollowingNavigationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RouteFollowingNavigationView.swift; sourceTree = "<group>"; };
@@ -291,6 +300,7 @@
 		F001000000000000000077 /* TrackRecordingLiveActivityManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrackRecordingLiveActivityManager.swift; sourceTree = "<group>"; };
 		F001000000000000000078 /* ShippingService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShippingService.swift; sourceTree = "<group>"; };
 		F00100000000000000007A /* APIClientBase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIClientBase.swift; sourceTree = "<group>"; };
+		F0010000000000000000B2 /* APIConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIConfig.swift; sourceTree = "<group>"; };
 		F00100000000000000007B /* ReturnService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReturnService.swift; sourceTree = "<group>"; };
 		F00100000000000000007C /* UserAddressService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserAddressService.swift; sourceTree = "<group>"; };
 		F00100000000000000008A /* RIDBConfig.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = RIDBConfig.plist; sourceTree = "<group>"; };
@@ -394,6 +404,7 @@
 				F001000000000000000062 /* MacroJourneyModel.swift */,
 				F001000000000000000063 /* OfficialJourney.swift */,
 				F001000000000000000064 /* CommunityJourney.swift */,
+				F0010000000000000000B3 /* UserProfile.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -403,6 +414,7 @@
 			children = (
 				F00100000000000000006C /* WeatherManager.swift */,
 				F001000000000000000078 /* ShippingService.swift */,
+				F0010000000000000000B2 /* APIConfig.swift */,
 				F00100000000000000007A /* APIClientBase.swift */,
 				F00100000000000000007B /* ReturnService.swift */,
 				F00100000000000000007C /* UserAddressService.swift */,
@@ -471,7 +483,9 @@
 				F001000000000000000001 /* HikBikApp.swift */,
 				F001000000000000000002 /* ContentView.swift */,
 				F001000000000000000071 /* AuthManager.swift */,
+				F0010000000000000000B1 /* AuthGuardKit.swift */,
 				F001000000000000000052 /* UserState.swift */,
+				F0010000000000000000B4 /* UserProfileViewModel.swift */,
 				F00100000000000000006A /* SocialManager.swift */,
 				F001000000000000000075 /* TabSelectionManager.swift */,
 			);
@@ -551,6 +565,7 @@
 			isa = PBXGroup;
 			children = (
 				F001000000000000000020 /* ProfileView.swift */,
+				F0010000000000000000B5 /* EditProfileSheet.swift */,
 				F00100000000000000004B /* AdventureStatsProView.swift */,
 				F00100000000000000004A /* RadarChartView.swift */,
 				F00100000000000000004C /* ParkLandmarkIcons.swift */,
@@ -849,6 +864,7 @@
 				B00100000000000000001E /* ExploreView.swift in Sources */,
 				B00100000000000000001F /* TripsListView.swift in Sources */,
 				B001000000000000000020 /* ProfileView.swift in Sources */,
+				B0010000000000000000B5 /* EditProfileSheet.swift in Sources */,
 				B001000000000000000048 /* HonorCenterView.swift in Sources */,
 				B001000000000000000049 /* AdventureStatsService.swift in Sources */,
 				B0010000000000000000FE /* TrackDataManager.swift in Sources */,
@@ -943,6 +959,9 @@
 				B00100000000000000006F /* SocialDataManager.swift in Sources */,
 				B001000000000000000070 /* AuthService.swift in Sources */,
 				B001000000000000000071 /* AuthManager.swift in Sources */,
+				B0010000000000000000B3 /* UserProfile.swift in Sources */,
+				B0010000000000000000B4 /* UserProfileViewModel.swift in Sources */,
+				B0010000000000000000B1 /* AuthGuardKit.swift in Sources */,
 				B001000000000000000072 /* TrackRecorderEngine.swift in Sources */,
 				B001000000000000000073 /* PostEditorView.swift in Sources */,
 				B001000000000000000074 /* RouteFollowingNavigationView.swift in Sources */,
@@ -950,6 +969,7 @@
 				B001000000000000000076 /* TrackRecordingLiveActivityAttributes.swift in Sources */,
 				B001000000000000000077 /* TrackRecordingLiveActivityManager.swift in Sources */,
 				B001000000000000000078 /* ShippingService.swift in Sources */,
+				B0010000000000000000B2 /* APIConfig.swift in Sources */,
 				B00100000000000000007A /* APIClientBase.swift in Sources */,
 				B00100000000000000007B /* ReturnService.swift in Sources */,
 				B00100000000000000007C /* UserAddressService.swift in Sources */,

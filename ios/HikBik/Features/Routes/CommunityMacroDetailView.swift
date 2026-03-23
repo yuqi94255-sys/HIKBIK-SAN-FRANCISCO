@@ -414,8 +414,10 @@ struct CommunityMacroDetailView: View {
                                     .buttonStyle(PlainButtonStyle())
                                     Spacer(minLength: 8)
                                     Button {
-                                        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
-                                        socialManager.toggleFollow(for: a.id, currentUserId: socialManager.currentUserId)
+                                        AuthGuard.run(message: AuthGuardMessages.followUser) {
+                                            UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                                            socialManager.toggleFollow(for: a.id, currentUserId: socialManager.currentUserId)
+                                        }
                                     } label: {
                                         Text(isFollowing ? "Following" : "Follow")
                                             .font(.system(size: 14, weight: .semibold))
@@ -1002,10 +1004,12 @@ struct CommunityMacroDetailView: View {
     private var socialInteractionBar: some View {
         HStack(spacing: 0) {
             Button {
-                UIImpactFeedbackGenerator(style: .light).impactOccurred()
-                currentUser.toggleLike(postId: effectivePostId)
-                isLiked.toggle()
-                likeCount += isLiked ? 1 : -1
+                AuthGuard.run(message: AuthGuardMessages.likePost) {
+                    UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                    currentUser.toggleLike(postId: effectivePostId)
+                    isLiked.toggle()
+                    likeCount += isLiked ? 1 : -1
+                }
             } label: {
                 HStack(spacing: 6) {
                     Image(systemName: isLiked ? "heart.fill" : "heart")
@@ -1035,9 +1039,11 @@ struct CommunityMacroDetailView: View {
             .buttonStyle(.plain)
 
             Button {
-                UIImpactFeedbackGenerator(style: .light).impactOccurred()
-                currentUser.toggleSave(postId: effectivePostId)
-                isFavorited = currentUser.isSaved(postId: effectivePostId)
+                AuthGuard.run(message: AuthGuardMessages.collectRoute) {
+                    UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                    currentUser.toggleSave(postId: effectivePostId)
+                    isFavorited = currentUser.isSaved(postId: effectivePostId)
+                }
             } label: {
                 HStack(spacing: 6) {
                     Image(systemName: isFavorited ? "bookmark.fill" : "bookmark")

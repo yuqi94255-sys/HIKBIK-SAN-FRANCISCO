@@ -404,7 +404,9 @@ struct AccessLogisticsView: View {
 
     private var startNavigationButton: some View {
         Button {
-            openInAppleMaps()
+            AuthGuard.run(message: AuthGuardMessages.startNavigation) {
+                openInAppleMaps()
+            }
         } label: {
             HStack(spacing: 8) {
                 Image(systemName: "location.fill")

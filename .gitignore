@@ -1,3 +1,12 @@
+# Xcode / macOS / CocoaPods（全專案排除垃圾與快取）
+DerivedData/
+Pods/
+*.xcuserdata
+**/xcuserdata/
+build/
+**/.DS_Store
+.DS_Store
+
 # Xcode 個人 UI 狀態（勿提交，不影響編譯）
 **/xcuserdata/**/UserInterfaceState.xcuserstate
 **/*.xcuserstate

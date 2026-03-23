@@ -66,6 +66,7 @@ struct ManualJourneyDetailView: View {
     @State private var showReviewsSheet = false
     @State private var showNavigationView = false
     @State private var showCommentsSheet = false
+    @State private var showRouteShareSheet = false
 
     /// 與 Profile Saved/Liked 同步的 Track ID（track_routeID）
     private var trackId: String { "track_\(viewModel.effectiveRouteID)" }
@@ -215,7 +216,11 @@ struct ManualJourneyDetailView: View {
     }
 
     private var shareButton: some View {
-        ShareLink(item: viewModel.shareMessage, subject: Text(viewModel.journey.routeName)) {
+        Button {
+            AuthGuard.run(message: AuthGuardMessages.exportRoute) {
+                showRouteShareSheet = true
+            }
+        } label: {
             Image(systemName: "square.and.arrow.up")
                 .font(.system(size: 16))
                 .foregroundStyle(.white)
@@ -227,9 +232,11 @@ struct ManualJourneyDetailView: View {
 
     private var favoriteButton: some View {
         Button {
-            UIImpactFeedbackGenerator(style: .light).impactOccurred()
-            currentUser.toggleLike(postId: trackId)
-            viewModel.setFavoriteFromCurrentUser(currentUser.isLiked(postId: trackId))
+            AuthGuard.run(message: AuthGuardMessages.likePost) {
+                UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                currentUser.toggleLike(postId: trackId)
+                viewModel.setFavoriteFromCurrentUser(currentUser.isLiked(postId: trackId))
+            }
         } label: {
             Image(systemName: isLiked ? "heart.fill" : "heart")
                 .font(.system(size: 16))
@@ -278,6 +285,9 @@ struct ManualJourneyDetailView: View {
         .overlay(toastOverlay)
         .sheet(isPresented: $showReviewsSheet) { sheetReviewsContent }
         .sheet(isPresented: $showCommentsSheet) { sheetCommentsContent }
+        .sheet(isPresented: $showRouteShareSheet) {
+            ShareSheet(activityItems: [viewModel.shareMessage])
+        }
         }
     }
 
@@ -615,9 +625,11 @@ struct ManualJourneyDetailView: View {
     private var sheetInteractionBar: some View {
         HStack(spacing: 0) {
             Button {
-                UIImpactFeedbackGenerator(style: .light).impactOccurred()
-                currentUser.toggleLike(postId: trackId)
-                viewModel.setFavoriteFromCurrentUser(currentUser.isLiked(postId: trackId))
+                AuthGuard.run(message: AuthGuardMessages.likePost) {
+                    UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                    currentUser.toggleLike(postId: trackId)
+                    viewModel.setFavoriteFromCurrentUser(currentUser.isLiked(postId: trackId))
+                }
             } label: {
                 HStack(spacing: 6) {
                     Image(systemName: isLiked ? "heart.fill" : "heart")
@@ -652,18 +664,20 @@ struct ManualJourneyDetailView: View {
             .buttonStyle(.plain)
 
             Button {
-                UIImpactFeedbackGenerator(style: .light).impactOccurred()
-                let wasSaved = isSaved
-                if wasSaved {
-                    currentUser.toggleSave(postId: trackId)
-                    SocialDataManager.shared.removeTrackJourney(id: trackId)
-                    toastMessage = "Removed from Saved"
-                } else {
-                    currentUser.toggleSave(postId: trackId)
-                    if let data = try? JSONEncoder().encode(journey) {
-                        SocialDataManager.shared.saveTrackJourney(id: trackId, journeyData: data)
+                AuthGuard.run(message: AuthGuardMessages.collectRoute) {
+                    UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                    let wasSaved = isSaved
+                    if wasSaved {
+                        currentUser.toggleSave(postId: trackId)
+                        SocialDataManager.shared.removeTrackJourney(id: trackId)
+                        toastMessage = "Removed from Saved"
+                    } else {
+                        currentUser.toggleSave(postId: trackId)
+                        if let data = try? JSONEncoder().encode(journey) {
+                            SocialDataManager.shared.saveTrackJourney(id: trackId, journeyData: data)
+                        }
+                        toastMessage = "Saved to Profile"
                     }
-                    toastMessage = "Saved to Profile"
                 }
             } label: {
                 Image(systemName: isSaved ? "bookmark.fill" : "bookmark")
@@ -849,7 +863,9 @@ struct ManualJourneyDetailView: View {
     /// Start Navigation button: enter real-time route-following mode
     private var sheetStartButton: some View {
         Button {
-            showNavigationView = true
+            AuthGuard.run(message: AuthGuardMessages.startNavigation) {
+                showNavigationView = true
+            }
         } label: {
             Text("Start Navigation")
                 .font(.system(size: 17, weight: .semibold))

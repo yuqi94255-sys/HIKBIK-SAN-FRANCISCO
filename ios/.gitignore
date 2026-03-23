@@ -1,0 +1,33 @@
+# macOS
+.DS_Store
+**/.DS_Store
+
+# Xcode — 使用者資料（勿提交）
+*.xcuserdata
+**/xcuserdata/
+*.xcuserstate
+**/xcuserdata/**/UserInterfaceState.xcuserstate
+
+# Xcode / SwiftPM 建置產物
+DerivedData/
+build/
+*.swiftpm/xcode/package.xcworkspace/xcuserdata/
+
+# CocoaPods（若使用；Podfile.lock 建議保留於版本庫）
+Pods/
+
+# Carthage（若使用）
+Carthage/Build/
+
+# fastlane
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots
+fastlane/test_output
+
+# 其他
+*.moved-aside
+*.hmap
+*.ipa
+*.dSYM.zip
+*.dSYM

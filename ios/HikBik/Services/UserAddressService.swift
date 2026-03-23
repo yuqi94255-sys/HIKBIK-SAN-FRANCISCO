@@ -31,7 +31,7 @@ final class UserAddressService {
         #endif
     }
 
-    private let client = APIClientBase.shared
+    private let client = NetworkManager.shared
 
     private init() {}
 

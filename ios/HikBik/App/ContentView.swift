@@ -2,10 +2,13 @@ import SwiftUI
 
 /// 5 Tab：Home, Routes, Shop, Community, Profile（Orders 入口移至 Shop 內）
 struct ContentView: View {
+    @EnvironmentObject private var userState: UserState
+    @ObservedObject private var authPrompt = AuthPromptState.shared
     @StateObject private var cartStore = CartStore()
     @StateObject private var communityViewModel = CommunityViewModel()
     @StateObject private var currentUser = CurrentUser()
     @StateObject private var socialManager = SocialManager()
+    @StateObject private var userProfileVM = UserProfileViewModel.shared
     @ObservedObject private var tabSelection = TabSelectionManager.shared
 
     var body: some View {
@@ -29,10 +32,24 @@ struct ContentView: View {
         .environmentObject(cartStore)
         .environmentObject(communityViewModel)
         .environmentObject(currentUser)
+        .environmentObject(userProfileVM)
         .environmentObject(socialManager)
         .environmentObject(TrackDataManager.shared)
         .environmentObject(PostCommentStore.shared)
         .tint(Color.hikbikTabActive)
+        .sheet(isPresented: $authPrompt.isPresented) {
+            AuthActionSheetView(
+                message: authPrompt.message,
+                onDismiss: { authPrompt.dismiss() },
+                onLoginRegister: {
+                    authPrompt.dismiss()
+                    userState.requestLandingForAuth()
+                }
+            )
+            .presentationDetents([.medium, .large])
+            .presentationDragIndicator(.visible)
+            .presentationCornerRadius(24)
+        }
         .onAppear {
             let appearance = UITabBarAppearance()
             appearance.configureWithTransparentBackground()
@@ -55,6 +72,7 @@ struct ContentView: View {
         .environmentObject(UserState())
         .environmentObject(CommunityViewModel())
         .environmentObject(CurrentUser())
+        .environmentObject(UserProfileViewModel.shared)
         .environmentObject(SocialManager())
         .environmentObject(TrackDataManager.shared)
         .environmentObject(PostCommentStore.shared)

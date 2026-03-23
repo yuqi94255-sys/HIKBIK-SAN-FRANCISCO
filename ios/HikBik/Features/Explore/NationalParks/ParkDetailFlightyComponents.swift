@@ -3,6 +3,7 @@
 
 import SwiftUI
 import MapKit
+import UIKit
 
 private let detailSheetBackgroundColor = Color(red: 0x1C/255, green: 0x1C/255, blue: 0x1E/255)
 
@@ -1243,7 +1244,11 @@ struct FeeStatusView: View {
                             .padding(.vertical, 6)
                             .background(themeColor.opacity(0.2), in: Capsule())
                         if let url = (permitLinks?.first ?? officialWebsite).flatMap({ URL(string: $0) }) {
-                            Link(destination: url) {
+                            Button {
+                                AuthGuard.run(message: AuthGuardMessages.parkReservation) {
+                                    UIApplication.shared.open(url)
+                                }
+                            } label: {
                                 Text("Book Entry")
                                     .font(.caption.weight(.semibold))
                                     .foregroundStyle(.white)
@@ -1251,6 +1256,7 @@ struct FeeStatusView: View {
                                     .padding(.vertical, 6)
                                     .background(themeColor, in: Capsule())
                             }
+                            .buttonStyle(.plain)
                         }
                     }
                 }

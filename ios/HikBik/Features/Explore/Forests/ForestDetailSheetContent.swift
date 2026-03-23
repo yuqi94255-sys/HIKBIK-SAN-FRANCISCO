@@ -359,7 +359,9 @@ struct ForestDetailSheetContent: View {
         print("[Interaction] 準備跳轉至設施：\(name)")
         #endif
         guard let url = url else { return }
-        UIApplication.shared.open(url)
+        AuthGuard.run(message: AuthGuardMessages.travelBooking) {
+            UIApplication.shared.open(url)
+        }
     }
 }
 
@@ -770,9 +772,11 @@ struct StartNavigationButton: View {
     var body: some View {
         Button {
             guard let coord = coordinate else { return }
-            let placemark = MKPlacemark(coordinate: coord)
-            let item = MKMapItem(placemark: placemark)
-            item.openInMaps(launchOptions: [MKLaunchOptionsDirectionsModeKey: MKLaunchOptionsDirectionsModeDriving])
+            AuthGuard.run(message: AuthGuardMessages.startNavigation) {
+                let placemark = MKPlacemark(coordinate: coord)
+                let item = MKMapItem(placemark: placemark)
+                item.openInMaps(launchOptions: [MKLaunchOptionsDirectionsModeKey: MKLaunchOptionsDirectionsModeDriving])
+            }
         } label: {
             HStack(spacing: 8) {
                 Image(systemName: "location.fill")

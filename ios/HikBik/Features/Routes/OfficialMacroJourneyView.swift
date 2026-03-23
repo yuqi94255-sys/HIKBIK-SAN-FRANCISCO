@@ -138,7 +138,11 @@ struct OfficialMacroJourneyView: View {
     }
 
     private var startNavigationButton: some View {
-        Button { isNavigating = true } label: {
+        Button {
+            AuthGuard.run(message: AuthGuardMessages.startNavigation) {
+                isNavigating = true
+            }
+        } label: {
             Text("Start Navigation")
                 .font(.system(size: 17, weight: .semibold))
                 .foregroundStyle(.white)

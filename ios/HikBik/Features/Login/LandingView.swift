@@ -12,7 +12,7 @@ private let emailErrorRed = Color(hex: "E07A7A")
 /// Spin: ultra-slim input background (very faint tint)
 private let inputSlimBg = Color.white.opacity(0.05)
 
-/// Step 1: Email | Step 2: Password/Details (Register or Login) | Step 3: OTP (in same card)
+/// Step 1: Email +「下一步」分流 | Step 2: 老用戶密碼 / 新用戶註冊資料 | Step 3: 僅新用戶驗證碼
 private enum FlowStep: Int {
     case email = 0
     case details = 1
@@ -51,6 +51,9 @@ struct LandingView: View {
             .animation(.easeInOut(duration: 0.3), value: flowStep.rawValue)
         }
         .ignoresSafeArea()
+        .onAppear {
+            AuthManager.shared.stripAuthTokenBeforeCredentialLogin()
+        }
     }
 }
 
@@ -95,9 +98,17 @@ private struct UnifiedLoginCard: View {
     @State private var isCheckingEmail = false
     /// 註冊請求進行中，按鈕顯示 Loading，防止重複點擊
     @State private var isSubmittingDetails = false
+    /// Email 步「下一步」：查詢 isExistingUser 或發送 OTP 進行中
+    @State private var isEmailNextLoading = false
+    @State private var sendOTPErrorMessage: String?
+    /// 後端驗證 OTP 進行中
+    @State private var isVerifyingOTP = false
+    @State private var verifyOTPErrorMessage: String?
     /// 註冊報錯「Email already in use」時彈窗引導去登錄
     @State private var showAccountExistsAlert = false
     @State private var emailCheckTask: Task<Void, Never>?
+    /// Step 2 登錄/註冊失敗提示
+    @State private var detailsSubmitErrorMessage: String?
 
     private let otpLength = 6
     private let emailDebounceNanoseconds: UInt64 = 500_000_000 // 500ms
@@ -119,12 +130,22 @@ private struct UnifiedLoginCard: View {
     private static let specialChars = CharacterSet(charactersIn: "@$%!#&*()_+-=[]{}|;:'\",.<>?/\\~`")
     private var passwordRuleSpecial: Bool { password.unicodeScalars.contains(where: { Self.specialChars.contains($0) }) }
 
-    /// Step 1: Verify Email only when valid email、同意條款且該郵箱未已被註冊
-    private var canVerifyEmail: Bool {
-        isEmailValid && agreedToTerms && !emailAlreadyExists
+    /// Step 1：同意條款後可點「下一步」（由後端 `isExistingUser` 分流）
+    private var canTapEmailNext: Bool {
+        isEmailValid && agreedToTerms
     }
 
-    /// Step 2: Create Account requires email verified + all fields (name, password, terms)
+    /// Step 3（僅新用戶）：必須填滿 6 位且未在請求中，才可點「Verify」
+    private var canTapVerifyOTP: Bool {
+        otpCode.count == otpLength && !isVerifyingOTP
+    }
+
+    private var emailNextButtonTitle: String {
+        if isEmailNextLoading { return "Loading…" }
+        return "Next"
+    }
+
+    /// Step 2：老用戶僅密碼；新用戶需 OTP 通過後填寫註冊資料
     private var canSubmitDetails: Bool {
         let detailsOk: Bool
         if isExistingUser {
@@ -242,7 +263,7 @@ private struct UnifiedLoginCard: View {
                             .foregroundStyle(inputTextWhite)
                             .onChange(of: email) { _, _ in
                                 if showEmailError && isEmailValid { showEmailError = false }
-                                if emailAlreadyExists { emailAlreadyExists = false }
+                                emailAlreadyExists = false
                                 scheduleEmailExistsCheck()
                             }
                         if email.isEmpty {
@@ -291,18 +312,31 @@ private struct UnifiedLoginCard: View {
                 .padding(.horizontal, 4)
                 .frame(maxWidth: .infinity, alignment: .leading)
 
-                // Verify Email — same width as Email; goes to OTP (two-step flow)
-                Button(action: step1VerifyEmailTapped) {
-                    Text("Verify Email")
-                        .font(.system(size: 17, weight: .semibold, design: .rounded))
-                        .foregroundStyle(canVerifyEmail ? .black : .black.opacity(0.6))
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 14)
-                        .background(Capsule().fill(canVerifyEmail ? neonGreen : neonGreen.opacity(0.5)))
+                // 下一步：後端回傳 isExistingUser → 老用戶進密碼頁；新用戶發 OTP 進驗證碼頁
+                Button(action: step1NextTapped) {
+                    HStack(spacing: 10) {
+                        if isEmailNextLoading {
+                            ProgressView()
+                                .tint(.black)
+                        }
+                        Text(emailNextButtonTitle)
+                            .font(.system(size: 17, weight: .semibold, design: .rounded))
+                    }
+                    .foregroundStyle((canTapEmailNext && !isEmailNextLoading) ? .black : .black.opacity(0.6))
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 14)
+                    .background(Capsule().fill((canTapEmailNext && !isEmailNextLoading) ? neonGreen : neonGreen.opacity(0.5)))
                 }
                 .buttonStyle(.plain)
-                .shadow(color: neonGreen.opacity(canVerifyEmail ? 0.5 : 0.25), radius: 10)
-                .shadow(color: neonGreen.opacity(canVerifyEmail ? 0.3 : 0.15), radius: 20)
+                .disabled(!canTapEmailNext || isEmailNextLoading)
+                .shadow(color: neonGreen.opacity((canTapEmailNext && !isEmailNextLoading) ? 0.5 : 0.25), radius: 10)
+                .shadow(color: neonGreen.opacity((canTapEmailNext && !isEmailNextLoading) ? 0.3 : 0.15), radius: 20)
+
+                if let msg = sendOTPErrorMessage {
+                    Text(msg)
+                        .font(.system(size: 12, weight: .medium, design: .rounded))
+                        .foregroundStyle(emailErrorRed)
+                }
 
                 // Social — more padding between icons so they don’t look cramped
                 VStack(spacing: 20) {
@@ -369,6 +403,8 @@ private struct UnifiedLoginCard: View {
             VStack(alignment: .leading, spacing: 20) {
                 Button(action: {
                     isEmailVerified = false
+                    isExistingUser = false
+                    emailAlreadyExists = false
                     withAnimation(.easeInOut(duration: 0.3)) { flowStep = .email }
                 }) {
                     HStack(spacing: 6) {
@@ -379,32 +415,48 @@ private struct UnifiedLoginCard: View {
                 }
                 .buttonStyle(.plain)
 
-                Text("Set up your account")
+                Text(isExistingUser ? "Welcome back" : "Set up your account")
                     .font(.system(size: 22, weight: .bold, design: .rounded))
                     .foregroundStyle(.white)
 
-                // Verified email badge (post-OTP)
-                HStack(spacing: 8) {
-                    Text(email.trimmingCharacters(in: .whitespacesAndNewlines))
-                        .font(.system(size: 14, weight: .medium, design: .rounded))
-                        .foregroundStyle(.white.opacity(0.9))
-                        .lineLimit(1)
-                    if isEmailVerified {
-                        HStack(spacing: 4) {
-                            Image(systemName: "checkmark.circle.fill")
-                                .font(.system(size: 14))
-                                .foregroundStyle(neonGreen)
-                            Text("Verified")
-                                .font(.system(size: 12, weight: .semibold, design: .rounded))
-                                .foregroundStyle(neonGreen)
-                        }
-                    }
-                }
-                .padding(.vertical, 4)
-
                 if isExistingUser {
+                    // 老用戶：密碼登入頁，Email 由上一步帶入、只讀展示
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Email")
+                            .font(.system(size: 13, weight: .semibold, design: .rounded))
+                            .foregroundStyle(placeholderGray)
+                        Text(email.trimmingCharacters(in: .whitespacesAndNewlines))
+                            .font(.system(size: 16, weight: .medium, design: .rounded))
+                            .foregroundStyle(inputTextWhite)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 14)
+                            .background(RoundedRectangle(cornerRadius: 12).fill(inputSlimBg))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .strokeBorder(Color.white.opacity(0.15), lineWidth: 1)
+                            )
+                    }
+                    .padding(.vertical, 4)
                     detailsLoginOnly
                 } else {
+                    HStack(spacing: 8) {
+                        Text(email.trimmingCharacters(in: .whitespacesAndNewlines))
+                            .font(.system(size: 14, weight: .medium, design: .rounded))
+                            .foregroundStyle(.white.opacity(0.9))
+                            .lineLimit(1)
+                        if isEmailVerified {
+                            HStack(spacing: 4) {
+                                Image(systemName: "checkmark.circle.fill")
+                                    .font(.system(size: 14))
+                                    .foregroundStyle(neonGreen)
+                                Text("Verified")
+                                    .font(.system(size: 12, weight: .semibold, design: .rounded))
+                                    .foregroundStyle(neonGreen)
+                            }
+                        }
+                    }
+                    .padding(.vertical, 4)
                     detailsRegistration
                 }
 
@@ -425,6 +477,11 @@ private struct UnifiedLoginCard: View {
                 }
 
                 detailsPrimaryButton
+                if let err = detailsSubmitErrorMessage {
+                    Text(err)
+                        .font(.system(size: 12, weight: .medium, design: .rounded))
+                        .foregroundStyle(emailErrorRed)
+                }
                 Button(action: { withAnimation(.easeOut(duration: 0.2)) { isExistingUser.toggle() } }) {
                     Text(isExistingUser ? "New user? Create an account" : "Already have an account? Log in")
                         .font(.system(size: 14, weight: .medium, design: .rounded))
@@ -540,8 +597,31 @@ private struct UnifiedLoginCard: View {
             }
             return
         }
+        detailsSubmitErrorMessage = nil
+        AuthManager.shared.stripAuthTokenBeforeCredentialLogin()
         if isExistingUser {
-            onComplete()
+            isSubmittingDetails = true
+            Task {
+                do {
+                    try await AuthService.login(
+                        email: email.trimmingCharacters(in: .whitespacesAndNewlines),
+                        password: password
+                    )
+                    await MainActor.run {
+                        AuthManager.shared.setLoggedIn(true)
+                        isSubmittingDetails = false
+                    }
+                    await UserProfileViewModel.shared.refreshFromServerIfLoggedIn()
+                    await MainActor.run {
+                        onComplete()
+                    }
+                } catch {
+                    await MainActor.run {
+                        isSubmittingDetails = false
+                        detailsSubmitErrorMessage = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
+                    }
+                }
+            }
             return
         }
         isSubmittingDetails = true
@@ -554,8 +634,18 @@ private struct UnifiedLoginCard: View {
                     lastName: lastName.trimmingCharacters(in: .whitespaces),
                     password: password
                 )
+                let profile = UserProfile(
+                    firstName: firstName.trimmingCharacters(in: .whitespacesAndNewlines),
+                    lastName: lastName.trimmingCharacters(in: .whitespacesAndNewlines),
+                    email: email.trimmingCharacters(in: .whitespacesAndNewlines)
+                )
                 await MainActor.run {
+                    UserProfileViewModel.shared.save(profile)
+                    AuthManager.shared.setLoggedIn(true)
                     isSubmittingDetails = false
+                }
+                await UserProfileViewModel.shared.refreshFromServerIfLoggedIn()
+                await MainActor.run {
                     onComplete()
                 }
             } catch {
@@ -563,8 +653,9 @@ private struct UnifiedLoginCard: View {
                     isSubmittingDetails = false
                     if isEmailAlreadyInUse(error) {
                         showAccountExistsAlert = true
+                    } else {
+                        detailsSubmitErrorMessage = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
                     }
-                    // 其他錯誤可在此擴展（如 Toast 或 Alert）
                 }
             }
         }
@@ -604,9 +695,7 @@ private struct UnifiedLoginCard: View {
                     .onChange(of: otpCode) { _, newValue in
                         let filtered = newValue.filter { $0.isNumber }
                         otpCode = String(filtered.prefix(otpLength))
-                        if otpCode.count == otpLength {
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { submitOTP() }
-                        }
+                        if verifyOTPErrorMessage != nil { verifyOTPErrorMessage = nil }
                     }
                 HStack(spacing: 10) {
                     ForEach(0..<otpLength, id: \.self) { i in
@@ -615,6 +704,30 @@ private struct UnifiedLoginCard: View {
                 }
             }
             .frame(maxWidth: .infinity)
+
+            if let verifyErr = verifyOTPErrorMessage {
+                Text(verifyErr)
+                    .font(.system(size: 13, weight: .medium, design: .rounded))
+                    .foregroundStyle(emailErrorRed)
+            }
+
+            Button(action: verifyOTPButtonTapped) {
+                HStack(spacing: 10) {
+                    if isVerifyingOTP {
+                        ProgressView()
+                            .progressViewStyle(CircularProgressViewStyle(tint: .black))
+                            .scaleEffect(0.9)
+                    }
+                    Text(isVerifyingOTP ? "Verifying…" : "Verify")
+                        .font(.system(size: 17, weight: .semibold, design: .rounded))
+                }
+                .foregroundStyle(canTapVerifyOTP ? .black : .black.opacity(0.5))
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 14)
+                .background(Capsule().fill(canTapVerifyOTP ? neonGreen : neonGreen.opacity(0.45)))
+            }
+            .buttonStyle(.plain)
+            .disabled(!canTapVerifyOTP)
 
             Text(resendSeconds > 0 ? "Resend code in 00:\(String(format: "%02d", resendSeconds))" : "Resend code")
                 .font(.system(size: 14, weight: .regular, design: .rounded))
@@ -663,8 +776,9 @@ private struct UnifiedLoginCard: View {
         .transition(.opacity)
     }
 
-    private func step1VerifyEmailTapped() {
-        guard canVerifyEmail else {
+    /// Email 步「下一步」：`GET auth/check-email` 得 `isExistingUser` → 老用戶進密碼頁；新用戶 `POST auth/send-otp` 後進驗證碼頁。
+    private func step1NextTapped() {
+        guard canTapEmailNext else {
             if !agreedToTerms {
                 showTermsHint = true
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) { showTermsHint = false }
@@ -673,9 +787,30 @@ private struct UnifiedLoginCard: View {
             }
             return
         }
+        guard !isEmailNextLoading else { return }
         showEmailError = false
         showTermsHint = false
-        withAnimation(.easeInOut(duration: 0.3)) { flowStep = .otp }
+        sendOTPErrorMessage = nil
+        Task { @MainActor in
+            isEmailNextLoading = true
+            defer { isEmailNextLoading = false }
+            do {
+                let exists = try await AuthService.resolveEmailIsExistingUser(email)
+                isExistingUser = exists
+                emailAlreadyExists = exists
+                if exists {
+                    isEmailVerified = true
+                    password = ""
+                    confirmPassword = ""
+                    withAnimation(.easeInOut(duration: 0.3)) { flowStep = .details }
+                } else {
+                    try await AuthService.sendOTP(email: email)
+                    withAnimation(.easeInOut(duration: 0.3)) { flowStep = .otp }
+                }
+            } catch {
+                sendOTPErrorMessage = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
+            }
+        }
     }
 
     private func triggerTermsShake() {
@@ -687,19 +822,31 @@ private struct UnifiedLoginCard: View {
         }
     }
 
-    private func submitOTP() {
-        guard otpCode.count == otpLength else { return }
-        withAnimation(.easeOut(duration: 0.25)) { showOTPSuccess = true }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-            withAnimation(.easeOut(duration: 0.2)) { showCheckmark = true }
-        }
-        // Two-step flow: do NOT auto-login; return to registration form with email verified
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
-            isEmailVerified = true
-            showOTPSuccess = false
-            showCheckmark = false
-            otpCode = ""
-            withAnimation(.easeInOut(duration: 0.3)) { flowStep = .details }
+    /// 僅新用戶到此步。`POST auth/verify-otp` 成功後進入註冊資料（密碼登入不經 OTP）。
+    private func verifyOTPButtonTapped() {
+        guard otpCode.count == otpLength, !isVerifyingOTP else { return }
+        verifyOTPErrorMessage = nil
+        Task { @MainActor in
+            isVerifyingOTP = true
+            defer { isVerifyingOTP = false }
+            do {
+                _ = try await AuthService.verifyOTP(email: email, code: otpCode)
+                withAnimation(.easeOut(duration: 0.25)) { showOTPSuccess = true }
+                try await Task.sleep(nanoseconds: 300_000_000)
+                withAnimation(.easeOut(duration: 0.2)) { showCheckmark = true }
+                try await Task.sleep(nanoseconds: 900_000_000)
+                isEmailVerified = true
+                showOTPSuccess = false
+                showCheckmark = false
+                otpCode = ""
+                withAnimation(.easeInOut(duration: 0.3)) { flowStep = .details }
+            } catch {
+                if AuthService.isInvalidOrExpiredOTPError(error) {
+                    verifyOTPErrorMessage = "Invalid Verification Code"
+                } else {
+                    verifyOTPErrorMessage = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
+                }
+            }
         }
     }
 

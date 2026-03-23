@@ -65,8 +65,10 @@ struct UserProfileView: View {
                 if authorId != socialManager.currentUserId {
                     let isFollowing = socialManager.users[authorId]?.isFollowing ?? false
                     Button {
-                        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
-                        socialManager.toggleFollow(for: authorId, currentUserId: socialManager.currentUserId)
+                        AuthGuard.run(message: AuthGuardMessages.followUser) {
+                            UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                            socialManager.toggleFollow(for: authorId, currentUserId: socialManager.currentUserId)
+                        }
                     } label: {
                         Text(isFollowing ? "Following" : "Follow")
                             .font(.system(size: 14, weight: .semibold))

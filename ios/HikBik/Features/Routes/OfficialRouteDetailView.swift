@@ -130,7 +130,11 @@ struct OfficialRouteDetailView: View {
     /// Grand Journey / 宏觀路線頁底部：Start Navigation（與本頁佈局同色，與 StatCards 一致：themeColor ?? timelineBlueLight）
     private var grandJourneyStartButton: some View {
         let accent = routeData.themeColor ?? HIKBIKTheme.timelineBlueLight
-        return Button { showMacroNavigation = true } label: {
+        return Button {
+            AuthGuard.run(message: AuthGuardMessages.startNavigation) {
+                showMacroNavigation = true
+            }
+        } label: {
             Text("Start Navigation")
                 .font(.system(size: 17, weight: .semibold))
                 .foregroundStyle(.white)
@@ -180,9 +184,11 @@ struct OfficialRouteDetailView: View {
             .buttonStyle(.plain)
             Spacer()
             Button {
-                let generator = UIImpactFeedbackGenerator(style: .light)
-                generator.impactOccurred()
-                routeFavorites.toggle(routeData.routeId)
+                AuthGuard.run(message: AuthGuardMessages.collectRoute) {
+                    let generator = UIImpactFeedbackGenerator(style: .light)
+                    generator.impactOccurred()
+                    routeFavorites.toggle(routeData.routeId)
+                }
             } label: {
                 Image(systemName: routeFavorites.isFavorite(routeData.routeId) ? "heart.fill" : "heart")
                     .font(.system(size: 20))
@@ -832,7 +838,11 @@ struct OfficialDetailedTrackView: View {
     /// 官方細節路線（Yosemite）：只開精密導航頁，不開 Macro（無 Day 1/2/3）
     private var startNavigationButton: some View {
         VStack(spacing: 10) {
-            Button { showDetailedTrackNavigation = true } label: {
+            Button {
+                AuthGuard.run(message: AuthGuardMessages.startNavigation) {
+                    showDetailedTrackNavigation = true
+                }
+            } label: {
                 Text("Start Navigation")
                     .font(.system(size: 17, weight: .semibold))
                     .foregroundStyle(.white)
@@ -847,6 +857,7 @@ struct OfficialDetailedTrackView: View {
                     )
                     .clipShape(RoundedRectangle(cornerRadius: 14))
             }
+            .buttonStyle(.plain)
         }
         .padding(.horizontal, OfficialTrackViewTheme.blockPadding)
         .padding(.top, 12)

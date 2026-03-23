@@ -156,10 +156,12 @@ struct DraftItem: Identifiable, Codable, Hashable {
     var macroJourneyJSON: String?
     /// 微觀 Detailed Track 發布時寫入的完整 DetailedTrackPost JSON（含 viewPointNodes：arrivalTime、amenities、elevation 等）。Community 卡片與詳情頁解碼用。
     var detailedTrackJSON: String?
+    /// 發布時綁定 MongoDB 用戶 id；Profile Posts 僅顯示與當前帳號一致者。
+    var ownerUserId: String?
 
     enum CodingKeys: String, CodingKey {
         case id, source, category, title, createdAt, waypoints, polylineCoordinates, durationSeconds, coverImageData, formDescription, locationName, currentWeather, nearbyFacilities
-        case macroJourneyJSON, detailedTrackJSON
+        case macroJourneyJSON, detailedTrackJSON, ownerUserId
     }
 
     /// 從 source 推斷默認 category：Builder→Grand Journeys，Live Recording→Lively Activity，Micro/Detailed→Detailed Tracks。
@@ -171,7 +173,7 @@ struct DraftItem: Identifiable, Codable, Hashable {
         }
     }
 
-    init(id: UUID, source: DraftSource, category: PostCategory? = nil, title: String, createdAt: Date, waypoints: [DraftWaypoint], polylineCoordinates: [DraftCoordinate]?, durationSeconds: Double?, coverImageData: Data? = nil, formDescription: String? = nil, locationName: String? = nil, currentWeather: String? = nil, nearbyFacilities: [String]? = nil, macroJourneyJSON: String? = nil, detailedTrackJSON: String? = nil) {
+    init(id: UUID, source: DraftSource, category: PostCategory? = nil, title: String, createdAt: Date, waypoints: [DraftWaypoint], polylineCoordinates: [DraftCoordinate]?, durationSeconds: Double?, coverImageData: Data? = nil, formDescription: String? = nil, locationName: String? = nil, currentWeather: String? = nil, nearbyFacilities: [String]? = nil, macroJourneyJSON: String? = nil, detailedTrackJSON: String? = nil, ownerUserId: String? = nil) {
         self.id = id
         self.source = source
         self.category = category ?? Self.category(from: source)
@@ -187,6 +189,7 @@ struct DraftItem: Identifiable, Codable, Hashable {
         self.nearbyFacilities = nearbyFacilities
         self.macroJourneyJSON = macroJourneyJSON
         self.detailedTrackJSON = detailedTrackJSON
+        self.ownerUserId = ownerUserId
     }
 
     struct DraftWaypoint: Codable, Hashable {

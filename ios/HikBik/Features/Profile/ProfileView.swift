@@ -118,11 +118,12 @@ fileprivate enum ProfileSavedRow: Identifiable, Hashable {
 
 struct ProfileView: View {
     @EnvironmentObject private var userState: UserState
+    @ObservedObject private var authManager = AuthManager.shared
+    /// 與 `ContentView` 注入的 `UserProfileViewModel.shared` 同一實例；**禁止**在此使用 `StateObject(UserProfileViewModel())` 以免資料不共享。
+    @EnvironmentObject private var userProfileVM: UserProfileViewModel
     @EnvironmentObject private var currentUser: CurrentUser
     @EnvironmentObject private var communityViewModel: CommunityViewModel
     @EnvironmentObject private var trackDataManager: TrackDataManager
-    @State private var userName: String = UserDefaults.standard.string(forKey: "hikbik_user_name") ?? ""
-    @State private var isLoggedIn: Bool = (UserDefaults.standard.data(forKey: "hikbik_user") != nil)
     @State private var selectedGridTab: ProfileGridTab = .grid
     @State private var collections: [ProfileCollection] = []
     /// Drafts list bound to DataManager.draftTracks (single source of truth; no local copy to avoid list shaking).
@@ -139,21 +140,31 @@ struct ProfileView: View {
     @State private var draftToDelete: DraftItem? = nil
     /// 點擊卡片跳轉詳情：由 onTapGesture 設置，避免 NavigationLink 與按鈕點擊錯位
     @State private var selectedDraftForDetail: DraftItem? = nil
+    @State private var showEditProfile = false
+    @State private var avatarPickerItem: PhotosPickerItem?
+    @State private var isUploadingAvatar = false
 
-    private let followingCount = 12
-    private let followersCount = 48
-    private let bio = "Peak hunter based in Zurich | 🏔️ 30+ Summits"
+    /// Posts 僅顯示當前 MongoDB 用戶 id 與 `ownerUserId` 一致的已發布內容（新用戶無 id 時列表為空，不混入他人）。
+    private var myPublishedPostsForCurrentUser: [DraftItem] {
+        let all = trackDataManager.publishedTracks
+        guard let uid = userProfileVM.profile?.id, !uid.isEmpty else { return [] }
+        return all.filter { $0.ownerUserId == uid }
+    }
 
-    /// Display name: registered → "Adventurer"; else stored name or "Explorer"
-    private var displayName: String {
-        userState.isRegistered ? "Adventurer" : (userName.isEmpty ? "Explorer" : userName)
+    private var profileBioDisplay: String {
+        let raw = userProfileVM.profile?.bio?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        return raw.isEmpty ? "No bio added yet" : raw
     }
 
     var body: some View {
         NavigationStack {
             Group {
-                if userState.isGuest {
+                if !authManager.isLoggedIn {
                     guestJoinHIKBIKContent
+                } else if userProfileVM.profile == nil {
+                    ProgressView()
+                        .tint(ProfileTheme.accent)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
                 } else {
                     ScrollView(.vertical, showsIndicators: false) {
                         VStack(alignment: .leading, spacing: 0) {
@@ -175,7 +186,9 @@ struct ProfileView: View {
             .toolbarColorScheme(.dark, for: .navigationBar)
             .onAppear {
                 trackDataManager.reloadFromStore()
+                userProfileVM.reloadFromStorage()
                 loadData()
+                Task { await userProfileVM.refreshFromServerIfLoggedIn() }
             }
             .onReceive(NotificationCenter.default.publisher(for: .unifiedDraftsDidChange)) { _ in
                 loadData()
@@ -201,7 +214,23 @@ struct ProfileView: View {
                 }
             }
             .sheet(isPresented: $showFollowList) {
-                FollowListSheet(mode: followListMode)
+                FollowListSheet(
+                    mode: followListMode,
+                    userIds: followListMode == .followers
+                        ? (userProfileVM.profile?.followers ?? [])
+                        : (userProfileVM.profile?.following ?? [])
+                )
+            }
+            .sheet(isPresented: $showEditProfile) {
+                EditProfileSheet()
+                    .environmentObject(userProfileVM)
+                    .presentationDetents([.medium, .large])
+                    .presentationDragIndicator(.visible)
+            }
+            .onChange(of: showEditProfile) { _, isOpen in
+                if !isOpen {
+                    Task { await userProfileVM.refreshFromServerIfLoggedIn() }
+                }
             }
             .navigationDestination(for: DraftItem.self) { draft in
                 if trackDataManager.publishedTracks.contains(where: { $0.id == draft.id }) {
@@ -269,9 +298,9 @@ struct ProfileView: View {
             }
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    if userState.isGuest {
+                    if !authManager.isLoggedIn {
                         Button("Sign In") {
-                            userState.showLandingFromApp = true
+                            userState.requestLandingForAuth()
                         }
                         .font(.system(size: 15, weight: .medium))
                         .foregroundStyle(ProfileTheme.accent)
@@ -287,11 +316,8 @@ struct ProfileView: View {
             .alert("Sign Out", isPresented: $showSignOutAlert) {
                 Button("Cancel", role: .cancel) {}
                 Button("Confirm", role: .destructive) {
-                    UserDefaults.standard.removeObject(forKey: "hikbik_user")
-                    UserDefaults.standard.removeObject(forKey: "hikbik_user_name")
-                    isLoggedIn = false
-                    userName = ""
                     userState.userStatus = .guest
+                    AuthManager.shared.logout()
                 }
             } message: {
                 Text("Are you sure you want to sign out?")
@@ -299,17 +325,14 @@ struct ProfileView: View {
             .onReceive(NotificationCenter.default.publisher(for: .postDeleted)) { _ in
                 trackDataManager.reloadFromStore()
             }
+            .onChange(of: avatarPickerItem) { _, new in
+                Task { await uploadAvatarIfPicked(new) }
+            }
             .preferredColorScheme(.dark)
         }
     }
 
     private func loadData() {
-        if let data = UserDefaults.standard.data(forKey: "hikbik_user"),
-           let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-           let name = json["name"] as? String {
-            userName = name
-            isLoggedIn = true
-        }
         collections = ProfileCollectionsStore.loadAll()
         let draftList = trackDataManager.draftTracks
         ProfileAchievementsStore.updateFromDrafts(draftList)
@@ -348,7 +371,7 @@ struct ProfileView: View {
                 .padding(.horizontal, 20)
 
                 Button {
-                    userState.showLandingFromApp = true
+                    userState.requestLandingForAuth()
                 } label: {
                     Text("Sign Up")
                         .font(.system(size: 17, weight: .semibold))
@@ -395,14 +418,60 @@ struct ProfileView: View {
                 MagicPathGlowGraphic()
                     .frame(width: 140, height: 140)
                     .blur(radius: 24)
-                Image(systemName: "person.circle.fill")
-                    .font(.system(size: 80))
-                    .foregroundStyle(ProfileTheme.textMuted.opacity(0.9))
+                PhotosPicker(selection: $avatarPickerItem, matching: .images) {
+                    ZStack {
+                        Circle()
+                            .fill(Color.white.opacity(0.06))
+                            .frame(width: 88, height: 88)
+                        profileAvatarImageContent
+                            .frame(width: 88, height: 88)
+                            .clipShape(Circle())
+                    }
+                    .overlay(Circle().stroke(ProfileTheme.accent.opacity(0.45), lineWidth: 2))
+                    .overlay {
+                        if isUploadingAvatar {
+                            ZStack {
+                                Color.black.opacity(0.45)
+                                ProgressView()
+                                    .tint(ProfileTheme.accent)
+                            }
+                            .frame(width: 88, height: 88)
+                            .clipShape(Circle())
+                        }
+                    }
+                }
+                .buttonStyle(.plain)
+                .disabled(isUploadingAvatar)
+                .accessibilityLabel("Change profile photo")
             }
 
-            Text(userState.isGuest ? "Guest" : displayName)
-                .font(.system(size: 22, weight: .bold))
-                .foregroundStyle(ProfileTheme.textPrimary)
+            Group {
+                if !authManager.isLoggedIn {
+                    Text("Guest")
+                        .font(.system(size: 22, weight: .bold))
+                        .foregroundStyle(ProfileTheme.textPrimary)
+                } else {
+                    VStack(spacing: 10) {
+                        Text(profileDisplayName)
+                            .font(.system(size: 22, weight: .bold))
+                            .foregroundStyle(ProfileTheme.textPrimary)
+                        if let email = userProfileVM.profile?.email, !email.isEmpty {
+                            Text(email)
+                                .font(.system(size: 14))
+                                .foregroundStyle(ProfileTheme.textMuted)
+                        }
+                        Button {
+                            showEditProfile = true
+                        } label: {
+                            Text("Edit Profile")
+                                .font(.system(size: 15, weight: .semibold))
+                                .foregroundStyle(ProfileTheme.accent)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+            }
+            .multilineTextAlignment(.center)
 
             HStack(spacing: 24) {
                 Button {
@@ -410,7 +479,7 @@ struct ProfileView: View {
                     showFollowList = true
                 } label: {
                     VStack(spacing: 2) {
-                        Text("\(followingCount)")
+                        Text("\(userProfileVM.profile?.displayFollowingCount ?? 0)")
                             .font(.system(size: 17, weight: .bold))
                             .foregroundStyle(ProfileTheme.textPrimary)
                         Text("Following")
@@ -424,7 +493,7 @@ struct ProfileView: View {
                     showFollowList = true
                 } label: {
                     VStack(spacing: 2) {
-                        Text("\(followersCount)")
+                        Text("\(userProfileVM.profile?.displayFollowersCount ?? 0)")
                             .font(.system(size: 17, weight: .bold))
                             .foregroundStyle(ProfileTheme.textPrimary)
                         Text("Followers")
@@ -451,11 +520,15 @@ struct ProfileView: View {
             }
             .buttonStyle(.plain)
 
-            Text(bio)
+            Text(profileBioDisplay)
+                .id(userProfileVM.profile?.bio ?? "")
                 .font(.system(size: 14))
                 .foregroundStyle(ProfileTheme.textMuted)
                 .multilineTextAlignment(.center)
                 .frame(maxWidth: .infinity)
+                .onReceive(userProfileVM.$profile) { _ in
+                    print("UI 刷新了")
+                }
 
             if ProfileUSRegionHelper.distinctStateCount(from: drafts) > 3 {
                 HStack(spacing: 6) {
@@ -473,6 +546,62 @@ struct ProfileView: View {
         }
         .padding(.vertical, 20)
         .padding(.horizontal, 20)
+    }
+
+    @ViewBuilder
+    private var profileAvatarImageContent: some View {
+        if let urlStr = userProfileVM.profile?.avatarUrl?.trimmingCharacters(in: .whitespacesAndNewlines),
+           !urlStr.isEmpty,
+           let url = URL(string: urlStr) {
+            AsyncImage(url: url) { phase in
+                switch phase {
+                case .success(let image):
+                    image
+                        .resizable()
+                        .scaledToFill()
+                case .failure:
+                    Image(systemName: "person.fill")
+                        .font(.system(size: 36))
+                        .foregroundStyle(ProfileTheme.textMuted)
+                case .empty:
+                    ProgressView()
+                        .tint(ProfileTheme.accent)
+                @unknown default:
+                    EmptyView()
+                }
+            }
+        } else {
+            Image(systemName: "person.fill")
+                .font(.system(size: 36))
+                .foregroundStyle(ProfileTheme.textMuted)
+        }
+    }
+
+    private func uploadAvatarIfPicked(_ item: PhotosPickerItem?) async {
+        guard let item else { return }
+        guard let data = try? await item.loadTransferable(type: Data.self), !data.isEmpty else { return }
+        await MainActor.run { isUploadingAvatar = true }
+        do {
+            try await AuthService.uploadUserAvatar(imageData: data)
+            await userProfileVM.refreshFromServerIfLoggedIn()
+        } catch {
+            print("ProfileView: avatar upload failed — \(error.localizedDescription)")
+        }
+        await MainActor.run {
+            isUploadingAvatar = false
+            avatarPickerItem = nil
+        }
+    }
+
+    private var profileDisplayName: String {
+        guard let p = userProfileVM.profile else { return "Member" }
+        let first = p.firstName.trimmingCharacters(in: .whitespacesAndNewlines)
+        let last = p.lastName.trimmingCharacters(in: .whitespacesAndNewlines)
+        let full = [first, last].filter { !$0.isEmpty }.joined(separator: " ")
+        if !full.isEmpty { return full }
+        if !first.isEmpty { return first }
+        // 兼容後端若用 nickname/displayName 字段映射失败的场景，至少不显示空白
+        return "Member"
     }
 
     /// 標籤文字 + 數量（Liked/Saved 與 currentUser 實時同步）
@@ -531,7 +660,7 @@ struct ProfileView: View {
 
     /// Profile Posts = published only。宏觀 / 微觀 / 實時 三種卡片與導航完全分流。
     private var myPostsGrid: some View {
-        let posts = trackDataManager.publishedTracks
+        let posts = myPublishedPostsForCurrentUser
         return Group {
             if posts.isEmpty {
                 Text("No posts yet. Publish a recording from Community to see it here.")
@@ -545,7 +674,7 @@ struct ProfileView: View {
                         profilePostRow(draft: draft, selectedDraftForDetail: $selectedDraftForDetail)
                     }
                 }
-                .id(trackDataManager.publishedTracks.count)
+                .id(posts.count)
                 .padding(.horizontal, 20)
             }
         }
@@ -724,8 +853,10 @@ struct ProfileView: View {
             }
             .buttonStyle(ScaleOnPressCardStyle())
             Button {
-                UIImpactFeedbackGenerator(style: .light).impactOccurred()
-                currentUser.toggleSave(postId: postId)
+                AuthGuard.run(message: AuthGuardMessages.collectRoute) {
+                    UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                    currentUser.toggleSave(postId: postId)
+                }
             } label: {
                 Image(systemName: "bookmark.fill")
                     .font(.system(size: 18))
@@ -859,8 +990,10 @@ struct ProfileView: View {
             }
             .buttonStyle(ScaleOnPressCardStyle())
             Button {
-                UIImpactFeedbackGenerator(style: .light).impactOccurred()
-                currentUser.toggleLike(postId: postId)
+                AuthGuard.run(message: AuthGuardMessages.likePost) {
+                    UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                    currentUser.toggleLike(postId: postId)
+                }
             } label: {
                 Image(systemName: "heart.fill")
                     .font(.system(size: 18))
@@ -1463,6 +1596,8 @@ fileprivate struct ProfileFullWidthJourneyCard: View {
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .clipped()
+                @unknown default:
+                    Rectangle().fill(ProfileTheme.cardBg)
                 }
             }
             .frame(height: 200)
@@ -1552,6 +1687,9 @@ fileprivate struct ProfileInsStyleCard: View {
                         }
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                         .clipped()
+                    @unknown default:
+                        Rectangle()
+                            .fill(ProfileTheme.cardBg)
                     }
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -2296,37 +2434,45 @@ struct BadgeDetailModal: View {
 // MARK: - Follow list sheet (Following / Followers with mini-avatars)
 struct FollowListSheet: View {
     fileprivate let mode: FollowListMode
+    let userIds: [String]
     @Environment(\.dismiss) private var dismiss
-
-    private static let mockUsers: [(name: String, handle: String)] = [
-        ("Alex Trail", "@alex_trail"), ("Jordan Peak", "@jordan_peak"), ("Sam Ridge", "@sam_ridge"),
-        ("Casey Summit", "@casey_summit"), ("Morgan Woods", "@morgan_woods"), ("Riley Creek", "@riley_creek"),
-    ]
 
     var body: some View {
         NavigationStack {
-            List {
-                ForEach(Array(Self.mockUsers.enumerated()), id: \.offset) { _, u in
-                    HStack(spacing: 12) {
-                        Image(systemName: "person.circle.fill")
-                            .font(.system(size: 44))
-                            .foregroundStyle(ProfileTheme.textMuted.opacity(0.8))
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(u.name)
-                                .font(.system(size: 16, weight: .semibold))
-                                .foregroundStyle(ProfileTheme.textPrimary)
-                            Text(u.handle)
-                                .font(.system(size: 13))
-                                .foregroundStyle(ProfileTheme.textMuted)
-                        }
-                        Spacer()
+            Group {
+                if userIds.isEmpty {
+                    VStack(spacing: 12) {
+                        Image(systemName: mode == .followers ? "person.2.slash" : "person.crop.circle.badge.minus")
+                            .font(.system(size: 40))
+                            .foregroundStyle(ProfileTheme.textMuted.opacity(0.9))
+                        Text(mode == .followers ? "No followers yet" : "Not following anyone yet")
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundStyle(ProfileTheme.textPrimary)
                     }
-                    .padding(.vertical, 4)
-                    .listRowBackground(ProfileTheme.cardBg)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .background(ProfileTheme.background)
+                } else {
+                    List {
+                        ForEach(userIds, id: \.self) { userId in
+                            HStack(spacing: 12) {
+                                Image(systemName: "person.circle.fill")
+                                    .font(.system(size: 44))
+                                    .foregroundStyle(ProfileTheme.textMuted.opacity(0.8))
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(userId)
+                                        .font(.system(size: 16, weight: .semibold))
+                                        .foregroundStyle(ProfileTheme.textPrimary)
+                                }
+                                Spacer()
+                            }
+                            .padding(.vertical, 4)
+                            .listRowBackground(ProfileTheme.cardBg)
+                        }
+                    }
+                    .scrollContentBackground(.hidden)
+                    .background(ProfileTheme.background)
                 }
             }
-            .scrollContentBackground(.hidden)
-            .background(ProfileTheme.background)
             .navigationTitle(mode == .followers ? "Followers" : "Following")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -2595,4 +2741,11 @@ struct AddRouteToCollectionSheet: View {
     }
 }
 
-#Preview { ProfileView().environmentObject(UserState()).environmentObject(CurrentUser()).environmentObject(CommunityViewModel()).environmentObject(TrackDataManager.shared) }
+#Preview {
+    ProfileView()
+        .environmentObject(UserState())
+        .environmentObject(UserProfileViewModel.shared)
+        .environmentObject(CurrentUser())
+        .environmentObject(CommunityViewModel())
+        .environmentObject(TrackDataManager.shared)
+}

@@ -458,9 +458,11 @@ struct RoutesView: View {
                             }
                             .buttonStyle(.plain)
                             Button {
-                                let generator = UIImpactFeedbackGenerator(style: .light)
-                                generator.impactOccurred()
-                                routeFavorites.toggle(route.id)
+                                AuthGuard.run(message: AuthGuardMessages.collectRoute) {
+                                    let generator = UIImpactFeedbackGenerator(style: .light)
+                                    generator.impactOccurred()
+                                    routeFavorites.toggle(route.id)
+                                }
                             } label: {
                                 Image(systemName: routeFavorites.isFavorite(route.id) ? "heart.fill" : "heart")
                                     .font(.system(size: 18))

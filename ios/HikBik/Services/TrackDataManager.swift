@@ -74,8 +74,12 @@ final class TrackDataManager: ObservableObject {
         }
     }
 
-    /// Publish path: insert at 0, then dismiss to Community.
+    /// Publish path: insert at 0, then dismiss to Community。
     func addPublished(_ item: Track) {
+        var item = item
+        if item.ownerUserId == nil {
+            item.ownerUserId = UserProfileViewModel.shared.profile?.id
+        }
         publishedTracks.insert(item, at: 0)
         savePublishedTracksToStore()
         objectWillChange.send()
@@ -112,6 +116,9 @@ final class TrackDataManager: ObservableObject {
 
         // 第一步：直接創建發布對象（不查草稿箱），並按來源打 category
         var newPost = draft
+        if newPost.ownerUserId == nil {
+            newPost.ownerUserId = UserProfileViewModel.shared.profile?.id
+        }
         newPost.category = overrideCategory ?? DraftItem.category(from: draft.source)
         newPost.title = journey.routeName.trimmingCharacters(in: .whitespaces).isEmpty ? draft.title : journey.routeName
         newPost.currentWeather = currentWeather ?? draft.currentWeather

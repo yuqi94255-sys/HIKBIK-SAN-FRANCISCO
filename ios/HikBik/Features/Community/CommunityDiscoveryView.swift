@@ -147,73 +147,8 @@ private let zionManualJourneyMock: DetailedTrackPost = DetailedTrackPost(
     routeID: "zion-angels-landing-001"
 )
 
-/// 輕量紀錄 Mock：小型靜態地圖 + 里程/耗時/天氣
-private let mockLiveActivities: [LiveActivityItem] = {
-    let zionTrail: [CLLocationCoordinate2D] = [
-        CLLocationCoordinate2D(latitude: 37.2591, longitude: -112.9501),
-        CLLocationCoordinate2D(latitude: 37.2610, longitude: -112.9485),
-        CLLocationCoordinate2D(latitude: 37.2635, longitude: -112.9472),
-        CLLocationCoordinate2D(latitude: 37.2662, longitude: -112.9468)
-    ]
-    let moabTrail: [CLLocationCoordinate2D] = [
-        CLLocationCoordinate2D(latitude: 38.5733, longitude: -109.5498),
-        CLLocationCoordinate2D(latitude: 38.5780, longitude: -109.5520),
-        CLLocationCoordinate2D(latitude: 38.5820, longitude: -109.5480)
-    ]
-    let rainierTrail: [CLLocationCoordinate2D] = [
-        CLLocationCoordinate2D(latitude: 46.7852, longitude: -121.7354),
-        CLLocationCoordinate2D(latitude: 46.7880, longitude: -121.7320),
-        CLLocationCoordinate2D(latitude: 46.7910, longitude: -121.7280),
-        CLLocationCoordinate2D(latitude: 46.7940, longitude: -121.7240)
-    ]
-    return [
-        LiveActivityItem(
-            id: "la1",
-            authorId: "jessica-martinez",
-            authorName: "Jessica Martinez",
-            authorSubtitle: "427 followers",
-            authorAvatarUrl: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200",
-            isFollowing: true,
-            polylineCoordinates: zionTrail,
-            title: "Angels Landing Morning Run",
-            mileage: "5.4 mi",
-            duration: "1h 24m",
-            weatherStatus: "Sunny, 68°F",
-            likeCount: 234,
-            commentCount: 18
-        ),
-        LiveActivityItem(
-            id: "la2",
-            authorId: "david-kim",
-            authorName: "David Kim",
-            authorSubtitle: "Overlanding Pro",
-            authorAvatarUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200",
-            isFollowing: false,
-            polylineCoordinates: moabTrail,
-            title: "Arches Scenic Drive",
-            mileage: "18.2 mi",
-            duration: "2h 18m",
-            weatherStatus: "Partly cloudy, 82°F",
-            likeCount: 89,
-            commentCount: 6
-        ),
-        LiveActivityItem(
-            id: "la3",
-            authorId: "lauren-hughes",
-            authorName: "Lauren Hughes",
-            authorSubtitle: "Backcountry Expert",
-            authorAvatarUrl: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200",
-            isFollowing: false,
-            polylineCoordinates: rainierTrail,
-            title: "Skyline Trail Segment",
-            mileage: "6.1 mi",
-            duration: "3h 05m",
-            weatherStatus: "Clear, 58°F",
-            likeCount: 312,
-            commentCount: 22
-        ),
-    ]
-}()
+/// 無實時後端數據時為空；Live Activity 分頁僅顯示用戶本地已發布之 Lively Activity。
+private let mockLiveActivities: [LiveActivityItem] = []
 
 /// 真實示範：Jessica Martinez「Angels Landing Summit」，id 與 zionManualJourneyMock.routeID 一致以便 Profile Saved 跳轉與 Like/Save 同步。
 private let mockDetailedTracks: [DetailedTrackItem] = [
@@ -277,6 +212,7 @@ struct CommunityDiscoveryView: View {
     /// 暴力測試：點擊卡片強行綁定跳轉詳情
     @State private var selectedJourney: ManualJourney? = nil
     @State private var showDetail = false
+    @State private var navigateToCreateFlow = false
 
     private var stickyHeaderHeight: CGFloat {
         safeAreaTop + stickyHeaderTitlePadding + stickyHeaderContentHeight
@@ -351,8 +287,10 @@ struct CommunityDiscoveryView: View {
                                             displayCommentCount: item.commentCount + postCommentStore.commentCount(for: item.id),
                                             authorSubtitleOverride: dynamicUser.map { "\($0.followersCount) followers" },
                                             onFollowTap: {
-                                                UIImpactFeedbackGenerator(style: .light).impactOccurred()
-                                                socialManager.toggleFollow(for: item.authorId, currentUserId: socialManager.currentUserId)
+                                                AuthGuard.run(message: AuthGuardMessages.followUser) {
+                                                    UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                                                    socialManager.toggleFollow(for: item.authorId, currentUserId: socialManager.currentUserId)
+                                                }
                                             },
                                             onLikeTap: { toggleLike(item.id) },
                                             onSaveTap: { toggleSave(item.id) }
@@ -427,8 +365,10 @@ struct CommunityDiscoveryView: View {
                                         displayCommentCount: item.commentCount + postCommentStore.commentCount(for: item.id),
                                         authorSubtitleOverride: dtDynamicSubtitle,
                                         onFollowTap: {
-                                            UIImpactFeedbackGenerator(style: .light).impactOccurred()
-                                            socialManager.toggleFollow(for: item.authorId, currentUserId: socialManager.currentUserId)
+                                            AuthGuard.run(message: AuthGuardMessages.followUser) {
+                                                UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                                                socialManager.toggleFollow(for: item.authorId, currentUserId: socialManager.currentUserId)
+                                            }
                                         },
                                         onLikeTap: { toggleLike(item.id) },
                                         onSaveTap: { toggleSave(item.id) }
@@ -565,6 +505,9 @@ struct CommunityDiscoveryView: View {
             .onChange(of: showFilterSheet) { _, isShowing in
                 if !isShowing { syncSearchState() }
             }
+            .navigationDestination(isPresented: $navigateToCreateFlow) {
+                CreateRouteFlowView()
+            }
         }
     }
 
@@ -595,7 +538,7 @@ struct CommunityDiscoveryView: View {
             Image(systemName: "map.circle")
                 .font(.system(size: 56))
                 .foregroundStyle(CommunityColors.textMuted.opacity(0.8))
-            Text("No activities yet")
+            Text("No live activities right now")
                 .font(.system(size: 18, weight: .semibold))
                 .foregroundStyle(CommunityColors.textPrimary)
             Text("Record a route in Community, then publish. Your posts will show here.")
@@ -628,7 +571,11 @@ struct CommunityDiscoveryView: View {
                     .font(.system(size: 28, weight: .bold))
                     .foregroundStyle(CommunityColors.textPrimary)
                 Spacer(minLength: 8)
-                NavigationLink(destination: CreateRouteFlowView()) {
+                Button {
+                    AuthGuard.run(message: AuthGuardMessages.publishPost) {
+                        navigateToCreateFlow = true
+                    }
+                } label: {
                     Image(systemName: "plus")
                         .font(.system(size: 20, weight: .medium))
                         .foregroundStyle(CommunityColors.textPrimary)
@@ -1031,15 +978,19 @@ struct CommunityDiscoveryView: View {
     }
 
     private func toggleLike(_ id: String) {
-        let generator = UIImpactFeedbackGenerator(style: .light)
-        generator.impactOccurred()
-        currentUser.toggleLike(postId: id)
+        AuthGuard.run(message: AuthGuardMessages.likePost) {
+            let generator = UIImpactFeedbackGenerator(style: .light)
+            generator.impactOccurred()
+            currentUser.toggleLike(postId: id)
+        }
     }
 
     private func toggleSave(_ id: String) {
-        let generator = UIImpactFeedbackGenerator(style: .light)
-        generator.impactOccurred()
-        currentUser.toggleSave(postId: id)
+        AuthGuard.run(message: AuthGuardMessages.collectRoute) {
+            let generator = UIImpactFeedbackGenerator(style: .light)
+            generator.impactOccurred()
+            currentUser.toggleSave(postId: id)
+        }
     }
 
     /// 從 "339 followers" 解析出 339，用於列表 onAppear 時註冊作者初始粉絲數。
@@ -2898,7 +2849,7 @@ struct CreateRouteFlowView: View {
                     .onTapGesture { showLoginPrompt = false }
                 LoginPromptModal(
                     onSignIn: {
-                        userState.showLandingFromApp = true
+                        userState.requestLandingForAuth()
                         showLoginPrompt = false
                     },
                     onDismiss: { showLoginPrompt = false }
