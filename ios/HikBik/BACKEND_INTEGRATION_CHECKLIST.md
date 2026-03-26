@@ -8,7 +8,7 @@
 
 | 檔案路徑 | 說明 | 後端需對接內容 |
 |----------|------|----------------|
-| `Services/APIConfig.swift` | 主後端根 URL | `static let baseURL`（例：`http://…:3000/api`）。真機區網 HTTP 依賴 `Info.plist` 中 `NSAllowsArbitraryLoads`。 |
+| `Services/APIConfig.swift` | 主後端根 URL | `static let baseURL`（生產：`https://hikbik-backend.onrender.com/api/`）。 |
 | `Services/APIClientBase.swift` | 通用 API 客戶端（別名 `NetworkManager`） | `baseURL` 來自 `APIConfig`；DEBUG 可用環境變數 `HIKBIK_API_BASE` 覆蓋。`authToken` 從 `UserDefaults["hikbik.authToken"]` 讀。請求頭：`Authorization: Bearer {token}`，Body **snake_case**。 |
 | `Services/RIDBAPIConfig.swift` | RIDB 休閒區 API 配置 | `apiKey`、`baseURL`（目前 `https://ridb.recreation.gov/api/v1`）。僅讀取第三方 RIDB，非你們後端。 |
 | `Services/RIDBService.swift` | RIDB 請求實現 | 使用 `URLSession`，GET `/recareas`、`/recareas/{id}/media`、`/recareas/{id}/facilities`。若後端做 RIDB 代理，可改為調你們域名。 |

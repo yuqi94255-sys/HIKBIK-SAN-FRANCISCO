@@ -170,7 +170,7 @@ struct LiveTrackRecordingView: View {
                             latitude: start?.latitude ?? 0,
                             longitude: start?.longitude ?? 0
                         )
-                        let newPost = DraftItem.fromLiveTrack(
+                        var newPost = DraftItem.fromLiveTrack(
                             waypoints: waypoints,
                             polyline: engine.routePolyline,
                             durationSeconds: engine.elapsedSeconds,
@@ -179,6 +179,10 @@ struct LiveTrackRecordingView: View {
                             currentWeather: weather,
                             nearbyFacilities: facilities
                         )
+                        if let enc = try? JSONEncoder().encode(journey),
+                           let jsonStr = String(data: enc, encoding: .utf8) {
+                            newPost.detailedTrackJSON = jsonStr
+                        }
                         await MainActor.run {
                             printPublishPayloadsToConsole(newPost)
                             trackDataManager.addPublished(newPost)

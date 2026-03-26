@@ -18,10 +18,30 @@ struct CommunityFilterState {
 private let recentSearchesKey = "recentSearches"
 private let recentSearchesMaxCount = 10
 
-/// Community search and filter state only. Feed data is ONLY in TrackDataManager.shared (publishedTracks / draftTracks).
+/// Community search and filter state；本地發布在 `TrackDataManager`，雲端 Feed 在 `cloudGrandJourneys` / `cloudDetailedTracks`。
 final class CommunityViewModel: ObservableObject {
+    enum FeedLoadTrigger: String {
+        case onAppear
+        case pullToRefresh
+        case manual
+    }
+
+    private enum FeedCancelReason: String {
+        case onDisappear
+        case overriddenByNewRequest
+        case unknown
+    }
+
     /// Legacy: used only for Profile liked resolution and CustomRouteBuilder macro flow. Do NOT use for Community feed.
     @Published var publishedPosts: [CommunityJourney] = []
+
+    /// `GET /api/social/feed` 解析後的宏觀列表（卡片用 `GrandJourneyItem`）。
+    @Published var cloudGrandJourneys: [GrandJourneyItem] = []
+    /// `GET /api/social/feed` 解析後的微觀列表。
+    @Published var cloudDetailedTracks: [DetailedTrackItem] = []
+    @Published var isFeedLoading = false
+    private var currentFeedTask: Task<[SocialFeedEntry], Error>? = nil
+    private var feedCancelReason: FeedCancelReason? = nil
 
     @Published var searchText: String = ""
     @Published var filterState: CommunityFilterState = CommunityFilterState()
@@ -41,6 +61,77 @@ final class CommunityViewModel: ObservableObject {
     /// Prepend a journey (e.g. from CustomRouteBuilder macro flow).
     func prepend(_ post: CommunityJourney) {
         publishedPosts.insert(post, at: 0)
+    }
+
+    /// 清空由 `prepend` 寫入的本地列表（與 `TrackDataManager` 清空發布箱時一併重置 UI 用）。
+    func clearPrependedPublishedPosts() {
+        publishedPosts.removeAll()
+        objectWillChange.send()
+    }
+
+    /// 拉取全網 Feed（`SocialFeedService` → `GET /api/social/feed`）。
+    @MainActor
+    func loadFeed(trigger: FeedLoadTrigger = .manual) async {
+        if isFeedLoading {
+            if trigger == .pullToRefresh, let runningTask = currentFeedTask {
+                feedCancelReason = .overriddenByNewRequest
+                runningTask.cancel()
+                _ = try? await runningTask.value
+            } else {
+            #if DEBUG
+                print("📥 [NETWORK] 略過重複請求（trigger=\(trigger.rawValue)）")
+            #endif
+                return
+            }
+        }
+
+        isFeedLoading = true
+        feedCancelReason = nil
+        defer {
+            isFeedLoading = false
+            currentFeedTask = nil
+            feedCancelReason = nil
+        }
+        do {
+            let task = Task.detached(priority: .userInitiated) {
+                try await SocialFeedService.shared.fetchFeed()
+            }
+            currentFeedTask = task
+            let posts = try await task.value
+            var macro: [GrandJourneyItem] = []
+            var micro: [DetailedTrackItem] = []
+            macro.reserveCapacity(posts.count)
+            micro.reserveCapacity(posts.count)
+            for e in posts {
+                switch e {
+                case .macro(let g): macro.append(g)
+                case .micro(let d): micro.append(d)
+                }
+            }
+            cloudGrandJourneys = macro
+            cloudDetailedTracks = micro
+            print("📥 [NETWORK] 成功從雲端拉取 \(posts.count) 條動態")
+        } catch is CancellationError {
+            let reason = feedCancelReason ?? .overriddenByNewRequest
+            switch reason {
+            case .onDisappear:
+                print("📥 [NETWORK] Feed 請求已取消：onDisappear 觸發")
+            case .overriddenByNewRequest:
+                print("📥 [NETWORK] Feed 請求已取消：新的請求覆蓋了舊請求")
+            case .unknown:
+                print("📥 [NETWORK] Feed 請求已取消：未知原因")
+            }
+        } catch {
+            #if DEBUG
+            print("📥 [NETWORK] Feed 拉取失敗: \(error.localizedDescription)")
+            #endif
+        }
+    }
+
+    @MainActor
+    func cancelFeedLoadOnDisappear() {
+        feedCancelReason = .onDisappear
+        currentFeedTask?.cancel()
     }
 
     /// Union of filter match (A) and search match (B); then rank.

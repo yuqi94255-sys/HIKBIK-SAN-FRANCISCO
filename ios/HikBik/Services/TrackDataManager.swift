@@ -151,4 +151,20 @@ final class TrackDataManager: ObservableObject {
         loadPublishedTracksFromStore()
         objectWillChange.send()
     }
+
+    /// 清空本地發布箱：逐條清理媒體與持久化檔 `publishedTracks.json`，並清除 UserDefaults 鍵 `published_tracks_key`（若存在）。
+    func clearLocalPublishedTracks() {
+        let ids = publishedTracks.map(\.id)
+        if ids.isEmpty {
+            publishedTracks = []
+            savePublishedTracksToStore()
+        } else {
+            for id in ids {
+                removePublished(id: id)
+            }
+        }
+        UserDefaults.standard.removeObject(forKey: "published_tracks_key")
+        try? FileManager.default.removeItem(at: publishedTracksFileURL)
+        objectWillChange.send()
+    }
 }

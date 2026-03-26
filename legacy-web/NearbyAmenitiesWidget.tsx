@@ -55,7 +55,7 @@ export function NearbyAmenitiesWidget({ latitude, longitude, parkName }: NearbyA
   // 生成导航链接
   const getNavigationUrl = (amenity: Amenity) => {
     // 使用 Apple Maps
-    return `http://maps.apple.com/?daddr=${amenity.latitude},${amenity.longitude}&dirflg=d`;
+    return `https://maps.apple.com/?daddr=${amenity.latitude},${amenity.longitude}&dirflg=d`;
   };
 
   // 获取距离颜色

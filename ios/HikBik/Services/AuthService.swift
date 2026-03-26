@@ -219,7 +219,7 @@ enum AuthService {
     static func sendOTP(email: String) async throws {
         let trimmed = email.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return }
-        print("📡 準備請求：\(APIConfig.baseURL)/auth/send-otp")
+        print("📡 準備請求：\(APIConfig.baseURL)auth/send-otp")
         do {
             _ = try await APIClientBase.shared.post("auth/send-otp", body: ["email": trimmed])
         } catch {

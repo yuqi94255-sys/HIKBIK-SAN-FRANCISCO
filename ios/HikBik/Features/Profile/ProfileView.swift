@@ -171,6 +171,7 @@ struct ProfileView: View {
                             socialHeaderSection
                             ProStatsDashboardCard()
                             threeTabSection
+                            localPublishDebugClearSection
                             gridOrFolderOrHeartContent
                             Color.clear.frame(height: 80)
                         }
@@ -637,6 +638,35 @@ struct ProfileView: View {
         }
         .background(ProfileTheme.cardBgWithBlur)
         .background(.ultraThinMaterial.opacity(0.5))
+    }
+
+    /// 臨時：清空本地已發布列表，便於測試雲端 Feed。
+    private var localPublishDebugClearSection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("測試工具")
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundStyle(ProfileTheme.textMuted)
+            Button {
+                trackDataManager.clearLocalPublishedTracks()
+                communityViewModel.clearPrependedPublishedPosts()
+                TabSelectionManager.shared.switchToCommunity()
+            } label: {
+                Text("清理本地發布箱")
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(.white)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 12)
+                    .background(Color.red.opacity(0.85))
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(ProfileTheme.cardBgWithBlur)
+        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .padding(.horizontal, 20)
+        .padding(.top, 16)
     }
 
     // MARK: - 3. Tab content (Posts | My Trip | Saved | Medals)

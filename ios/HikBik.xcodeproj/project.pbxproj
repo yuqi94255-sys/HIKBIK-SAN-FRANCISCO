@@ -40,6 +40,8 @@
 		B00100000000000000001F /* TripsListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00100000000000000001F /* TripsListView.swift */; };
 		B001000000000000000020 /* ProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F001000000000000000020 /* ProfileView.swift */; };
 		B0010000000000000000B5 /* EditProfileSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0010000000000000000B5 /* EditProfileSheet.swift */; };
+		B0010000000000000000B6 /* SocialPublishService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0010000000000000000B6 /* SocialPublishService.swift */; };
+		B0010000000000000000B7 /* SocialFeedService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0010000000000000000B7 /* SocialFeedService.swift */; };
 		B001000000000000000021 /* FavoritesListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F001000000000000000021 /* FavoritesListView.swift */; };
 		B001000000000000000022 /* NationalParkExtendedModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = F001000000000000000022 /* NationalParkExtendedModels.swift */; };
 		B001000000000000000023 /* national-parks-facilities.json in Resources */ = {isa = PBXBuildFile; fileRef = F001000000000000000023 /* national-parks-facilities.json */; };
@@ -208,6 +210,8 @@
 		F00100000000000000001F /* TripsListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TripsListView.swift; sourceTree = "<group>"; };
 		F001000000000000000020 /* ProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileView.swift; sourceTree = "<group>"; };
 		F0010000000000000000B5 /* EditProfileSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditProfileSheet.swift; sourceTree = "<group>"; };
+		F0010000000000000000B6 /* SocialPublishService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SocialPublishService.swift; sourceTree = "<group>"; };
+		F0010000000000000000B7 /* SocialFeedService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SocialFeedService.swift; sourceTree = "<group>"; };
 		F001000000000000000021 /* FavoritesListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FavoritesListView.swift; sourceTree = "<group>"; };
 		F001000000000000000022 /* NationalParkExtendedModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NationalParkExtendedModels.swift; sourceTree = "<group>"; };
 		F001000000000000000023 /* national-parks-facilities.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "national-parks-facilities.json"; sourceTree = "<group>"; };
@@ -428,6 +432,8 @@
 				F001000000000000000049 /* AdventureStatsService.swift */,
 				F0010000000000000000FE /* TrackDataManager.swift */,
 				F0010000000000000000FF /* PostMediaStore.swift */,
+				F0010000000000000000B6 /* SocialPublishService.swift */,
+				F0010000000000000000B7 /* SocialFeedService.swift */,
 				F001000000000000000076 /* TrackRecordingLiveActivityAttributes.swift */,
 				F001000000000000000077 /* TrackRecordingLiveActivityManager.swift */,
 				F00100000000000000004D /* ProfileLikedStore.swift */,
@@ -973,6 +979,8 @@
 				B00100000000000000007A /* APIClientBase.swift in Sources */,
 				B00100000000000000007B /* ReturnService.swift in Sources */,
 				B00100000000000000007C /* UserAddressService.swift in Sources */,
+				B0010000000000000000B6 /* SocialPublishService.swift in Sources */,
+				B0010000000000000000B7 /* SocialFeedService.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -720,7 +720,7 @@ private struct StoreCard: View {
     }
     
     private func openDirections() {
-        let urlString = "http://maps.apple.com/?daddr=\(store.latitude),\(store.longitude)&dirflg=d"
+        let urlString = "https://maps.apple.com/?daddr=\(store.latitude),\(store.longitude)&dirflg=d"
         if let url = URL(string: urlString) {
             UIApplication.shared.open(url)
         }
@@ -886,7 +886,7 @@ struct StoreDetailView: View {
     }
     
     private func openDirections() {
-        let urlString = "http://maps.apple.com/?daddr=\(store.latitude),\(store.longitude)&dirflg=d"
+        let urlString = "https://maps.apple.com/?daddr=\(store.latitude),\(store.longitude)&dirflg=d"
         if let url = URL(string: urlString) {
             UIApplication.shared.open(url)
         }

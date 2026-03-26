@@ -79,6 +79,7 @@ struct PostEditorView: View {
     @State private var showPublishedToast = false
     /// 暴力測試：發布點擊後立刻彈窗，證明按鈕閉包有執行
     @State private var showPublishSuccessAlert = false
+    @State private var publishError: String?
 
     /// 第一張為封面
     private var coverImageData: Data? { selectedImageData.first }
@@ -239,7 +240,15 @@ struct PostEditorView: View {
         .alert("發布成功", isPresented: $showPublishSuccessAlert) {
             Button("OK") {}
         } message: {
-            Text("數據已寫入庫")
+            Text("伺服器已接受發布（HTTP 201），本地已同步。")
+        }
+        .alert("發布失敗", isPresented: Binding(
+            get: { publishError != nil },
+            set: { if !$0 { publishError = nil } }
+        )) {
+            Button("OK", role: .cancel) { publishError = nil }
+        } message: {
+            Text(publishError ?? "")
         }
     }
 
@@ -494,49 +503,7 @@ struct PostEditorView: View {
             .buttonStyle(.plain)
 
             Button {
-                UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
-                print("🔘 [DIAG] Button Tapped — 發布按鈕被點擊")
-                let titleEmpty = title.trimmingCharacters(in: .whitespaces).isEmpty
-                let imageEmpty = selectedImageData.isEmpty
-                print("DEBUG: canPublish = \(canPublish), titleEmpty = \(titleEmpty), imageEmpty = \(imageEmpty), titleCount = \(title.count), imageCount = \(selectedImageData.count)")
-                // 臨時放寬：僅要求標題非空即可發布，確保 onPublish(journey) 能執行（跑通邏輯後可改回 canPublish）
-                guard !titleEmpty, !isPublishing else { return }
-                isPublishing = true
-                // 暴力修復：無視所有閉包傳遞，直接對總部單例寫入
-                let finalJourney = buildJourney()
-                if let source = sourceDraftItem {
-                    TrackDataManager.shared.publishDraft(source, with: finalJourney)
-                    TrackDataManager.shared.objectWillChange.send()
-                    let isGrandJourney = source.category == .grandJourney
-                    let postId = PostMediaStore.publishId(publishedIndex: 0, trackRouteID: isGrandJourney ? nil : source.routeID)
-                    let urls = savePostMediaToDocuments(postId: postId, imageData: selectedImageData)
-                    if !urls.isEmpty { PostMediaStore.shared.setImageUrls(id: postId, urls: urls) }
-                    print("🚨 [FATAL_FIX] 暴力寫入完成！當前單例總數: \(TrackDataManager.shared.publishedTracks.count)")
-                    TrackRecordingLiveActivityManager.startPublishedActivity(
-                        distanceMeters: distanceMeters,
-                        durationSeconds: durationSeconds,
-                        elevationMeters: elevationMeters
-                    )
-                    showPublishedToast = true
-                    showPublishSuccessAlert = true
-                    onPublishComplete?()
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                        showPublishedToast = false
-                        isPublishing = false
-                    }
-                    return
-                }
-
-                print("🚀 [FORCE] 即將執行 onPublish(journey)")
-                onPublish(finalJourney)
-                print("🚀 [FORCE] onPublish(journey) 已執行")
-                showPublishedToast = true
-                showPublishSuccessAlert = true
-                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-                    showPublishedToast = false
-                    isPublishing = false
-                    onPublishComplete?()
-                }
+                publishToCommunityTapped()
             } label: {
                 HStack(spacing: 8) {
                     if isPublishing {
@@ -565,6 +532,113 @@ struct PostEditorView: View {
         .padding(.horizontal, 20)
         .padding(.vertical, 16)
         .background(editorBg.opacity(0.95))
+    }
+
+    // MARK: - 雲端發布（上傳圖 → POST /api/social/publish；僅 HTTP 201 成功後才本地入庫 / dismiss / 切 Tab）
+    private func publishToCommunityTapped() {
+        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+        let titleTrimmed = title.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !titleTrimmed.isEmpty, !isPublishing else { return }
+        isPublishing = true
+        publishError = nil
+        Task {
+            do {
+                // 僅在下方 `publish` 成功（HTTP 201）後，才允許呼叫 `finishPublishLocally`。
+                let cloudURLs: [String]
+                if selectedImageData.isEmpty {
+                    cloudURLs = []
+                } else {
+                    cloudURLs = try await SocialPublishService.shared.uploadAllJPEGData(selectedImageData)
+                }
+                let apiCategory: CommunityPostCategoryAPI = {
+                    if let s = sourceDraftItem {
+                        return CommunityPostCategoryAPI.from(postCategory: s.category)
+                    }
+                    return .communityMicro
+                }()
+                let mergedJourney = buildJourneyWithCloudURLs(cloudURLs: cloudURLs)
+                switch apiCategory {
+                case .communityMacro:
+                    guard let source = sourceDraftItem else {
+                        throw APIError.decoding(NSError(domain: "SocialPublish", code: -10, userInfo: [NSLocalizedDescriptionKey: "宏觀發布需要草稿來源"]))
+                    }
+                    let macro = SocialPublishService.shared.buildMacroForPublish(
+                        draft: source,
+                        title: titleTrimmed,
+                        description: descriptionText.trimmingCharacters(in: .whitespacesAndNewlines),
+                        cloudURLs: cloudURLs
+                    )
+                    try await SocialPublishService.shared.publish(category: apiCategory, macro: macro, micro: nil)
+                case .communityMicro:
+                    try await SocialPublishService.shared.publish(category: apiCategory, macro: nil, micro: mergedJourney)
+                }
+                await MainActor.run {
+                    self.finishPublishLocally(mergedJourney: mergedJourney, cloudURLs: cloudURLs)
+                }
+            } catch {
+                await MainActor.run {
+                    publishError = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
+                    isPublishing = false
+                }
+            }
+        }
+    }
+
+    private func finishPublishLocally(mergedJourney: DetailedTrackPost, cloudURLs: [String]) {
+        if let source = sourceDraftItem {
+            TrackDataManager.shared.publishDraft(source, with: mergedJourney)
+            TrackDataManager.shared.objectWillChange.send()
+            let isGrandJourney = source.category == .grandJourney
+            let postId = PostMediaStore.publishId(publishedIndex: 0, trackRouteID: isGrandJourney ? nil : source.routeID)
+            if !cloudURLs.isEmpty {
+                PostMediaStore.shared.setImageUrls(id: postId, urls: cloudURLs)
+            } else if !selectedImageData.isEmpty {
+                let localUrls = savePostMediaToDocuments(postId: postId, imageData: selectedImageData)
+                if !localUrls.isEmpty { PostMediaStore.shared.setImageUrls(id: postId, urls: localUrls) }
+            }
+            TrackRecordingLiveActivityManager.startPublishedActivity(
+                distanceMeters: distanceMeters,
+                durationSeconds: durationSeconds,
+                elevationMeters: elevationMeters
+            )
+            showPublishedToast = true
+            showPublishSuccessAlert = true
+            onPublishComplete?()
+            TabSelectionManager.shared.switchToCommunity()
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                showPublishedToast = false
+                isPublishing = false
+            }
+            return
+        }
+        onPublish(mergedJourney)
+        showPublishedToast = true
+        showPublishSuccessAlert = true
+        TabSelectionManager.shared.switchToCommunity()
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+            showPublishedToast = false
+            isPublishing = false
+            onPublishComplete?()
+        }
+    }
+
+    private func buildJourneyWithCloudURLs(cloudURLs: [String]) -> DetailedTrackPost {
+        var post = buildJourney()
+        applyCloudURLs(to: &post, urls: cloudURLs)
+        return post
+    }
+
+    private func applyCloudURLs(to post: inout DetailedTrackPost, urls: [String]) {
+        guard !urls.isEmpty else { return }
+        post.heroImage = urls[0]
+        post.heroImages = urls
+        var nodes = post.viewPointNodes
+        for i in nodes.indices {
+            let u = urls[min(i, urls.count - 1)]
+            nodes[i].imageUrls = [u]
+            nodes[i].photoCount = max(nodes[i].photoCount, 1)
+        }
+        post.viewPointNodes = nodes
     }
 
     private func buildJourney() -> ManualJourney {

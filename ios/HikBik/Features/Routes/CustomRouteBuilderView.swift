@@ -318,8 +318,10 @@ struct CustomRouteBuilderView: View {
     @State private var macroTripTags: String = ""
     /// 發布成功後顯示 overlay；2 秒後自動 dismiss。
     @State private var showingSuccessOverlay = false
-    /// 點擊 Publish 後顯示旋轉圖標，持續 1.5 秒模擬上傳。
+    /// 點擊 Publish 後顯示旋轉圖標；實際直到 Render API 成功才寫入本地。
     @State private var isPublishing = false
+    /// 雲端發布失敗（未寫入發布箱）
+    @State private var publishError: String?
     /// 成功 overlay 綠勾動畫：從 0.5 放大到 1。
     @State private var successCheckmarkScale: CGFloat = 0.5
     /// Cancel 時若有路徑數據則彈確認：保存草稿 / 放棄 / 繼續編輯
@@ -607,6 +609,92 @@ struct CustomRouteBuilderView: View {
         }
     }
 
+    // MARK: - Render API → 成功後才 publishDraft（與 PostEditorView 一致）
+
+    private func collectMacroJPEGDataForCloudUpload() -> [Data] {
+        var allImageData: [Data] = []
+        let coverSources = coverImages.isEmpty && coverImage != nil ? [coverImage!] : coverImages
+        for img in coverSources {
+            if let data = img.jpegData(compressionQuality: 0.85) { allImageData.append(data) }
+        }
+        for stop in stops {
+            let imgs = stop.photos.isEmpty ? [stop.photo].compactMap { $0 } : stop.photos
+            for img in imgs {
+                if let data = img.jpegData(compressionQuality: 0.85) { allImageData.append(data) }
+            }
+        }
+        return allImageData
+    }
+
+    private func collectMicroJPEGDataAndCountsForUpload(draft: DraftItem, basePost: DetailedTrackPost) -> (data: [Data], nodeCounts: [Int], hasCover: Bool) {
+        var data: [Data] = []
+        var nodeCounts: [Int] = []
+        var hasCover = false
+        if let coverData = draft.coverImageData ?? coverImage?.jpegData(compressionQuality: 0.85), !coverData.isEmpty {
+            data.append(coverData)
+            hasCover = true
+        }
+        for node in basePost.viewPointNodes {
+            let images = viewPointPhotos[node.id] ?? []
+            let ds = images.compactMap { $0.jpegData(compressionQuality: 0.85) }
+            nodeCounts.append(ds.count)
+            data.append(contentsOf: ds)
+        }
+        return (data, nodeCounts, hasCover)
+    }
+
+    private func mergeMicroJourneyWithCloudURLs(base: DetailedTrackPost, cloudURLs: [String], nodeCounts: [Int], hasCover: Bool) -> DetailedTrackPost {
+        var post = base
+        guard !cloudURLs.isEmpty else { return post }
+        var idx = 0
+        if hasCover {
+            post.heroImage = cloudURLs[idx]
+            post.heroImages = [cloudURLs[idx]]
+            idx += 1
+        }
+        var nodes = post.viewPointNodes
+        for i in nodes.indices {
+            let n = i < nodeCounts.count ? nodeCounts[i] : 0
+            let end = min(idx + n, cloudURLs.count)
+            guard idx < cloudURLs.count else { break }
+            let slice = Array(cloudURLs[idx..<end])
+            idx = end
+            nodes[i].imageUrls = slice.isEmpty ? nil : slice
+            nodes[i].photoCount = max(nodes[i].photoCount, slice.count)
+        }
+        post.viewPointNodes = nodes
+        if post.heroImage == nil, let first = cloudURLs.first {
+            post.heroImage = first
+            post.heroImages = cloudURLs
+        }
+        return post
+    }
+
+    /// 僅在 `SocialPublishService.publish` 成功（HTTP 201）後呼叫。
+    private func finishPublishDraftToLocal(draft: DraftItem, with journey: DetailedTrackPost, category: PostCategory, cloudURLs: [String], isMacro: Bool) {
+        TrackDataManager.shared.publishDraft(draft, with: journey, category: category)
+        if isMacro {
+            if !cloudURLs.isEmpty {
+                let postId = PostMediaStore.publishId(publishedIndex: 0, trackRouteID: nil)
+                PostMediaStore.shared.setImageUrls(id: postId, urls: cloudURLs)
+            }
+        } else {
+            let mainId = "track_\(draft.routeID)"
+            if let hero = journey.heroImage {
+                PostMediaStore.shared.setImageUrls(id: mainId, urls: [hero])
+            }
+            for (index, node) in journey.viewPointNodes.enumerated() {
+                let vpId = "track_\(draft.routeID)_vp_\(index)"
+                if let urls = node.imageUrls, !urls.isEmpty {
+                    PostMediaStore.shared.setImageUrls(id: vpId, urls: urls)
+                }
+            }
+        }
+        isPublishing = false
+        showingSuccessOverlay = true
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) { dismiss() }
+    }
+
     /// Export Detailed Track to JSON string (View Points only, no Days). Only valid when isReadyToPublish. Syncs photoCount from viewPointPhotos.
     private func exportDetailedTrackToJSON() -> String? {
         guard detailedTrack.isReadyToPublish else { return nil }
@@ -674,6 +762,14 @@ struct CustomRouteBuilderView: View {
                 }
             } message: {
                 Text("You have path data. Save to Draft Box to edit and publish later, or discard and exit.")
+            }
+            .alert("發布失敗", isPresented: Binding(
+                get: { publishError != nil },
+                set: { if !$0 { publishError = nil } }
+            )) {
+                Button("OK", role: .cancel) { publishError = nil }
+            } message: {
+                Text(publishError ?? "")
             }
             .onAppear {
                 applyLiveTrackDraftIfNeeded()
@@ -2810,48 +2906,57 @@ struct CustomRouteBuilderView: View {
                             if !canPublish { printMacroPublishValidation() }
                             return
                         }
-                        // 雙路徑：完整行程 → Grand Journeys（專業行程模板）；微觀/單點動態 → Detailed Tracks（微觀足跡視圖，傳入完整 viewPointNodes + 每點照片 URL）
                         let category: PostCategory = planningStyle == .macroJourney ? .grandJourney : .detailedTrack
-                        let journey: DetailedTrackPost = planningStyle == .macroJourney
+                        let baseJourney: DetailedTrackPost = planningStyle == .macroJourney
                             ? draft.toManualJourney()
                             : {
                                 var post = detailedTrack
                                 post.routeID = draft.routeID
-                                for (index, node) in post.viewPointNodes.enumerated() {
-                                    let images = viewPointPhotos[node.id] ?? []
-                                    let imageData = images.compactMap { $0.jpegData(compressionQuality: 0.85) }
-                                    let vpId = "track_\(draft.routeID)_vp_\(index)"
-                                    let urls = savePostMediaToDocuments(postId: vpId, imageData: imageData)
-                                    if !urls.isEmpty { PostMediaStore.shared.setImageUrls(id: vpId, urls: urls) }
-                                    post.viewPointNodes[index].imageUrls = urls.isEmpty ? nil : urls
-                                }
                                 return post
                             }()
-                        var draftToPublish = draft
-                        if category == .detailedTrack, let data = try? JSONEncoder().encode(journey), let str = String(data: data, encoding: .utf8) {
-                            draftToPublish.detailedTrackJSON = str
-                        }
                         isPublishing = true
-                        TrackDataManager.shared.publishDraft(draftToPublish, with: journey, category: category)
-                        if category == .detailedTrack {
-                            let mainId = "track_\(draft.routeID)"
-                            let coverData = draft.coverImageData ?? coverImage?.jpegData(compressionQuality: 0.85)
-                            if let data = coverData, !data.isEmpty {
-                                let urls = savePostMediaToDocuments(postId: mainId, imageData: [data])
-                                if !urls.isEmpty { PostMediaStore.shared.setImageUrls(id: mainId, urls: urls) }
+                        publishError = nil
+                        Task {
+                            do {
+                                if category == .grandJourney {
+                                    let macroImageData = collectMacroJPEGDataForCloudUpload()
+                                    let cloudURLs = macroImageData.isEmpty ? [] : (try await SocialPublishService.shared.uploadAllJPEGData(macroImageData))
+                                    var draftMut = draft
+                                    let titleForMacro = journeyName.trimmingCharacters(in: .whitespaces).isEmpty ? draftMut.title : journeyName
+                                    let day1Note = stops.first?.briefNote.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+                                    let macro = SocialPublishService.shared.buildMacroForPublish(
+                                        draft: draftMut,
+                                        title: titleForMacro,
+                                        description: day1Note,
+                                        cloudURLs: cloudURLs
+                                    )
+                                    try await SocialPublishService.shared.publish(category: .communityMacro, macro: macro, micro: nil)
+                                    if let macroData = try? JSONEncoder().encode(macro), let str = String(data: macroData, encoding: .utf8) {
+                                        draftMut.macroJourneyJSON = str
+                                    }
+                                    let journeyLocal = draftMut.toManualJourney()
+                                    await MainActor.run {
+                                        finishPublishDraftToLocal(draft: draftMut, with: journeyLocal, category: category, cloudURLs: cloudURLs, isMacro: true)
+                                    }
+                                } else {
+                                    let (microData, nodeCounts, hasCover) = collectMicroJPEGDataAndCountsForUpload(draft: draft, basePost: baseJourney)
+                                    let cloudURLs = microData.isEmpty ? [] : (try await SocialPublishService.shared.uploadAllJPEGData(microData))
+                                    let mergedJourney = mergeMicroJourneyWithCloudURLs(base: baseJourney, cloudURLs: cloudURLs, nodeCounts: nodeCounts, hasCover: hasCover)
+                                    var draftToPublish = draft
+                                    if let data = try? JSONEncoder().encode(mergedJourney), let str = String(data: data, encoding: .utf8) {
+                                        draftToPublish.detailedTrackJSON = str
+                                    }
+                                    try await SocialPublishService.shared.publish(category: .communityMicro, macro: nil, micro: mergedJourney)
+                                    await MainActor.run {
+                                        finishPublishDraftToLocal(draft: draftToPublish, with: mergedJourney, category: category, cloudURLs: cloudURLs, isMacro: false)
+                                    }
+                                }
+                            } catch {
+                                await MainActor.run {
+                                    publishError = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
+                                    isPublishing = false
+                                }
                             }
-                        }
-                        if category == .grandJourney {
-                            let data = draft.coverImageData ?? coverImage?.jpegData(compressionQuality: 0.85)
-                            if let data = data, !data.isEmpty {
-                                let postId = PostMediaStore.publishId(publishedIndex: 0, trackRouteID: nil)
-                                let urls = savePostMediaToDocuments(postId: postId, imageData: [data])
-                                if !urls.isEmpty { PostMediaStore.shared.setImageUrls(id: postId, urls: urls) }
-                            }
-                        }
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
-                            isPublishing = false
-                            showingSuccessOverlay = true
                         }
                     } label: {
                         Group {

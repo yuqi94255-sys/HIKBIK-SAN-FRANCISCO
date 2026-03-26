@@ -51,6 +51,8 @@ struct GrandJourneyItem: Identifiable {
     let tags: [String]
     /// For heat formula HoursOld
     let createdAt: Date?
+    /// 雲端 Feed 帶完整 Macro payload 時用於詳情；本地 / mock 為 nil。
+    let macroCommunityJourney: CommunityJourney?
 }
 
 // MARK: - Live Activity Model (lightweight record: map + mileage/duration/weather)
@@ -90,6 +92,8 @@ struct DetailedTrackItem: Identifiable {
     let elevationProfileHeights: [CGFloat] // 0...1 for bar heights
     let likeCount: Int
     let commentCount: Int
+    /// 雲端 Feed 帶完整 DetailedTrack payload 時用於詳情；本地 / mock 為 nil。
+    let detailTrackPost: DetailedTrackPost?
 }
 
 extension DetailedTrackItem {
@@ -118,7 +122,8 @@ private let mockGrandJourneys: [GrandJourneyItem] = [
         commentCount: 45,
         stateIds: ["ut"],
         tags: ["Canyons", "Mountains"],
-        createdAt: Date().addingTimeInterval(-3600 * 24 * 2)
+        createdAt: Date().addingTimeInterval(-3600 * 24 * 2),
+        macroCommunityJourney: nil
     ),
 ]
 
@@ -172,7 +177,8 @@ private let mockDetailedTracks: [DetailedTrackItem] = [
         difficultyColor: CommunityColors.difficultyOrange,
         elevationProfileHeights: [0.2, 0.4, 0.7, 0.9, 0.6, 0.8],
         likeCount: 1234,
-        commentCount: 89
+        commentCount: 89,
+        detailTrackPost: nil
     ),
 ]
 
@@ -229,12 +235,12 @@ struct CommunityDiscoveryView: View {
         trackDataManager.publishedTracks.filter { $0.category == .livelyActivity }
     }
 
-    /// Grand Journeys 欄目：僅 .grandJourney，再疊加 mock。
+    /// Grand Journeys 欄目：雲端 Feed → 本地已發布 → mock。
     private var grandJourneyListForFilter: [GrandJourneyItem] {
         let fromPublished = grandJourneyPublished.enumerated().map { index, draft in
             grandJourneyItemFromDraft(draft, publishedIndex: index)
         }
-        return fromPublished + mockGrandJourneys
+        return communityViewModel.cloudGrandJourneys + fromPublished + mockGrandJourneys
     }
 
     private var filteredGrandJourneyList: [GrandJourneyItem] {
@@ -269,6 +275,13 @@ struct CommunityDiscoveryView: View {
                     LazyVStack(alignment: .leading, spacing: 12) {
                         Color.clear
                             .frame(height: stickyHeaderHeight)
+                        if trackDataManager.publishedTracks.isEmpty {
+                            Text("尚無動態")
+                                .font(.system(size: 16, weight: .medium))
+                                .foregroundStyle(CommunityColors.textMuted)
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 20)
+                        }
                         if viewMode == .grandJourneys {
                             // Grand Journeys 欄目：僅 category == .grandJourney 的發布數據 + mock
                             ForEach(grandJourneyListDataSource, id: \.id) { item in
@@ -328,6 +341,36 @@ struct CommunityDiscoveryView: View {
                                 }
                             }
                         } else if viewMode == .detailedTracks {
+                            // 雲端 Feed（DetailedTrackItem）
+                            ForEach(communityViewModel.cloudDetailedTracks) { item in
+                                let dtAuthor = CommunityAuthor(id: item.authorId, displayName: item.authorName, avatarURL: item.authorAvatarUrl)
+                                let dtDynamicUser = socialManager.users[item.authorId]
+                                let dtDynamicSubtitle = dtDynamicUser.map { "\($0.followersCount) followers" } ?? item.authorSubtitle
+                                let dtIsFollowing = dtDynamicUser?.isFollowing ?? item.isFollowing
+                                NavigationLink(destination: ManualJourneyDetailView(journey: item.detailTrackPost ?? zionManualJourneyMock)) {
+                                    DetailedTrackCard(
+                                        item: item,
+                                        isFollowing: dtIsFollowing,
+                                        isLiked: currentUser.isLiked(postId: item.id),
+                                        isSaved: currentUser.isSaved(postId: item.id),
+                                        displayLikeCount: item.likeCount + (currentUser.isLiked(postId: item.id) ? 1 : 0),
+                                        displayCommentCount: item.commentCount + postCommentStore.commentCount(for: item.id),
+                                        authorSubtitleOverride: dtDynamicSubtitle,
+                                        onFollowTap: {
+                                            AuthGuard.run(message: AuthGuardMessages.followUser) {
+                                                UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                                                socialManager.toggleFollow(for: item.authorId, currentUserId: socialManager.currentUserId)
+                                            }
+                                        },
+                                        onLikeTap: { toggleLike(item.id) },
+                                        onSaveTap: { toggleSave(item.id) }
+                                    )
+                                }
+                                .buttonStyle(PlainButtonStyle())
+                                .onAppear {
+                                    socialManager.register(author: dtAuthor, initialFollowersCount: Self.parseFollowersFromSubtitle(item.authorSubtitle))
+                                }
+                            }
                             // Detailed Tracks 欄目：依篩選狀態顯示 detailedTrackListDataSource 或全量
                             ForEach(detailedTrackListDataSource, id: \.id) { post in
                                 let detailedTrackPostId = "track_\(post.routeID)"
@@ -413,6 +456,9 @@ struct CommunityDiscoveryView: View {
                     .padding(.horizontal, 20)
                     .opacity(viewMode == .grandJourneys && searchState == .searching ? 0.9 : 1)
                 }
+                .refreshable {
+                    await communityViewModel.loadFeed(trigger: .pullToRefresh)
+                }
                 .scrollContentBackground(.hidden)
                 .background(CommunityColors.background.ignoresSafeArea(edges: .all))
                 .animation(.easeInOut(duration: 0.25), value: searchState)
@@ -433,6 +479,9 @@ struct CommunityDiscoveryView: View {
                 if abs(safeAreaTop - newTop) > 0.5 { safeAreaTop = newTop }
             }
             .onAppear {
+                Task(priority: .userInitiated) {
+                    await communityViewModel.loadFeed(trigger: .onAppear)
+                }
                 // Sarah Chen (id "1") 輪播效果：Utah Mighty 5 三張圖
                 if PostMediaStore.shared.imageUrls(for: "1") == nil {
                     let sarahImageUrls = [
@@ -450,6 +499,11 @@ struct CommunityDiscoveryView: View {
                         "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800"
                     ]
                     PostMediaStore.shared.setImageUrls(id: "track_zion-angels-landing-001", urls: zionImageUrls)
+                }
+            }
+            .onDisappear {
+                Task { @MainActor in
+                    communityViewModel.cancelFeedLoadOnDisappear()
                 }
             }
             .sheet(isPresented: $showDetail) {
@@ -1005,6 +1059,8 @@ struct CommunityDiscoveryView: View {
            idx >= 0, idx < grandJourneyPublished.count {
             let draft = grandJourneyPublished[idx]
             CommunityMacroDetailView(journey: draft.communityJourneyForMacroDetail(), journeyId: item.id, coverImageData: draft.coverImageData)
+        } else if let cloud = item.macroCommunityJourney {
+            CommunityMacroDetailView(journey: cloud, journeyId: item.id)
         } else if item.id == "1" {
             CommunityMacroDetailView(journey: Self.sarahChenUtahCommunityJourney, journeyId: item.id)
         } else {
@@ -1080,7 +1136,8 @@ struct CommunityDiscoveryView: View {
             commentCount: 0,
             stateIds: [],
             tags: [],
-            createdAt: draft.createdAt
+            createdAt: draft.createdAt,
+            macroCommunityJourney: nil
         )
     }
 
@@ -1109,7 +1166,8 @@ struct CommunityDiscoveryView: View {
             commentCount: journey.commentCount,
             stateIds: stateIds.isEmpty ? [] : stateIds,
             tags: [],
-            createdAt: Date()
+            createdAt: Date(),
+            macroCommunityJourney: nil
         )
     }
 

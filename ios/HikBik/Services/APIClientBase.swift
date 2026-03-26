@@ -29,7 +29,7 @@ enum APIError: LocalizedError {
 }
 
 /// 通用 API 客戶端：Base URL、Auth Token、JSON、錯誤處理
-/// 統一使用 `APIConfig.baseURL`；DEBUG 可設環境變數 `HIKBIK_API_BASE` 覆蓋（便於本地調試）。
+    /// 統一使用 `APIConfig.baseURL`；DEBUG 可設環境變數 `HIKBIK_API_BASE` 覆蓋（須為 **https** 且建議以 `/api/` 結尾）。
 final class APIClientBase {
     static let shared = APIClientBase()
 
@@ -92,8 +92,22 @@ final class APIClientBase {
     }
 
     func post<T: Decodable, B: Encodable>(_ path: String, body: B) async throws -> T {
+        let url: URL
+        do {
+            url = try urlForRequest(path: path, query: [:])
+            print("🚀 [NETWORK] Sending request to: \(url.absoluteString)")
+        } catch {
+            print("❌ [NETWORK] Request failed with error: \(error)")
+            throw error
+        }
         let bodyData = try encoder.encode(body)
-        let (data, http) = try await performRequest(path: path, method: "POST", query: [:], body: bodyData)
+        let (data, http): (Data, HTTPURLResponse)
+        do {
+            (data, http) = try await performRequest(path: path, method: "POST", query: [:], body: bodyData)
+        } catch {
+            print("❌ [NETWORK] Request failed with error: \(error)")
+            throw error
+        }
         do {
             return try decoder.decode(T.self, from: data)
         } catch {
@@ -103,9 +117,27 @@ final class APIClientBase {
         }
     }
 
-    func post(_ path: String, body: [String: Any]) async throws -> Data {
+    /// POST JSON 字典；回傳 `(data, http)`，供調用方驗證狀態碼（例如發布需 **201**）。
+    func postWithResponse(_ path: String, body: [String: Any]) async throws -> (Data, HTTPURLResponse) {
+        let url: URL
+        do {
+            url = try urlForRequest(path: path, query: [:])
+            print("🚀 [NETWORK] Sending request to: \(url.absoluteString)")
+        } catch {
+            print("❌ [NETWORK] Request failed with error: \(error)")
+            throw error
+        }
         let bodyData = try JSONSerialization.data(withJSONObject: body)
-        let (data, _) = try await performRequest(path: path, method: "POST", query: [:], body: bodyData)
+        do {
+            return try await performRequest(path: path, method: "POST", query: [:], body: bodyData)
+        } catch {
+            print("❌ [NETWORK] Request failed with error: \(error)")
+            throw error
+        }
+    }
+
+    func post(_ path: String, body: [String: Any]) async throws -> Data {
+        let (data, _) = try await postWithResponse(path, body: body)
         return data
     }
 
@@ -201,8 +233,8 @@ final class APIClientBase {
 
     // MARK: - 底層 request
 
-    /// 回傳 `(data, http)`，供解碼失敗時印出狀態碼與原文。
-    private func performRequest(path: String, method: String, query: [String: String], body: Data?) async throws -> (Data, HTTPURLResponse) {
+    /// 與 `performRequest` / `postMultipart` 使用同一套路徑拼接規則。
+    private func urlForRequest(path: String, query: [String: String] = [:]) throws -> URL {
         let pathNormalized = path.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
         guard var finalComponents = URLComponents(string: baseURL.hasSuffix("/") ? String(baseURL.dropLast()) : baseURL) else {
             throw APIError.invalidURL(baseURL + "/" + pathNormalized)
@@ -221,7 +253,13 @@ final class APIClientBase {
         guard let finalURL = finalComponents.url else {
             throw APIError.invalidURL(baseURL + "/" + pathNormalized)
         }
-        let pathKey = pathNormalized.trimmingCharacters(in: CharacterSet(charactersIn: "/")).lowercased()
+        return finalURL
+    }
+
+    /// 回傳 `(data, http)`，供解碼失敗時印出狀態碼與原文。
+    private func performRequest(path: String, method: String, query: [String: String], body: Data?) async throws -> (Data, HTTPURLResponse) {
+        let finalURL = try urlForRequest(path: path, query: query)
+        let pathKey = path.trimmingCharacters(in: CharacterSet(charactersIn: "/")).lowercased()
         let attachAuth = Self.shouldAttachAuthorizationHeader(pathKey: pathKey)
 
         var request = URLRequest(url: finalURL)
