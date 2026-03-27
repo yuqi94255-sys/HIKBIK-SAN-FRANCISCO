@@ -29,6 +29,10 @@ enum AuthService {
             try await AuthService.updateProfile(firstName: firstName, lastName: lastName, bio: bio)
         }
 
+        func patchProfileAvatar(avatarUrl: String) async throws -> UpdateProfileResponse {
+            try await AuthService.patchProfileAvatar(avatarUrl: avatarUrl)
+        }
+
         func fetchCurrentUserProfile() async throws -> UserProfile {
             try await AuthService.fetchCurrentUserProfile()
         }
@@ -348,6 +352,27 @@ enum AuthService {
         throw APIError.decoding(
             NSError(domain: "AuthService", code: -1, userInfo: [NSLocalizedDescriptionKey: "無法從 JSON 解出 UserProfile（已嘗試 data / 頂層 / user）"])
         )
+    }
+
+    /// 同步頭像 URL：`PATCH /api/users/profile`，body `{ "avatarUrl": "https://..." }`。
+    static func patchProfileAvatar(avatarUrl: String) async throws -> UpdateProfileResponse {
+        let body: [String: Any] = ["avatarUrl": avatarUrl]
+        let data = try await APIClientBase.shared.patch("users/profile", body: body)
+        let raw = String(data: data, encoding: .utf8) ?? ""
+        print("📝 [PATCH PROFILE avatarUrl] response: \(raw.isEmpty ? "<empty>" : raw)")
+
+        if data.isEmpty {
+            let user = try await fetchCurrentUserProfile()
+            return UpdateProfileResponse(data: user)
+        }
+        do {
+            let user = try decodeUserProfileFromAPIBody(data)
+            return UpdateProfileResponse(data: user)
+        } catch {
+            print("PATCH users/profile 解碼失敗，改拉 auth/me：\(error.localizedDescription)")
+            let user = try await fetchCurrentUserProfile()
+            return UpdateProfileResponse(data: user)
+        }
     }
 
     /// 更新當前用戶：`PATCH /api/users/me`，body 為 `{ firstName, lastName, bio }`。

@@ -599,17 +599,25 @@ struct CommunityMacroDetailView: View {
         .clipShape(Circle())
     }
 
-    /// 行程描述（首日筆記或佔位），緊接 Hero 下方；約束寬度並自動換行，禁止橫向撐開。
+    /// 全線概覽：僅 `journey.overallDescription`（由 `MacroJourneyPost.overallDescription` 或 Feed `summary.description` 合併）；**禁止**使用 `days.first` 作為頂層簡介。
+    @ViewBuilder
     private var descriptionSection: some View {
-        let desc = journey.days.first?.text ?? journey.days.first?.description ?? journey.days.first?.notes ?? "A curated journey through iconic stops."
-        return Text(desc)
-            .font(.system(size: 15))
-            .foregroundStyle(.white.opacity(0.9))
-            .lineLimit(5...10)
-            .fixedSize(horizontal: false, vertical: true)
-            .frame(maxWidth: .infinity, alignment: .leading)
+        let overview = journey.overallDescription?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        if !overview.isEmpty {
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Trip overview")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(textMuted)
+                Text(overview)
+                    .font(.system(size: 15))
+                    .foregroundStyle(.white.opacity(0.9))
+                    .lineSpacing(6)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
             .padding(.horizontal, pad)
             .padding(.top, 24)
+        }
     }
 
     // MARK: - Tag Cloud：Pill 膠囊 + .ultraThinMaterial，白字，與官方「User Shared」一致
@@ -813,8 +821,8 @@ struct CommunityMacroDetailView: View {
             }
             .padding(.horizontal, pad)
 
-            // 每日照片牆：橫向滾動 dayPhotos（無則不顯示；保留單圖 photoURL 兼容）
-            dayPhotosRow(day: day)
+            // 每日照片牆：僅讀取當前 day 子集（days[index].images/dayPhotos），不讀頂層聚合圖集。
+            dayPhotosRow(index: index)
 
             // 富文本介紹：規格 text → description → notes
             if let desc = day.text ?? day.description ?? day.notes, !desc.trimmingCharacters(in: .whitespaces).isEmpty {
@@ -883,11 +891,13 @@ struct CommunityMacroDetailView: View {
     }
 
     /// 當日照片牆：多圖用 MediaCarouselView 輪播，單圖靜態；無圖不顯示。支持 file:// 與 https。
-    private func dayPhotosRow(day: CommunityJourneyDay) -> some View {
+    /// 嚴格限制數據源為 `journey.days[index]` 的子集字段（images/dayPhotos），不回退到頂層 `journey.imageUrls`。
+    private func dayPhotosRow(index: Int) -> some View {
+        guard index >= 0, index < journey.days.count else { return AnyView(EmptyView()) }
+        let day = journey.days[index]
         let urls: [String] = {
             if let im = day.images, !im.isEmpty { return im }
             if let dp = day.dayPhotos, !dp.isEmpty { return dp }
-            if let u = day.photoURL, !u.isEmpty { return [u] }
             return []
         }()
         guard !urls.isEmpty else { return AnyView(EmptyView()) }

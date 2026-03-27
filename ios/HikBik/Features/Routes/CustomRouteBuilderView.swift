@@ -277,6 +277,8 @@ struct CustomRouteBuilderView: View {
     @State private var pendingLiveTrackDraft: LiveTrackDraft?
     @State private var planningStyle: PlanningStyle = .microTrack
     @State private var journeyName: String = ""
+    /// 宏觀：全線概覽簡介（寫入 `MacroJourneyPost.overallDescription`，與單日 briefNote 分離）。
+    @State private var macroOverallDescription: String = ""
     @State private var duration: DurationOption = .twoThree
     @State private var vehicle: VehicleOption = .suv
     @State private var pace: PaceOption = .moderate
@@ -522,6 +524,7 @@ struct CustomRouteBuilderView: View {
             let s = part.trimmingCharacters(in: .whitespaces)
             if !s.isEmpty, !tagList.contains(s) { tagList.append(s) }
         }
+        let overviewTrimmed = macroOverallDescription.trimmingCharacters(in: .whitespacesAndNewlines)
         return MacroJourneyPost(
             journeyName: journeyName,
             days: days,
@@ -531,8 +534,35 @@ struct CustomRouteBuilderView: View {
             pace: pace.rawValue,
             difficulty: pace.rawValue,
             tags: tagList,
-            state: stateDisplay
+            state: stateDisplay,
+            overallDescription: overviewTrimmed.isEmpty ? nil : overviewTrimmed
         )
+    }
+
+    /// 路線標題下方：全線概覽（選填），與標題區用邊框與高度區隔。
+    private var macroOverallDescriptionEditor: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            labelWithIcon("Trip overview (optional)", icon: "text.alignleft")
+            ZStack(alignment: .topLeading) {
+                if macroOverallDescription.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                    Text("Share an exciting overview of this trip... (optional)")
+                        .font(.system(size: 15))
+                        .foregroundStyle(CRBColors.textMuted)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 12)
+                        .allowsHitTesting(false)
+                }
+                TextEditor(text: $macroOverallDescription)
+                    .scrollContentBackground(.hidden)
+                    .font(.system(size: 15))
+                    .foregroundStyle(CRBColors.textPrimary)
+                    .frame(minHeight: 108)
+                    .padding(8)
+            }
+            .background(CRBColors.searchBg)
+            .clipShape(RoundedRectangle(cornerRadius: 12))
+            .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(CRBColors.borderMuted, lineWidth: 1))
+        }
     }
 
     /// 將單張當日照片寫入臨時檔並回傳 file URL 字串，供 JSON dayPhotos 使用。
@@ -1420,6 +1450,9 @@ struct CustomRouteBuilderView: View {
         VStack(alignment: .leading, spacing: 16) {
             coverPhotoZone
             journeyNameField
+            if planningStyle == .macroJourney {
+                macroOverallDescriptionEditor
+            }
             if planningStyle == .macroJourney {
                 VStack(alignment: .leading, spacing: 8) {
                     labelWithIcon("Trip tags (shown on detail hero)", icon: "tag.fill")
@@ -2924,11 +2957,19 @@ struct CustomRouteBuilderView: View {
                                     var draftMut = draft
                                     let titleForMacro = journeyName.trimmingCharacters(in: .whitespaces).isEmpty ? draftMut.title : journeyName
                                     let day1Note = stops.first?.briefNote.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+                                    let coverSources = coverImages.isEmpty && coverImage != nil ? [coverImage!] : coverImages
+                                    let coverCount = coverSources.count
+                                    let photosPerDay = stops.map { stop in
+                                        let imgs = stop.photos.isEmpty ? [stop.photo].compactMap { $0 } : stop.photos
+                                        return imgs.count
+                                    }
                                     let macro = SocialPublishService.shared.buildMacroForPublish(
                                         draft: draftMut,
                                         title: titleForMacro,
                                         description: day1Note,
-                                        cloudURLs: cloudURLs
+                                        cloudURLs: cloudURLs,
+                                        coverImageCount: coverCount,
+                                        dayPhotoSlotCounts: photosPerDay
                                     )
                                     try await SocialPublishService.shared.publish(category: .communityMacro, macro: macro, micro: nil)
                                     if let macroData = try? JSONEncoder().encode(macro), let str = String(data: macroData, encoding: .utf8) {

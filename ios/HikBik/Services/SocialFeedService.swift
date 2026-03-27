@@ -81,6 +81,8 @@ private struct SocialFeedSummaryDTO: Decodable {
     var activityTag: String?
     var heroImage: String?
     var heroImages: [String]?
+    /// Feed/API 頂層摘要正文（與 payload.overallDescription 對齊時由後端填寫）。
+    var description: String?
 }
 
 private enum SocialFeedPayloadDTO: Decodable {
@@ -253,7 +255,15 @@ final class SocialFeedService {
         }()
         let community: CommunityJourney? = {
             if let m = macroPost {
-                return CommunityJourney.from(m, author: authorFromSummary(s), likeCount: s.likeCount ?? 0, commentCount: s.commentCount ?? 0, coverImageURL: s.coverImageUrl ?? s.imageUrl, imageUrls: imageUrls)
+                return CommunityJourney.from(
+                    m,
+                    author: authorFromSummary(s),
+                    likeCount: s.likeCount ?? 0,
+                    commentCount: s.commentCount ?? 0,
+                    coverImageURL: s.coverImageUrl ?? s.imageUrl,
+                    imageUrls: imageUrls,
+                    summaryDescription: s.description
+                )
             }
             return nil
         }()

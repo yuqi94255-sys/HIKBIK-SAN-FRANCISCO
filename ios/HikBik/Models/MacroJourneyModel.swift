@@ -140,6 +140,8 @@ struct MacroJourneyPost: Codable {
     var tags: [String]?
     /// 州選擇器硬規格：與 UI 首位標籤 1:1（多州時為 "Utah · California"）。
     var state: String
+    /// 全線概覽簡介（與單日筆記分離；詳情頁頂部展示，不寫入 Day 1 正文字段）。
+    var overallDescription: String?
 
     init(
         journeyName: String = "",
@@ -150,7 +152,8 @@ struct MacroJourneyPost: Codable {
         pace: String? = nil,
         difficulty: String? = nil,
         tags: [String]? = nil,
-        state: String = ""
+        state: String = "",
+        overallDescription: String? = nil
     ) {
         self.journeyName = journeyName
         self.days = days
@@ -161,6 +164,7 @@ struct MacroJourneyPost: Codable {
         self.difficulty = difficulty
         self.tags = tags
         self.state = state
+        self.overallDescription = overallDescription
     }
 
     init(from decoder: Decoder) throws {
@@ -175,10 +179,12 @@ struct MacroJourneyPost: Codable {
         tags = try c.decodeIfPresent([String].self, forKey: .tags)
         state = (try? c.decode(String.self, forKey: .state)) ?? ""
         if state.isEmpty, let first = selectedStates.sorted().first { state = first }
+        overallDescription = try c.decodeIfPresent(String.self, forKey: .overallDescription)
     }
 
     enum CodingKeys: String, CodingKey {
         case journeyName, days, selectedStates, duration, vehicle, pace, difficulty, tags, state
+        case overallDescription
     }
 
     func encode(to encoder: Encoder) throws {
@@ -192,6 +198,7 @@ struct MacroJourneyPost: Codable {
         try c.encodeIfPresent(difficulty, forKey: .difficulty)
         try c.encodeIfPresent(tags, forKey: .tags)
         try c.encode(state, forKey: .state)
+        try c.encodeIfPresent(overallDescription, forKey: .overallDescription)
     }
 
     var isReadyToPublish: Bool {

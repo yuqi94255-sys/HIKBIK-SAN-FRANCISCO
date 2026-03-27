@@ -580,17 +580,22 @@ struct ProfileView: View {
 
     private func uploadAvatarIfPicked(_ item: PhotosPickerItem?) async {
         guard let item else { return }
-        guard let data = try? await item.loadTransferable(type: Data.self), !data.isEmpty else { return }
+        guard let rawData = try? await item.loadTransferable(type: Data.self), !rawData.isEmpty else { return }
         await MainActor.run { isUploadingAvatar = true }
         do {
-            try await AuthService.uploadUserAvatar(imageData: data)
-            await userProfileVM.refreshFromServerIfLoggedIn()
+            let cloudURL = try await CloudinaryService.uploadImage(rawData)
+            let response = try await AuthService.patchProfileAvatar(avatarUrl: cloudURL)
+            await MainActor.run {
+                userProfileVM.applyPatchResponseOnMainThread(response.data)
+                isUploadingAvatar = false
+                avatarPickerItem = nil
+            }
         } catch {
             print("ProfileView: avatar upload failed — \(error.localizedDescription)")
-        }
-        await MainActor.run {
-            isUploadingAvatar = false
-            avatarPickerItem = nil
+            await MainActor.run {
+                isUploadingAvatar = false
+                avatarPickerItem = nil
+            }
         }
     }
 

@@ -997,8 +997,9 @@ struct ManualJourneyDetailView: View {
                         }
                     }
                 }
-                if let urls = node.imageUrls, !urls.isEmpty {
-                    viewPointPhotoBlock(urls: urls)
+                let scopedNodeImageURLs = scopedViewPointImageURLs(at: index)
+                if !scopedNodeImageURLs.isEmpty {
+                    viewPointPhotoBlock(urls: scopedNodeImageURLs)
                 } else if node.photoCount > 0 {
                     RoundedRectangle(cornerRadius: 12)
                         .fill(Color.white.opacity(0.08))
@@ -1019,6 +1020,12 @@ struct ManualJourneyDetailView: View {
         .onTapGesture {
             viewModel.selectedViewPointIndex = index
         }
+    }
+
+    /// 嚴格按節點索引取圖：只從 `journey.viewPointNodes[index].imageUrls` 取，不回退到 heroImages/頂層集合。
+    private func scopedViewPointImageURLs(at index: Int) -> [String] {
+        guard index >= 0, index < journey.viewPointNodes.count else { return [] }
+        return journey.viewPointNodes[index].imageUrls ?? []
     }
 
     /// ViewPoint 專屬照片：從 imageUrls 加載，fill + 圓角 12

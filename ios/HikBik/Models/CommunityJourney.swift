@@ -35,6 +35,8 @@ struct CommunityJourney: Codable {
     var imageUrls: [String]?
     /// 封面比例，明確記錄 16/10，有助於 UI 渲染穩定性
     var aspectRatio: Double?
+    /// 全線概覽（對應 `MacroJourneyPost.overallDescription`）；Feed 頂層 `summary.description` 會在 `from(_:summaryDescription:)` 中合併至此。
+    var overallDescription: String?
 
     init(
         journeyName: String = "",
@@ -53,7 +55,8 @@ struct CommunityJourney: Codable {
         isFavorited: Bool = false,
         coverImageURL: String? = nil,
         imageUrls: [String]? = nil,
-        aspectRatio: Double? = 16.0 / 10.0
+        aspectRatio: Double? = 16.0 / 10.0,
+        overallDescription: String? = nil
     ) {
         self.journeyName = journeyName
         self.days = days
@@ -72,12 +75,14 @@ struct CommunityJourney: Codable {
         self.coverImageURL = coverImageURL
         self.imageUrls = imageUrls
         self.aspectRatio = aspectRatio
+        self.overallDescription = overallDescription
     }
 
     enum CodingKeys: String, CodingKey {
         case journeyName, days, selectedStates, duration, vehicle, pace, difficulty, tags, state
         case author, likeCount, commentCount, isLiked, isFavorited
         case coverImageURL, imageUrls, aspectRatio
+        case overallDescription
     }
 
     init(from decoder: Decoder) throws {
@@ -102,10 +107,12 @@ struct CommunityJourney: Codable {
         coverImageURL = try c.decodeIfPresent(String.self, forKey: .coverImageURL)
         imageUrls = try c.decodeIfPresent([String].self, forKey: .imageUrls)
         aspectRatio = try c.decodeIfPresent(Double.self, forKey: .aspectRatio)
+        overallDescription = try c.decodeIfPresent(String.self, forKey: .overallDescription)
     }
 
     /// 從 MacroJourneyPost 建構（可傳入經預處理的 coverImageURL）。若傳入 imageUrls 則優先使用（發布時 PostMediaStore 寫入的 URL 數組）。
-    static func from(_ post: MacroJourneyPost, author: CommunityAuthor? = nil, likeCount: Int = 0, commentCount: Int = 0, coverImageURL: String? = nil, imageUrls: [String]? = nil) -> CommunityJourney {
+    /// - Parameter summaryDescription: Feed/API 頂層 `summary.description`，僅在 payload 無 `overallDescription` 時作為後備。
+    static func from(_ post: MacroJourneyPost, author: CommunityAuthor? = nil, likeCount: Int = 0, commentCount: Int = 0, coverImageURL: String? = nil, imageUrls: [String]? = nil, summaryDescription: String? = nil) -> CommunityJourney {
         let imgsFirst: (JourneyDay) -> String? = { ($0.images ?? $0.dayPhotos)?.first }
         let days = post.days.map { d in
             let recs = d.recommendations?.map { CommunityRecommendation(title: $0.title, link: $0.link) }
@@ -152,6 +159,14 @@ struct CommunityJourney: Codable {
             if allImageUrls.isEmpty, let c = coverImageURL, !c.isEmpty { allImageUrls = [c] }
         }
 
+        let overviewMerged: String? = {
+            let o = post.overallDescription?.trimmingCharacters(in: .whitespacesAndNewlines)
+            if let o, !o.isEmpty { return o }
+            let s = summaryDescription?.trimmingCharacters(in: .whitespacesAndNewlines)
+            if let s, !s.isEmpty { return s }
+            return nil
+        }()
+
         return CommunityJourney(
             journeyName: post.journeyName,
             days: days,
@@ -167,7 +182,8 @@ struct CommunityJourney: Codable {
             commentCount: commentCount,
             coverImageURL: coverImageURL,
             imageUrls: allImageUrls.isEmpty ? nil : allImageUrls,
-            aspectRatio: 16.0 / 10.0
+            aspectRatio: 16.0 / 10.0,
+            overallDescription: overviewMerged
         )
     }
 }
