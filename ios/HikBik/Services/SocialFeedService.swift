@@ -17,15 +17,19 @@ private struct SocialFeedRootDTO: Decodable {
     let dataAsArray: [SocialFeedPostRowDTO]?
     /// `data` 為物件且內含 `posts` 時（舊版相容）。
     let dataNestedPosts: [SocialFeedPostRowDTO]?
+    /// 部分後端使用 `results`
+    let results: [SocialFeedPostRowDTO]?
 
     enum CodingKeys: String, CodingKey {
         case posts
         case data
+        case results
     }
 
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         posts = try c.decodeIfPresent([SocialFeedPostRowDTO].self, forKey: .posts)
+        results = try c.decodeIfPresent([SocialFeedPostRowDTO].self, forKey: .results)
         guard c.contains(.data) else {
             dataAsArray = nil
             dataNestedPosts = nil
@@ -58,7 +62,10 @@ private struct SocialFeedSummaryDTO: Decodable {
     var authorName: String?
     var authorSubtitle: String?
     var authorAvatarUrl: String?
+    var authorFollowersCount: Int?
     var imageUrl: String?
+    /// 後端常見 `cover_image`（`convertFromSnakeCase` → `coverImage`）
+    var coverImage: String?
     var coverImageUrl: String?
     var imageUrls: [String]?
     var journeyName: String?
@@ -111,16 +118,18 @@ private struct SocialFeedPostRowDTO: Decodable {
 
     enum CodingKeys: String, CodingKey {
         case postCategory, summary, id, postId, payload
-        case authorId, authorName, authorSubtitle, authorAvatarUrl
-        case imageUrl, coverImageUrl, imageUrls
+        case renderData = "render_data"
+        case authorId, authorName, authorSubtitle, authorAvatarUrl, authorFollowersCount
+        case imageUrl, coverImage, coverImageUrl, imageUrls
         case journeyName, title, days, label, mileage, vehicle, waypoints, stateIds, tags
         case likeCount, commentCount, createdAt
         case routeName, routeId, distance, elevationGain, difficulty, activityTag, heroImage, heroImages
+        case description
     }
 
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
-        postCategory = try c.decode(String.self, forKey: .postCategory)
+        postCategory = (try c.decodeIfPresent(String.self, forKey: .postCategory))?.trimmingCharacters(in: .whitespacesAndNewlines).uppercased() ?? ""
         id = try c.decodeIfPresent(String.self, forKey: .id)
         postId = try c.decodeIfPresent(String.self, forKey: .postId)
         if let nested = try c.decodeIfPresent(SocialFeedSummaryDTO.self, forKey: .summary) {
@@ -134,7 +143,9 @@ private struct SocialFeedPostRowDTO: Decodable {
                 authorName: try c.decodeIfPresent(String.self, forKey: .authorName),
                 authorSubtitle: try c.decodeIfPresent(String.self, forKey: .authorSubtitle),
                 authorAvatarUrl: try c.decodeIfPresent(String.self, forKey: .authorAvatarUrl),
+                authorFollowersCount: try c.decodeIfPresent(Int.self, forKey: .authorFollowersCount),
                 imageUrl: try c.decodeIfPresent(String.self, forKey: .imageUrl),
+                coverImage: try c.decodeIfPresent(String.self, forKey: .coverImage),
                 coverImageUrl: try c.decodeIfPresent(String.self, forKey: .coverImageUrl),
                 imageUrls: try c.decodeIfPresent([String].self, forKey: .imageUrls),
                 journeyName: try c.decodeIfPresent(String.self, forKey: .journeyName),
@@ -156,14 +167,18 @@ private struct SocialFeedPostRowDTO: Decodable {
                 difficulty: try c.decodeIfPresent(String.self, forKey: .difficulty),
                 activityTag: try c.decodeIfPresent(String.self, forKey: .activityTag),
                 heroImage: try c.decodeIfPresent(String.self, forKey: .heroImage),
-                heroImages: try c.decodeIfPresent([String].self, forKey: .heroImages)
+                heroImages: try c.decodeIfPresent([String].self, forKey: .heroImages),
+                description: try c.decodeIfPresent(String.self, forKey: .description)
             )
         }
-        if c.contains(.payload) {
-            payload = try? c.decode(SocialFeedPayloadDTO.self, forKey: .payload)
-        } else {
-            payload = nil
+        var p: SocialFeedPayloadDTO?
+        if c.contains(.payload), !(try c.decodeNil(forKey: .payload)) {
+            p = try? c.decode(SocialFeedPayloadDTO.self, forKey: .payload)
         }
+        if p == nil, c.contains(.renderData), !(try c.decodeNil(forKey: .renderData)) {
+            p = try? c.decode(SocialFeedPayloadDTO.self, forKey: .renderData)
+        }
+        payload = p
     }
 }
 
@@ -175,27 +190,25 @@ final class SocialFeedService {
 
     private let feedPath = "social/feed"
 
-    /// 呼叫 `GET /api/social/feed`，依 `postCategory` 映射為 `GrandJourneyItem` / `DetailedTrackItem`。
-    /// `APIClientBase.getData` 回傳完整 HTTP body，**不**拆 `{ data: ... }`；陣列須在下方 `decodePostRows` 從 `data` 鍵讀取。
+    /// 主線：`SocialPublishService` → `GET /api/social/feed`。
     func fetchFeed() async throws -> [SocialFeedEntry] {
-        let data = try await APIClientBase.shared.getData("/social/feed")
+        let data: Data
+        do {
+            data = try await SocialPublishService.shared.fetchPostsData()
+            print("✅ [SocialFeedService] GET /api/social/feed 成功，\(data.count) bytes")
+        } catch {
+            print("❌ [SocialFeedService] GET /api/social/feed 失敗: \(error.localizedDescription) — \(error)")
+            throw error
+        }
         if let rawString = String(data: data, encoding: .utf8) {
-            print("🔥 [CEO DEBUG] 這是 Render 吐出來的原始東西：")
-            print(rawString)
+            print("🔥 [SocialFeed RAW] \(rawString.prefix(4000))\(rawString.count > 4000 ? "…(truncated)" : "")")
         }
         do {
             let rows = try decodePostRows(from: data)
-            var out: [SocialFeedEntry] = []
-            out.reserveCapacity(rows.count)
-            for row in rows {
-                let cat = row.postCategory.uppercased()
-                if cat.contains("MACRO") || cat == "COMMUNITY_MACRO" || cat == "GRAND_JOURNEY" {
-                    if let g = mapMacro(row) { out.append(.macro(g)) }
-                } else if cat.contains("MICRO") || cat == "COMMUNITY_MICRO" || cat == "DETAILED_TRACK" {
-                    if let d = mapMicro(row) { out.append(.micro(d)) }
-                }
+            if rows.isEmpty {
+                print("⚠️ [SocialFeedService] 解碼成功但帖子列為空（請核對後端欄位與 post_category / render_data）")
             }
-            return out
+            return buildEntries(from: rows)
         } catch let decodingError as DecodingError {
             print("❌ [DECODE ERROR] 具體原因: \(decodingError)")
             if let jsonString = String(data: data, encoding: .utf8) {
@@ -203,7 +216,7 @@ final class SocialFeedService {
             }
             throw decodingError
         } catch let apiError as APIError {
-            if case .decoding(let innerError) = apiError, let decodingError = innerError as? DecodingError {
+            if case .decodingError(let innerError) = apiError, let decodingError = innerError as? DecodingError {
                 print("❌ [DECODE ERROR] 具體原因: \(decodingError)")
                 if let jsonString = String(data: data, encoding: .utf8) {
                     print("📦 [RAW JSON] 原始數據: \(jsonString)")
@@ -214,6 +227,36 @@ final class SocialFeedService {
         }
     }
 
+    /// 與 `social/posts`、`me/liked` 等與 Feed 相同 JSON 形狀的響應解碼共用。
+    func entriesFromPostsPayload(_ data: Data) throws -> [SocialFeedEntry] {
+        let rows = try decodePostRows(from: data)
+        return buildEntries(from: rows)
+    }
+
+    private func buildEntries(from rows: [SocialFeedPostRowDTO]) -> [SocialFeedEntry] {
+        var out: [SocialFeedEntry] = []
+        out.reserveCapacity(rows.count)
+        for row in rows {
+            let cat: String = {
+                if !row.postCategory.isEmpty { return row.postCategory }
+                switch row.payload {
+                case .some(.macro): return "COMMUNITY_MACRO"
+                case .some(.micro): return "COMMUNITY_MICRO"
+                case .none: return "COMMUNITY_MACRO"
+                }
+            }()
+            let u = cat.uppercased()
+            if u.contains("MACRO") || u == "COMMUNITY_MACRO" || u == "GRAND_JOURNEY" {
+                if let g = mapMacro(row) { out.append(.macro(g)) }
+            } else if u.contains("MICRO") || u == "COMMUNITY_MICRO" || u == "DETAILED_TRACK" {
+                if let d = mapMicro(row) { out.append(.micro(d)) }
+            } else {
+                print("⚠️ [SocialFeedService] 略過未知 postCategory=\(cat) id=\(row.postId ?? row.id ?? "?")")
+            }
+        }
+        return out
+    }
+
     private func decodePostRows(from data: Data) throws -> [SocialFeedPostRowDTO] {
         let dec = JSONDecoder()
         dec.keyDecodingStrategy = .convertFromSnakeCase
@@ -222,6 +265,7 @@ final class SocialFeedService {
         do {
             let root = try dec.decode(SocialFeedRootDTO.self, from: data)
             if let p = root.posts { return p }
+            if let p = root.results { return p }
             if let p = root.dataAsArray { return p }
             if let p = root.dataNestedPosts { return p }
         } catch let e as DecodingError {
@@ -238,21 +282,29 @@ final class SocialFeedService {
         if let e = lastDecodingError {
             throw e
         }
-        throw APIError.decoding(NSError(domain: "SocialFeed", code: -1, userInfo: [NSLocalizedDescriptionKey: "無法解析 feed JSON"]))
+        throw APIError.decodingError(NSError(domain: "SocialFeed", code: -1, userInfo: [NSLocalizedDescriptionKey: "無法解析 feed JSON"]))
     }
 
     private func mapMacro(_ row: SocialFeedPostRowDTO) -> GrandJourneyItem? {
         let s = row.summary
-        let pid = s.postId ?? s.id ?? row.postId ?? row.id ?? UUID().uuidString
         let title = s.journeyName ?? s.title ?? "Journey"
-        let imageUrls = s.imageUrls ?? (s.coverImageUrl.map { [$0] } ?? s.heroImages)
-        let firstImage = s.imageUrl ?? s.coverImageUrl ?? imageUrls?.first ?? "https://images.unsplash.com/photo-1476610182048-b716b8518aae?w=800"
         let days = max(1, s.days ?? 1)
         let macroPost: MacroJourneyPost? = {
             guard let p = row.payload else { return nil }
             if case let .macro(m) = p { return m }
             return nil
         }()
+        let mongoId = macroPost?.id
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .flatMap { $0.isEmpty ? nil : $0 }
+        let coverResolved = s.coverImageUrl ?? s.coverImage ?? macroPost?.coverImage
+        let imageUrls = s.imageUrls ?? (coverResolved.map { [$0] } ?? s.heroImages)
+        let firstImage = s.imageUrl ?? coverResolved ?? imageUrls?.first ?? "https://images.unsplash.com/photo-1476610182048-b716b8518aae?w=800"
+        let journeyIdStr = mongoId ?? s.postId ?? s.id ?? row.postId ?? row.id
+        let journeyId = journeyIdStr.map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }.flatMap { $0.isEmpty ? nil : $0 }
+        let routeId = s.routeId.map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }.flatMap { $0.isEmpty ? nil : $0 }
+        let stableId = journeyId ?? UUID().uuidString
+
         let community: CommunityJourney? = {
             if let m = macroPost {
                 return CommunityJourney.from(
@@ -260,18 +312,39 @@ final class SocialFeedService {
                     author: authorFromSummary(s),
                     likeCount: s.likeCount ?? 0,
                     commentCount: s.commentCount ?? 0,
-                    coverImageURL: s.coverImageUrl ?? s.imageUrl,
+                    coverImageURL: coverResolved ?? s.imageUrl,
                     imageUrls: imageUrls,
                     summaryDescription: s.description
                 )
             }
-            return nil
+            let day = CommunityJourneyDay(
+                dayNumber: 1,
+                photoURL: firstImage,
+                description: s.description,
+                images: imageUrls
+            )
+            let stateLabel = (s.stateIds ?? []).map { $0.uppercased() }.joined(separator: " · ")
+            return CommunityJourney(
+                journeyName: title,
+                days: [day],
+                selectedStates: s.stateIds ?? [],
+                duration: s.days.map { "\($0) days" },
+                vehicle: s.vehicle,
+                tags: s.tags,
+                state: stateLabel,
+                author: authorFromSummary(s),
+                likeCount: s.likeCount ?? 0,
+                commentCount: s.commentCount ?? 0,
+                coverImageURL: coverResolved ?? s.imageUrl,
+                imageUrls: imageUrls,
+                overallDescription: s.description
+            )
         }()
         return GrandJourneyItem(
-            id: "cloud_\(pid)",
+            id: stableId,
             authorId: s.authorId ?? "unknown",
             authorName: s.authorName ?? "Explorer",
-            authorSubtitle: s.authorSubtitle ?? "",
+            authorSubtitle: s.authorFollowersCount.map { "\($0) followers" } ?? s.authorSubtitle ?? "",
             authorAvatarUrl: s.authorAvatarUrl,
             isFollowing: false,
             imageUrl: firstImage,
@@ -287,13 +360,14 @@ final class SocialFeedService {
             stateIds: s.stateIds ?? [],
             tags: s.tags ?? [],
             createdAt: parseDate(s.createdAt),
-            macroCommunityJourney: community
+            macroCommunityJourney: community,
+            journeyId: journeyId,
+            routeId: routeId
         )
     }
 
     private func mapMicro(_ row: SocialFeedPostRowDTO) -> DetailedTrackItem? {
         let s = row.summary
-        let pid = s.postId ?? s.id ?? row.postId ?? row.id ?? UUID().uuidString
         let title = s.routeName ?? s.title ?? "Route"
         let urls: [String] = {
             if let h = s.heroImages, !h.isEmpty { return h }
@@ -302,13 +376,25 @@ final class SocialFeedService {
             return ["https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=800"]
         }()
         let diff = s.difficulty ?? "Moderate"
-        let detail: DetailedTrackPost? = {
+        var detail: DetailedTrackPost? = {
             guard let p = row.payload else { return nil }
             if case let .micro(d) = p { return d }
             return nil
         }()
+        let journeyIdStr = s.postId ?? s.id ?? row.postId ?? row.id
+        let journeyId = journeyIdStr.map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }.flatMap { $0.isEmpty ? nil : $0 }
+        let routeFromSummary = s.routeId.map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }.flatMap { $0.isEmpty ? nil : $0 }
+        let routeFromDetail = detail?.routeID.map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }.flatMap { $0.isEmpty ? nil : $0 }
+        let routeId = routeFromSummary ?? routeFromDetail
+        if var d = detail {
+            if d.routeID == nil || (d.routeID?.isEmpty == true) {
+                d.routeID = routeId ?? journeyId
+            }
+            detail = d
+        }
+        let stableId = journeyId ?? UUID().uuidString
         return DetailedTrackItem(
-            id: "cloud_\(pid)",
+            id: stableId,
             authorId: s.authorId ?? "unknown",
             authorName: s.authorName ?? "Explorer",
             authorSubtitle: s.authorSubtitle ?? "",
@@ -324,7 +410,9 @@ final class SocialFeedService {
             elevationProfileHeights: [0.35, 0.55, 0.7, 0.5, 0.6, 0.45],
             likeCount: s.likeCount ?? 0,
             commentCount: s.commentCount ?? 0,
-            detailTrackPost: detail
+            detailTrackPost: detail,
+            journeyId: journeyId,
+            routeId: routeId
         )
     }
 
